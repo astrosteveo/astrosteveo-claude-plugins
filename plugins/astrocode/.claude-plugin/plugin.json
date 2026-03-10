@@ -1,0 +1,8 @@
+{
+    "name": "astrocode",
+    "description": "Workflow for coldstarting Claude Code",
+    "author": {
+        "name": "AstroSteveo",
+        "email": "astrosteveo@noreply.users.github.com"
+    }
+}

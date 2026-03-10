@@ -1,0 +1,19 @@
+{
+    "name": "astrosteveo-claude-plugins",
+    "description": "Curated list of Claude Code plugins for Engineers",
+    "owner": {
+        "name": "AstroSteveo",
+        "email": "astrosteveo@noreply.users.github.com"
+    },
+    "plugins": [
+        {
+            "name": "astrocode",
+            "description": "Workflow for coldstarting Claude Code",
+            "author": {
+                "name": "AstroSteveo",
+                "email": "astrosteveo@noreply.users.github.com"
+            },
+            "source": "./plugins/astrocode"
+        }
+    ]
+}
