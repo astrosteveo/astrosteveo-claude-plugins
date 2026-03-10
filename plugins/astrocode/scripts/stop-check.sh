@@ -25,6 +25,28 @@ fi
 CHANGES=$(git status --porcelain -- . ':!.claude/' 2>/dev/null | head -20)
 
 if [[ -z "$CHANGES" ]]; then
+  # No uncommitted changes — but check if PROGRESS.md is stale
+  # (source commits exist since the last synced hash)
+  PROGRESS_FILE=".claude/PROGRESS.md"
+  if [[ -f "$PROGRESS_FILE" ]]; then
+    SYNCED_HASH=$(grep -oP 'Last synced at: \K[a-f0-9]+' "$PROGRESS_FILE" 2>/dev/null || true)
+    if [[ -n "$SYNCED_HASH" ]]; then
+      # Check for source commits between synced hash and HEAD (ignore .claude/)
+      SOURCE_DRIFT=$(git log --oneline "$SYNCED_HASH"..HEAD -- . ':!.claude/' 2>/dev/null | head -5)
+      if [[ -n "$SOURCE_DRIFT" ]]; then
+        STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false')
+        if [[ "$STOP_HOOK_ACTIVE" != "true" ]]; then
+          cat <<DRIFTEOF
+{
+  "decision": "block",
+  "reason": "PROGRESS.md is stale — source commits exist since last sync (hash $SYNCED_HASH). Before stopping: 1) Update .claude/PROGRESS.md to reflect all work done this session (Recent Changes, Active Work Streams, Next Steps, Known Issues). 2) Set 'Last synced at:' to the current HEAD hash. 3) Commit: git commit -m 'chore: update project state' -- .claude/PROGRESS.md"
+}
+DRIFTEOF
+          exit 0
+        fi
+      fi
+    fi
+  fi
   echo '{"decision": "approve"}'
   exit 0
 fi

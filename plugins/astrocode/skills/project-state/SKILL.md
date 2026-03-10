@@ -54,15 +54,24 @@ Create `.claude/PROGRESS.md` using the template below. Tell the user what you in
 
 ## During the Session — Mandatory
 
-PROGRESS.md is the authoritative project state that hands off from session to session. Every source commit MUST be followed by a PROGRESS.md update commit. No exceptions.
+PROGRESS.md is the authoritative project state that hands off from session to session. It MUST be updated whenever project state changes — not only after source commits.
 
-**After every source commit:**
+### After every source commit:
 
 1. Update `.claude/PROGRESS.md`:
    - Add/update a row in **Recent Changes** for what you just committed.
    - Update **Active Work Streams** and **Next Steps** to reflect current reality.
    - Update the header: `> Last updated: YYYY-MM-DD | Last synced at: NEW_HEAD_HASH`
 2. Commit it: `git commit -m "chore: update project state" -- .claude/PROGRESS.md`
+
+### When the user reports completing an external action:
+
+Users may complete tasks outside Claude (e.g., configuring a webhook in a dashboard, merging a PR, updating DNS). When the user tells you something from Next Steps or Known Issues is done:
+
+1. Update PROGRESS.md **immediately** — remove or mark the item as done, update Next Steps, clear resolved blockers from Known Issues.
+2. Commit it: `git commit -m "chore: update project state" -- .claude/PROGRESS.md`
+
+Do NOT leave completed items in Next Steps or resolved blockers in Known Issues. Stale content is worse than missing content.
 
 Keep the file under 60 lines. Trim old Recent Changes rows when needed. The Stop hook exists as a last-resort safety net — do not rely on it.
 
