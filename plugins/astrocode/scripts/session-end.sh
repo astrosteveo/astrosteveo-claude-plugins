@@ -11,11 +11,12 @@ if [[ -z "$CWD" ]]; then
   exit 0
 fi
 
-PROGRESS_FILE="$CWD/.claude/memory/PROGRESS.md"
+PROGRESS_FILE="$CWD/.claude/PROGRESS.md"
 
 if [[ ! -f "$PROGRESS_FILE" ]]; then
   exit 0
 fi
 
-# Update the timestamp only — content accuracy is the skill's job
-sed -i "s/^> Last updated:.*/> Last updated: $(date +%Y-%m-%d)/" "$PROGRESS_FILE"
+# Update the date only, preserving everything after it (e.g. "| Last synced at: HASH")
+TODAY=$(date +%Y-%m-%d)
+sed -i "s/^> Last updated: [0-9-]*/> Last updated: $TODAY/" "$PROGRESS_FILE"

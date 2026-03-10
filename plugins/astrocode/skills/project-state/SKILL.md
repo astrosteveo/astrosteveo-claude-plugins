@@ -1,32 +1,38 @@
 ---
 name: project-state
 description: >
-  Use when starting a new session, cold-booting into a project, or when the user asks to
+  Use when starting a new session, or when the user asks to
   "check project state", "load progress", "initialize session", "catch up", "where did we leave off",
   or "what's the current status". Also use when the user runs /project-state.
 ---
 
-# Project State — Cold Boot Recovery
+# Project State
 
-You are starting a new session with no prior context. Your job: get oriented fast and brief the user in under 10 lines.
+`.claude/PROGRESS.md` is the **authoritative handoff document** between Claude sessions. When you read it, you should know everything you need to start working — what was done, what's in progress, what's next, what decisions were made, and what the architecture looks like. No codebase exploration needed. No reading git logs to reconstruct context. Just read the file and go.
+
+Every session reads it on start and updates it with every commit. If it's wrong or stale, the next session wastes time re-exploring the codebase from scratch — which is exactly what this file exists to prevent.
+
+**Keeping PROGRESS.md accurate is a core responsibility equal to writing correct code.** If you write code but don't update PROGRESS.md, the work is incomplete.
 
 **Prerequisite:** This skill requires a git repository. If the working directory is not a git repo, tell the user and offer to initialize one. Do not proceed without git.
 
-## Instructions
+## On Session Start
 
-### Step 1: Find the state file
+### Step 1: Read the state file
 
-Look for `.claude/memory/PROGRESS.md` relative to the current working directory.
+Read `.claude/PROGRESS.md` relative to the current working directory.
 
-### Step 2a: State file exists — Staleness check and brief
+> **Path note:** PROGRESS.md lives at `.claude/PROGRESS.md`, NOT `.claude/memory/`. The `memory/` directory is managed by Claude Code's auto-memory system and will mangle files placed there.
 
-1. Read `.claude/memory/PROGRESS.md`.
+### Step 2a: State file exists
+
+1. Read `.claude/PROGRESS.md`.
 2. **Staleness check.** Read the `Last synced at:` hash from the file header.
    - If the hash is present: `git diff --stat HASH..HEAD -- . ':!.claude/'`
-   - If no hash (legacy file or first run): treat as stale.
+   - If no hash: treat as stale.
    - **No source changes since hash**: state is current. Proceed to briefing.
    - **Source files changed**: state is stale. Show the user what changed (`git log --oneline HASH..HEAD -- . ':!.claude/'`) and update PROGRESS.md before briefing.
-3. Present a **brief** status (aim for 5-10 lines max):
+3. Present a **brief** status (5-10 lines max):
    - What's actively in progress
    - Any blockers
    - Top 2-3 next steps
@@ -34,9 +40,9 @@ Look for `.claude/memory/PROGRESS.md` relative to the current working directory.
 
 Do NOT read back the entire file. Summarize.
 
-### Step 2b: State file missing — Bootstrap from project signals
+### Step 2b: State file missing — First-time setup
 
-Scan the project first, then create a pre-populated state file:
+This only happens once per project. Scan the project and create the initial state file:
 
 1. `git log --oneline -15` for recent work.
 2. Read `package.json`, `Cargo.toml`, `pyproject.toml`, or equivalent for stack info.
@@ -44,28 +50,25 @@ Scan the project first, then create a pre-populated state file:
 4. Scan top-level directory structure for architecture clues.
 5. Grep for `TODO`, `FIXME`, `HACK` in source files (top 10 hits).
 
-Create `.claude/memory/PROGRESS.md` pre-populated with what you found. Tell the user what you inferred and ask them to correct anything wrong.
+Create `.claude/PROGRESS.md` using the template below. Tell the user what you inferred and ask them to correct anything wrong. Commit it immediately.
 
-### Step 3: Keep it current
+## During the Session — Mandatory
 
-Update PROGRESS.md at these moments during a session:
+PROGRESS.md is the authoritative project state that hands off from session to session. Every source commit MUST be followed by a PROGRESS.md update commit. No exceptions.
 
-- **After completing a feature or fix** — add to Recent Changes
-- **After making an architectural decision** — add to Architecture & Key Decisions
-- **When discovering a bug or blocker** — add to Known Issues
+**After every source commit:**
 
-A SessionEnd hook updates the timestamp automatically. You do not need to handle session close.
+1. Update `.claude/PROGRESS.md`:
+   - Add/update a row in **Recent Changes** for what you just committed.
+   - Update **Active Work Streams** and **Next Steps** to reflect current reality.
+   - Update the header: `> Last updated: YYYY-MM-DD | Last synced at: NEW_HEAD_HASH`
+2. Commit it: `git commit -m "chore: update project state" -- .claude/PROGRESS.md`
 
-**Every time you update PROGRESS.md:**
-- Set `Last synced at:` to the current HEAD short hash (`git rev-parse --short HEAD`)
-- Keep Recent Changes to the last ~10 entries (drop oldest)
-- Keep the whole file under 60 lines
-- Write as if briefing a stranger — specific, concise, no ambiguity
-- Stage and commit: `git commit -m "chore: update project state" -- .claude/memory/PROGRESS.md`
+Keep the file under 60 lines. Trim old Recent Changes rows when needed. The Stop hook exists as a last-resort safety net — do not rely on it.
 
 ## Template
 
-When creating a new PROGRESS.md, use this structure (pre-fill from Step 2b):
+Use this structure when creating a new PROGRESS.md (pre-fill from Step 2b):
 
 ```markdown
 # Project Progress
@@ -74,7 +77,7 @@ When creating a new PROGRESS.md, use this structure (pre-fill from Step 2b):
 
 ## Active Work Streams
 
-- (inferred from recent git commits or user input)
+- (what's currently in progress or recently completed)
 
 ## Recent Changes
 
@@ -83,7 +86,7 @@ When creating a new PROGRESS.md, use this structure (pre-fill from Step 2b):
 
 ## Architecture & Key Decisions
 
-- (inferred from project structure and config)
+- (key technical decisions, stack info, patterns)
 
 ## Known Issues & Blockers
 
@@ -91,12 +94,12 @@ When creating a new PROGRESS.md, use this structure (pre-fill from Step 2b):
 
 ## Next Steps
 
-1. (inferred or ask user)
+1. (prioritized next actions)
 
 ## Project Context
 
-- **Project:** (from package.json name/description or repo name)
-- **Stack:** (from dependencies and config files)
-- **Build/Run:** (from scripts in package.json or Makefile)
-- **Test:** (from test scripts or test directory presence)
+- **Project:** (name and one-line description)
+- **Stack:** (from dependencies and config)
+- **Build/Run:** (key commands)
+- **Test:** (test commands or "not configured")
 ```
