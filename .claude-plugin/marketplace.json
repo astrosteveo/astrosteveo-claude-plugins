@@ -14,6 +14,15 @@
                 "email": "astrosteveo@noreply.users.github.com"
             },
             "source": "./plugins/astrocode"
+        },
+        {
+            "name": "skills-creator",
+            "description": "Interactive guide for creating well-structured Claude skills",
+            "author": {
+                "name": "AstroSteveo",
+                "email": "astrosteveo@noreply.users.github.com"
+            },
+            "source": "./plugins/skills-creator"
         }
     ]
 }
