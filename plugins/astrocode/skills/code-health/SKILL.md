@@ -20,6 +20,8 @@ metadata:
 
 Analyze the codebase for tech debt, code quality issues, and convention violations. Produce a prioritized report with actionable recommendations.
 
+**Relationship to `/review-cycle`:** This skill is the diagnostic (read-only report). `/review-cycle` is the full loop that runs this audit, then fixes, verifies, aligns docs, and updates the backlog. Use `/code-health` when you just want to see the issues. Use `/review-cycle` when you want to act on them.
+
 ## Scope
 
 Determine scope based on the user's request:
@@ -157,6 +159,7 @@ Sort findings by priority, then by effort (quick wins first within each priority
 - Avoid bike-shedding — don't flag stylistic preferences that have no functional impact and are already consistent within the codebase.
 - Distinguish between "different from what I'd do" and "actually problematic." Only report the latter.
 - Credit what's done well — note strong patterns and good practices alongside issues. This provides useful context and helps the user understand what to preserve.
+- Include a **recommended action plan** at the end of the report, split into "This week" (critical/high quick wins) and "Next sprint" (medium items, larger refactors). This makes the report immediately actionable.
 
 ## Examples
 

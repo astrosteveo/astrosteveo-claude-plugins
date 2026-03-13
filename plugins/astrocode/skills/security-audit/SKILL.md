@@ -76,6 +76,7 @@ Check for each category systematically:
 - No account lockout after failed login attempts
 - Predictable resource IDs or tokens
 - Missing input validation at system boundaries
+- Dev/test overrides that aren't gated behind `NODE_ENV` checks — if accidentally set in production, they silently redirect real user communications or bypass security
 
 **A05 — Security Misconfiguration**
 - Debug mode or verbose error messages in production config
@@ -83,6 +84,7 @@ Check for each category systematically:
 - Unnecessary features enabled (directory listing, unused endpoints)
 - Missing security headers (CSP, HSTS, X-Frame-Options)
 - Overly permissive file/directory permissions
+- Environment variable null-check bypasses — comparing against an undefined env var (e.g., `Bearer ${process.env.SECRET}` becomes `"Bearer undefined"`, which an attacker can pass as a literal string)
 
 **A06 — Vulnerable Components**
 - Known vulnerable dependencies (check lock files for outdated packages)
