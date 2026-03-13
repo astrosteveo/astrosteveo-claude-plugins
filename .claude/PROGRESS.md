@@ -1,15 +1,17 @@
 # Project Progress
 
-> Last updated: 2026-03-12 | Last synced at: 9e73380
+> Last updated: 2026-03-13 | Last synced at: eaba128
 
 ## Active Work Streams
 
 - Skills-creator plugin complete as standalone plugin
+- Added code-health and security-audit skills to astrocode plugin
 
 ## Recent Changes
 
 | Date | Change | Files/Areas |
 |------|--------|-------------|
+| 2026-03-13 | Added code-health and security-audit skills | `plugins/astrocode/skills/code-health/`, `plugins/astrocode/skills/security-audit/` |
 | 2026-03-10 | Added skills-creator skill with 7 progressive reference docs | `plugins/skills-creator/` |
 | 2026-03-10 | Moved skills-creator to its own plugin (out of astrocode) | `plugins/skills-creator/`, `marketplace.json` |
 
