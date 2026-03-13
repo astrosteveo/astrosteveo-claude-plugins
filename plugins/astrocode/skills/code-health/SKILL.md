@@ -1,5 +1,6 @@
 ---
 name: code-health
+user-invocable: false
 description: >
   Analyzes codebase for tech debt, code quality issues, anti-patterns, and convention
   violations. Identifies complexity hotspots, deprecated usage, inconsistent patterns,

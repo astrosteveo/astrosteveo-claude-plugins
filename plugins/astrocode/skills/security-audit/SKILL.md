@@ -1,5 +1,6 @@
 ---
 name: security-audit
+user-invocable: false
 description: >
   Performs security audits on code to identify vulnerabilities, insecure patterns,
   and exposure risks. Checks for OWASP top 10 issues (injection, XSS, SSRF, auth

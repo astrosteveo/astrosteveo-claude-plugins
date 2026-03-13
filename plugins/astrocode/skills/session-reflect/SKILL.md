@@ -1,5 +1,6 @@
 ---
 name: session-reflect
+user-invocable: false
 description: >
   Reflect on the current session to extract lessons learned and persist them
   as auto-memory entries. Scans the conversation for mistakes made, corrections

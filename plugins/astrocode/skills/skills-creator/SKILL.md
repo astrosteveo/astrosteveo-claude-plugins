@@ -1,5 +1,6 @@
 ---
 name: skills-creator
+user-invocable: false
 description: >
   Interactive guide for creating new Claude skills. Walks the user through
   use-case definition, frontmatter generation, instruction writing, file

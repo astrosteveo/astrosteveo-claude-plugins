@@ -1,5 +1,6 @@
 ---
 name: project-state
+user-invocable: false
 description: >
   Use when starting a new session, or when the user asks to
   "check project state", "load progress", "initialize session", "catch up", "where did we leave off",
