@@ -1,6 +1,6 @@
 # Project Progress
 
-> Last updated: 2026-03-14 | Last synced at: 0e74eff
+> Last updated: 2026-03-14 | Last synced at: cadaba1
 
 ## Active Work Streams
 
@@ -11,6 +11,7 @@
 
 | Date | Change | Files/Areas |
 |------|--------|-------------|
+| 2026-03-14 | Genericized all skills for project-agnostic usage: removed Node.js-specific, SaaS-specific, and business-specific examples; fixed cross-platform sed in session-end.sh | `plugins/astrocode/skills/*/SKILL.md`, `scripts/session-end.sh` |
 | 2026-03-14 | Added standalone `commit` skill; refactored `project-state` to focus on PROGRESS.md lifecycle; updated `review-cycle` and `stop-check.sh` to reference commit skill | `plugins/astrocode/skills/commit/`, `commands/commit.md`, `skills/project-state/`, `skills/review-cycle/`, `scripts/stop-check.sh` |
 | 2026-03-13 | Set `user-invocable: false` on all skills; commands are the user-facing entry points | `plugins/astrocode/skills/*/SKILL.md` |
 | 2026-03-13 | Added thin wrapper commands for all 5 skills | `plugins/astrocode/commands/` |
