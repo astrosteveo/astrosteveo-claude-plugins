@@ -1,6 +1,6 @@
 # Project Progress
 
-> Last updated: 2026-03-14 | Last synced at: 7d2d519
+> Last updated: 2026-03-14 | Last synced at: 0e74eff
 
 ## Active Work Streams
 
@@ -11,7 +11,7 @@
 
 | Date | Change | Files/Areas |
 |------|--------|-------------|
-| 2026-03-14 | Added conventional commits standard to project-state and review-cycle skills | `plugins/astrocode/skills/project-state/SKILL.md`, `plugins/astrocode/skills/review-cycle/SKILL.md` |
+| 2026-03-14 | Added standalone `commit` skill; refactored `project-state` to focus on PROGRESS.md lifecycle; updated `review-cycle` and `stop-check.sh` to reference commit skill | `plugins/astrocode/skills/commit/`, `commands/commit.md`, `skills/project-state/`, `skills/review-cycle/`, `scripts/stop-check.sh` |
 | 2026-03-13 | Set `user-invocable: false` on all skills; commands are the user-facing entry points | `plugins/astrocode/skills/*/SKILL.md` |
 | 2026-03-13 | Added thin wrapper commands for all 5 skills | `plugins/astrocode/commands/` |
 | 2026-03-13 | Added code-health and security-audit skills | `plugins/astrocode/skills/code-health/`, `plugins/astrocode/skills/security-audit/` |
@@ -26,6 +26,7 @@
 - **Skills pattern:** Each skill is a kebab-case folder under `plugins/{plugin}/skills/` with `SKILL.md` + optional `references/`, `scripts/`, `assets/`. Skills set `user-invocable: false` so they don't appear un-namespaced in the `/` menu.
 - **Commands pattern:** Thin `.md` wrappers in `plugins/{plugin}/commands/` that delegate to corresponding skills; `name` omitted from frontmatter to inherit as `plugin:filename`. These are the user-facing entry points (namespaced in `/` menu).
 - **Progressive disclosure:** Large reference material decomposed into numbered `references/*.md` files loaded on demand rather than inlined in SKILL.md
+- **Commit standard:** `astrocode:commit` skill owns the conventional commit format; other skills reference it for all commit operations
 - **Hooks:** Stop hook enforces commit discipline + PROGRESS.md freshness; SessionEnd hook timestamps PROGRESS.md
 
 ## Known Issues & Blockers
