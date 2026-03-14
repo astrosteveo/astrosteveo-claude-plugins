@@ -17,7 +17,7 @@ metadata:
 
 # Pre-Deploy
 
-A fast, focused safety check on the current changeset before deploying. Run this before every push to production. Unlike `/review-cycle` (periodic, deep), this is lightweight and scoped to "is what I'm about to ship safe?"
+A fast, focused safety check on the current changeset before deploying. Run this before every push to production. Unlike `/review` in fix mode (periodic, deep), this is lightweight and scoped to "is what I'm about to ship safe?"
 
 ## Instructions
 
@@ -120,7 +120,7 @@ If everything passes, tell the user they're clear to ship. If there are warnings
 
 ## Important
 
-- **Speed matters.** This should take under 2 minutes. Don't deep-dive into architecture — that's what `/review-cycle` is for.
+- **Speed matters.** This should take under 2 minutes. Don't deep-dive into architecture — that's what `/review` is for.
 - **Only scan the changeset.** Don't audit the entire codebase. The question is "is this diff safe?" not "is the whole project healthy?"
 - **Warnings are not blockers.** A `console.log` in a new feature might be intentional logging. Flag it, don't block on it.
 - **Build failure IS a blocker.** Never suggest deploying a broken build.

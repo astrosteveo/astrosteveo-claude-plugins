@@ -5,7 +5,7 @@ description: >
   Conventional commit workflow — format, stage, commit, and update project state.
   Use when any skill needs to commit changes, or when the user says "commit",
   "commit this", "save my changes", or "commit what we did". Also use when the
-  user runs /commit. This skill is also referenced by other skills (review-cycle,
+  user runs /commit. This skill is also referenced by other skills (review,
   project-state) whenever they need to make commits.
 ---
 
