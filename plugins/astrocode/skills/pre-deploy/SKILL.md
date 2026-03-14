@@ -77,9 +77,9 @@ Skip this step if no API routes were changed.
 
 ### Step 6: Environment Variables
 
-Check if the changeset introduces new `process.env.*` references:
+Check if the changeset introduces new environment variable references:
 
-1. Extract all env var names referenced in changed files
+1. Extract all env var names referenced in changed files (e.g., `process.env.*`, `os.environ`, `env::var`, `ENV[]`, etc. depending on the language)
 2. Compare against `.env.example` (or equivalent)
 3. Flag any new env vars that aren't documented
 

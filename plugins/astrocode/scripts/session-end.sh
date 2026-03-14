@@ -19,4 +19,10 @@ fi
 
 # Update the date only, preserving everything after it (e.g. "| Last synced at: HASH")
 TODAY=$(date +%Y-%m-%d)
-sed -i "s/^> Last updated: [0-9-]*/> Last updated: $TODAY/" "$PROGRESS_FILE"
+
+# BSD sed (macOS) requires -i '', GNU sed (Linux) requires -i without an argument
+if sed --version >/dev/null 2>&1; then
+  sed -i "s/^> Last updated: [0-9-]*/> Last updated: $TODAY/" "$PROGRESS_FILE"
+else
+  sed -i '' "s/^> Last updated: [0-9-]*/> Last updated: $TODAY/" "$PROGRESS_FILE"
+fi

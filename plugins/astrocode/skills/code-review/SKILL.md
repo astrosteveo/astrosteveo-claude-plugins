@@ -37,7 +37,6 @@ Review the specified pull request (or the current branch's open PR) as an indepe
    - Error handling gaps (unhandled promise rejections, missing try/catch)
    - Missing or incorrect type safety
    - Performance issues (N+1 queries, missing indexes, unnecessary re-renders)
-   - Plan-tier gating gaps (feature accessible to wrong plan)
 
    ### Minor (nice to fix)
    - Code clarity improvements
@@ -48,7 +47,7 @@ Review the specified pull request (or the current branch's open PR) as an indepe
 4. **Check for project-specific conventions** (from CLAUDE.md and .claude/rules/ if they exist):
    - Does the project have a pre-commit checklist? Are all checks passing?
    - Input validation on API routes?
-   - Env var safety: no inline `process.env.X` comparisons?
+   - Env var safety: no inline environment variable comparisons (e.g., comparing against a potentially undefined value)?
    - Error responses: user-friendly messages only, no internal details?
    - Idempotent operations where applicable?
 

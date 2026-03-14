@@ -60,10 +60,10 @@ Respect the user's choices. They may want to skip items, reorder, or add context
 Work through the confirmed fixes in priority order:
 
 1. Make the code changes
-2. After each logical group of fixes, verify:
-   - `npm run lint` (or project equivalent)
-   - `npm test` (or project equivalent)
-   - `npm run build` (or project equivalent)
+2. After each logical group of fixes, verify using the project's lint, test, and build commands (discovered from `CLAUDE.md`, `package.json`, `Makefile`, `Cargo.toml`, `pyproject.toml`, or equivalent):
+   - Lint
+   - Test
+   - Build
    - **All three must pass before moving to the next group.**
 3. Do NOT commit yet — batch related fixes into meaningful commits at the end
 

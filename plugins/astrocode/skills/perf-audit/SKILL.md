@@ -112,7 +112,7 @@ Identify data that's fetched repeatedly but changes rarely:
 
 - Dashboard stats computed on every page load
 - User profile/settings fetched on every request
-- External API responses (accounting platform data, Stripe config)
+- External API responses that change infrequently
 - Static configuration or lookup tables
 
 For each, suggest the appropriate caching strategy:

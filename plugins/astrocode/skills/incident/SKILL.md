@@ -67,7 +67,7 @@ Work backward from the symptom:
 
 1. **Is it a code change?** Compare the suspect commit's diff against the error
 2. **Is it a data issue?** Could a new database state trigger the error?
-3. **Is it an external service?** Check if the error involves third-party APIs (payment processors, accounting platforms, email/SMS services)
+3. **Is it an external service?** Check if the error involves third-party APIs or external dependencies
 4. **Is it a configuration issue?** Missing or changed env vars, expired tokens, rotated keys
 5. **Is it a race condition or timing issue?** Only happens under load, concurrent requests, or specific timing
 

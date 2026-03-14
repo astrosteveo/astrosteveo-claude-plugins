@@ -118,11 +118,11 @@ Read `references/04-writing-instructions.md` for structure templates and best pr
 
 Goal: Create the skill's directory and all files.
 
-1. Determine the full path. Default location:
+1. Determine the full path. Ask the user where to place the skill. Common locations:
    ```
-   plugins/astrocode/skills/{skill-name}/
+   skills/{skill-name}/
+   plugins/{plugin-name}/skills/{skill-name}/
    ```
-   Ask the user if they want a different location.
 
 2. Create the directory structure:
    ```
