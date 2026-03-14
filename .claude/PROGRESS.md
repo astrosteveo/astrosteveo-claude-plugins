@@ -1,6 +1,6 @@
 # Project Progress
 
-> Last updated: 2026-03-13 | Last synced at: 5b94600
+> Last updated: 2026-03-14 | Last synced at: 7d2d519
 
 ## Active Work Streams
 
@@ -11,6 +11,7 @@
 
 | Date | Change | Files/Areas |
 |------|--------|-------------|
+| 2026-03-14 | Added conventional commits standard to project-state and review-cycle skills | `plugins/astrocode/skills/project-state/SKILL.md`, `plugins/astrocode/skills/review-cycle/SKILL.md` |
 | 2026-03-13 | Set `user-invocable: false` on all skills; commands are the user-facing entry points | `plugins/astrocode/skills/*/SKILL.md` |
 | 2026-03-13 | Added thin wrapper commands for all 5 skills | `plugins/astrocode/commands/` |
 | 2026-03-13 | Added code-health and security-audit skills | `plugins/astrocode/skills/code-health/`, `plugins/astrocode/skills/security-audit/` |
