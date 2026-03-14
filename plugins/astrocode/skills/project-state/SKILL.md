@@ -57,20 +57,44 @@ Create `.claude/PROGRESS.md` using the template below. Tell the user what you in
 
 PROGRESS.md is the authoritative project state that hands off from session to session. It MUST be updated whenever project state changes — not only after source commits.
 
+### Commit format
+
+All commits MUST follow the [Conventional Commits](https://www.conventionalcommits.org/) standard:
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+**Types:** `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`, `style`, `revert`
+**Scope:** optional, identifies the area of the codebase (e.g., `auth`, `api`, `ui`, `db`)
+**Description:** imperative mood, lowercase, no period — what the commit does, not what you did
+
+Examples:
+- `feat(auth): add OAuth2 login flow`
+- `fix(api): handle null response from upstream service`
+- `refactor(ui): extract shared button component`
+- `chore(state): update project state`
+
+For breaking changes, add `!` after the type/scope: `feat(api)!: change response format for /users endpoint`
+
 ### After every source commit:
 
 1. Update `.claude/PROGRESS.md`:
    - Add/update a row in **Recent Changes** for what you just committed.
    - Update **Active Work Streams** and **Next Steps** to reflect current reality.
    - Update the header: `> Last updated: YYYY-MM-DD | Last synced at: NEW_HEAD_HASH`
-2. Commit it: `git commit -m "chore: update project state" -- .claude/PROGRESS.md`
+2. Commit it: `git commit -m "chore(state): update project state" -- .claude/PROGRESS.md`
 
 ### When the user reports completing an external action:
 
 Users may complete tasks outside Claude (e.g., configuring a webhook in a dashboard, merging a PR, updating DNS). When the user tells you something from Next Steps or Known Issues is done:
 
 1. Update PROGRESS.md **immediately** — remove or mark the item as done, update Next Steps, clear resolved blockers from Known Issues.
-2. Commit it: `git commit -m "chore: update project state" -- .claude/PROGRESS.md`
+2. Commit it: `git commit -m "chore(state): update project state" -- .claude/PROGRESS.md`
 
 Do NOT leave completed items in Next Steps or resolved blockers in Known Issues. Stale content is worse than missing content.
 
