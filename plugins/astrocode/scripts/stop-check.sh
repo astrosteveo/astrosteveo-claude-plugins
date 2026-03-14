@@ -39,7 +39,7 @@ if [[ -z "$CHANGES" ]]; then
           cat <<DRIFTEOF
 {
   "decision": "block",
-  "reason": "PROGRESS.md is stale — source commits exist since last sync (hash $SYNCED_HASH). Before stopping: 1) Update .claude/PROGRESS.md to reflect all work done this session (Recent Changes, Active Work Streams, Next Steps, Known Issues). 2) Set 'Last synced at:' to the current HEAD hash. 3) Commit: git commit -m 'chore: update project state' -- .claude/PROGRESS.md"
+  "reason": "PROGRESS.md is stale — source commits exist since last sync (hash $SYNCED_HASH). Before stopping: 1) Update .claude/PROGRESS.md to reflect all work done this session (Recent Changes, Active Work Streams, Next Steps, Known Issues). 2) Set 'Last synced at:' to the current HEAD hash. 3) Commit: git commit -m 'chore(state): update project state' -- .claude/PROGRESS.md"
 }
 DRIFTEOF
           exit 0
@@ -62,7 +62,7 @@ fi
 cat <<EOF
 {
   "decision": "block",
-  "reason": "You have uncommitted source changes. Before stopping: 1) Stage and commit all meaningful changes with a descriptive commit message. 2) Update .claude/PROGRESS.md to reflect what was done this session (keep it under 60 lines, set 'Last synced at:' to the new HEAD hash). 3) Commit the PROGRESS.md update separately: git commit -m 'chore: update project state' -- .claude/PROGRESS.md"
+  "reason": "You have uncommitted source changes. Before stopping: 1) Stage and commit all meaningful changes using the conventional commit format: <type>(<scope>): <description>. 2) Update .claude/PROGRESS.md to reflect what was done this session (keep it under 60 lines, set 'Last synced at:' to the new HEAD hash). 3) Commit the PROGRESS.md update separately: git commit -m 'chore(state): update project state' -- .claude/PROGRESS.md"
 }
 EOF
 exit 0

@@ -103,10 +103,11 @@ Rewrite the backlog section of `.claude/PROGRESS.md`:
 
 ### Phase 7: Commit & Report
 
-1. Stage and commit fixes following the [Conventional Commits](https://www.conventionalcommits.org/) standard: `<type>(<scope>): <description>`. Use the type that best describes the change (`fix`, `refactor`, `perf`, `style`, etc.) and scope to the affected area. Group related fixes into a single commit where it makes sense.
-2. Update `.claude/PROGRESS.md` with the new HEAD hash
-3. Commit PROGRESS.md separately: `git commit -m 'chore(state): update project state'`
-4. Present a summary to the user:
+Follow the `/commit` workflow (see `astrocode:commit` skill) for all commits:
+
+1. Stage and commit fixes using the conventional commit format: `<type>(<scope>): <description>`. Use the type that best describes the change (`fix`, `refactor`, `perf`, `style`, etc.) and scope to the affected area. Group related fixes into a single logical commit where it makes sense.
+2. After source commits, update `.claude/PROGRESS.md` with the new HEAD hash and commit state separately per the `/commit` workflow.
+3. Present a summary to the user:
    - What was found (count by severity)
    - What was fixed
    - What was deferred and why
