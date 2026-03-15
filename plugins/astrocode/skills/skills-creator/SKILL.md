@@ -1,6 +1,5 @@
 ---
 name: skills-creator
-user-invocable: false
 description: >
   Interactive guide for creating new Claude skills. Walks the user through
   use-case definition, frontmatter generation, instruction writing, file
@@ -180,13 +179,15 @@ After the skill is created and validated:
 
 1. **Test it** — Read `references/07-testing.md` for testing approaches. Suggest 3–5 test queries:
    - 2–3 that SHOULD trigger the skill
-   - 1–2 that should NOT trigger it
+   - 2-3 that should NOT trigger it
 
 2. **Iterate** — Tell the user:
    - "Try using the skill in a real conversation. If it doesn't trigger when expected, we can refine the description. If instructions aren't followed well, we can restructure them."
    - "Bring back edge cases or failures and we can improve the skill together."
 
 3. **Distribute** (if relevant) — Mention options:
-   - Upload to Claude.ai via Settings > Capabilities > Skills
-   - Place in Claude Code skills directory
-   - Host on GitHub for sharing
+   - Place in global Claude Code skills directory (~/.claude/skills)
+   - Place in project (.claude/skills)
+   - Place in a plugin (user specifies location)
+
+   Don't make assumptions. Ask the user where to save the skill to when not sure.
