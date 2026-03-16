@@ -1,0 +1,105 @@
+# Skill Test Specification
+# Place this file in your skill's root directory alongside SKILL.md.
+# Run with: python scripts/run-tests.py /path/to/skill-folder
+
+version: 1
+skill: your-skill-name
+
+# ── Configuration ────────────────────────────────────────────────
+config:
+  # Default model for test runs (alias or full ID)
+  default_model: sonnet
+  # Default max turns for behavioral tests
+  default_max_turns: 5
+  # Max cost per individual test case (USD)
+  max_budget_per_test: 0.50
+  # Max total cost for entire test suite (USD)
+  max_budget_total: 5.00
+  # Permission mode for test runs
+  permission_mode: bypassPermissions
+  # Model matrix: run tests across multiple models/efforts (optional)
+  # matrix:
+  #   models: [haiku, sonnet]
+  #   efforts: [low, medium, high]
+
+# ── Layer 1: Structural Overrides ────────────────────────────────
+# These override defaults from validate-structure.py
+structural:
+  max_lines: 500
+  # Files that MUST exist in the skill folder
+  required_references: []
+  #   - references/api-guide.md
+  required_scripts: []
+  #   - scripts/validate.py
+
+# ── Layer 2: Trigger Tests ───────────────────────────────────────
+triggers:
+  # Queries that SHOULD cause the skill to be invoked
+  should_trigger:
+    - "example trigger query 1"
+    - "example trigger query 2"
+    - "example trigger query 3"
+
+  # Queries that should NOT invoke the skill
+  should_not_trigger:
+    - "completely unrelated query"
+    - "similar domain but wrong skill"
+    - "generic request that shouldn't match"
+
+  # Edge cases with expected behavior and notes
+  edge_cases:
+    []
+    # - query: "ambiguous query near trigger boundary"
+    #   expect: trigger          # or: no_trigger
+    #   note: "Explain why this is an edge case"
+
+# ── Layer 3: Behavioral Tests ────────────────────────────────────
+behavioral:
+  []
+  # - name: "happy path - basic workflow"
+  #   input: "User's natural language request"
+  #   max_turns: 5
+  #   assertions:
+  #     # Hard assertions (checked from stream data directly)
+  #     - type: no_errors
+  #     - type: tool_called
+  #       value: "Bash"
+  #     - type: output_matches
+  #       pattern: "success|completed"
+  #
+  #     # Soft assertions (evaluated by a separate Claude pass)
+  #     - type: asks_clarification
+  #     - type: stays_in_scope
+  #     - type: does_not_hallucinate_success
+  #
+  # - name: "error handling - missing input"
+  #   input: "Vague request with no details"
+  #   max_turns: 3
+  #   assertions:
+  #     - type: asks_clarification
+  #     - type: no_errors
+  #
+  # - name: "out of scope request"
+  #   input: "Request that's outside this skill's domain"
+  #   max_turns: 2
+  #   assertions:
+  #     - type: stays_in_scope
+  #     - type: does_not_hallucinate_success
+
+# ── Assertion Type Reference ─────────────────────────────────────
+# Hard assertions (deterministic, checked from stream-json data):
+#   no_errors          - No error messages or failed tool calls in output
+#   tool_called        - A specific tool was invoked (value: tool name)
+#   skill_invoked      - A specific skill was triggered (value: skill name)
+#   output_matches     - Response text matches regex (pattern: regex string)
+#   exit_success       - Process exited with code 0
+#   max_turns_ok       - Completed within max_turns (didn't hit limit)
+#
+# Soft assertions (evaluated by Claude with --tools ""):
+#   asks_clarification          - Claude asks for more info instead of guessing
+#   stays_in_scope              - Doesn't perform actions outside skill's domain
+#   suggests_fix                - Provides actionable remediation for errors
+#   mentions_error              - Surfaces a specific error condition (value: keyword)
+#   does_not_hallucinate_success - Doesn't claim success when action failed
+#   contains_step               - Output includes a specific workflow step (value: description)
+#   follows_instructions        - Follows the skill's documented workflow order

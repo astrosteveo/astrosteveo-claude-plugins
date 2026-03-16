@@ -1,0 +1,43 @@
+version: 1
+skill: skills-creator
+
+config:
+  default_model: sonnet
+  default_max_turns: 5
+  max_budget_per_test: 0.25
+  max_budget_total: 3.00
+  permission_mode: bypassPermissions
+
+structural:
+  max_lines: 500
+  required_references:
+    - references/01-fundamentals.md
+    - references/02-frontmatter.md
+    - references/03-descriptions-and-triggers.md
+    - references/04-writing-instructions.md
+    - references/05-patterns.md
+    - references/06-checklist.md
+    - references/07-testing.md
+
+triggers:
+  should_trigger:
+    - "create a new skill"
+    - "help me build a skill for code reviews"
+    - "I want to make a skill"
+    - "generate a SKILL.md for my project"
+
+  should_not_trigger:
+    - "review this pull request for bugs"
+    - "help me write a Python script"
+    - "what's the weather today"
+    - "create a new React component"
+
+  edge_cases:
+    - query: "help me write instructions for Claude"
+      expect: no_trigger
+      note: "Writing instructions could be confused with skill creation"
+    - query: "I need a new slash command"
+      expect: trigger
+      note: "Slash commands are skills — should trigger"
+
+behavioral: []

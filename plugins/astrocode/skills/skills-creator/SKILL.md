@@ -34,7 +34,9 @@ Goal: Understand what the user wants to build and classify the skill.
    Result: [What success looks like]
    ```
 
-4. Present the classification and use cases back to the user for confirmation before continuing.
+4. Note: these use cases will feed directly into trigger test cases in Phase 5. Capture the trigger phrases clearly.
+
+5. Present the classification and use cases back to the user for confirmation before continuing.
 
 ## Phase 2: Frontmatter
 
@@ -131,6 +133,7 @@ Goal: Create the skill's directory and all files.
    ```
    {skill-name}/
    ├── SKILL.md              # Always created
+   ├── TESTS.yaml            # Test specification (from use cases in Phase 1)
    ├── scripts/              # If the skill uses executable code
    ├── references/           # If detailed docs are needed
    └── assets/               # If templates/fonts/icons are needed
@@ -139,6 +142,12 @@ Goal: Create the skill's directory and all files.
 3. Write SKILL.md with the approved frontmatter and instructions.
 
 4. Create any supporting files (scripts, references, assets) identified during Phase 3.
+
+6. **Generate TESTS.yaml** from the use cases defined in Phase 1:
+   - Convert trigger phrases into `should_trigger` entries
+   - Add 3–4 `should_not_trigger` queries (unrelated topics)
+   - Add edge cases for ambiguous queries near the trigger boundary
+   - See `references/08-testing-framework.md` for the full TESTS.yaml format
 
 5. **Critical rules** — verify before writing:
    - File is named exactly `SKILL.md` (case-sensitive)
@@ -176,15 +185,23 @@ Run through each check:
 - [ ] Description is written in third person
 - [ ] Description mentions relevant file types (if applicable)
 
+### Automated tests
+If the skill has a TESTS.yaml, run the test suite (see `references/08-testing-framework.md`):
+- Layer 1 (structural): `python scripts/validate-structure.py /path/to/skill`
+- Layer 2 (triggers): `python scripts/run-tests.py /path/to/skill --layer 2`
+- Full suite: `python scripts/run-tests.py /path/to/skill`
+
 Present the validation results. If any checks fail, fix them and re-validate.
 
 ## Phase 6: Next Steps
 
 After the skill is created and validated:
 
-1. **Test it** — Read `references/07-testing.md` for testing approaches. Suggest 3–5 test queries:
-   - 2–3 that SHOULD trigger the skill
-   - 2-3 that should NOT trigger it
+1. **Test it** — Run the automated test suite if TESTS.yaml exists:
+   ```bash
+   python scripts/run-tests.py /path/to/skill
+   ```
+   Read `references/07-testing.md` and `references/08-testing-framework.md` for testing approaches. The TESTS.yaml should already have trigger tests from Phase 4. Add behavioral tests as needed.
 
 2. **Iterate** — Tell the user:
    - "Try using the skill in a real conversation. If it doesn't trigger when expected, we can refine the description. If instructions aren't followed well, we can restructure them."
