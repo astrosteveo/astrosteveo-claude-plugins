@@ -78,3 +78,37 @@ Compare:
 ## Debugging Approach
 
 Ask Claude: "When would you use the [skill name] skill?" — Claude will quote the description back, revealing what's missing or overly broad.
+
+## Success Criteria
+
+Define how you'll know your skill is working. These are aspirational targets — rough benchmarks, not precise thresholds.
+
+### Quantitative
+- Skill triggers on ~90% of relevant queries (test with 10–20 queries)
+- Completes workflow in expected number of tool calls (compare with and without skill)
+- 0 failed API calls per workflow (monitor MCP server logs during tests)
+
+### Qualitative
+- Users don't need to prompt Claude about next steps
+- Workflows complete without user correction
+- Consistent results across sessions
+
+## Evaluation-Driven Development
+
+Build evaluations BEFORE writing extensive documentation:
+
+1. Create evaluation criteria first
+2. Establish baseline performance without the skill
+3. Write minimal instructions to pass evaluations
+4. Iterate based on real gaps, not assumptions
+
+This prevents over-engineering your skill with instructions that don't improve outcomes.
+
+## Context Budget
+
+Skill descriptions are loaded into Claude's context at startup. With many skills, descriptions may exceed the character budget.
+
+- Budget scales dynamically at **2% of context window** (fallback: 16,000 characters)
+- Run `/context` to check for warnings about excluded skills
+- Override with: `export SLASH_COMMAND_TOOL_CHAR_BUDGET=32000`
+- If budget exceeded: shorten descriptions, reduce enabled skills, or use skill "packs" for related capabilities

@@ -81,7 +81,7 @@ Before writing queries, consult `references/api-patterns.md` for:
 
 ### Use Progressive Disclosure
 
-Keep SKILL.md focused on core instructions. Move detailed documentation to `references/` and link to it. Target: SKILL.md under 5,000 words.
+Keep SKILL.md focused on core instructions. Move detailed documentation to `references/` and link to it. Target: SKILL.md under 500 lines.
 
 ### Put Critical Instructions First
 
@@ -118,3 +118,76 @@ If it exits non-zero, show the user the error output and do not continue.
 - **Missing examples** — Always include at least one concrete example
 - **Overloading SKILL.md** — Use `references/` for detailed docs, API specs, long examples
 - **Vague error handling** — Be specific about what can go wrong and how to recover
+
+## String Substitutions
+
+Skills support variable substitution for dynamic content:
+
+| Variable | Purpose |
+|---|---|
+| `$ARGUMENTS` | All arguments passed when invoking the skill |
+| `$ARGUMENTS[N]` | Specific argument by 0-based index |
+| `$N` | Shorthand for `$ARGUMENTS[N]` (e.g., `$0`, `$1`) |
+| `${CLAUDE_SESSION_ID}` | Current session ID (useful for logging) |
+| `${CLAUDE_SKILL_DIR}` | Directory containing the skill's SKILL.md |
+
+Example:
+
+```markdown
+---
+name: review-issue
+argument-hint: "[issue-number]"
+description: Reviews a GitHub issue. Use when user says "review issue".
+---
+
+# Review Issue $0
+
+Fetch and analyze GitHub issue #$0.
+Use scripts in ${CLAUDE_SKILL_DIR}/scripts/ for validation.
+```
+
+## Dynamic Context Injection
+
+Use `` !`command` `` syntax to run shell commands before skill content is sent to Claude. The command output replaces the placeholder — Claude only sees the final rendered result.
+
+```markdown
+---
+name: pr-summary
+description: Summarize changes in a pull request.
+---
+
+## Pull request context
+- PR diff: !`gh pr diff`
+- PR comments: !`gh pr view --comments`
+- Changed files: !`gh pr diff --name-only`
+
+## Your task
+Summarize this pull request...
+```
+
+Use cases: fetching live API data, reading current file contents, getting Git history, querying databases, checking system status.
+
+## Extended Thinking
+
+Including the word `ultrathink` anywhere in SKILL.md content enables extended thinking mode, giving Claude deeper reasoning capabilities for complex analysis.
+
+```markdown
+---
+name: complex-analysis
+description: Deep analysis of complex systems.
+---
+
+Use ultrathink for thorough reasoning on this task.
+
+## Instructions
+[Complex analysis steps...]
+```
+
+## Reference File Depth
+
+Keep reference files one level deep from SKILL.md:
+
+- **Good:** `SKILL.md → references/api-guide.md`
+- **Bad:** `SKILL.md → docs/advanced.md → details.md → actual_info.md`
+
+Claude may partially read deeply nested files, resulting in incomplete information.

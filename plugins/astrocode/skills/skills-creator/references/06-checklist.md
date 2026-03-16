@@ -24,7 +24,7 @@ Use this checklist to validate a skill before and after upload.
 - [ ] Error handling included for likely failure modes
 - [ ] Examples provided for common scenarios
 - [ ] References clearly linked (if using `references/`)
-- [ ] SKILL.md is under 5,000 words
+- [ ] SKILL.md is under 500 lines
 
 ## Trigger Quality
 
@@ -32,6 +32,7 @@ Use this checklist to validate a skill before and after upload.
 - [ ] Description is specific enough to avoid false triggers
 - [ ] Description mentions relevant file types (if applicable)
 - [ ] Negative triggers included if needed (to prevent over-triggering)
+- [ ] Description is written in third person (not first/second person)
 
 ## Before Upload
 

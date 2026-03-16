@@ -150,3 +150,52 @@ ELSE: flag for review, create case
 ```
 
 **Key techniques:** Domain expertise embedded in logic, compliance before action, comprehensive documentation, clear governance.
+
+## Pattern 6: Plan-Validate-Execute
+
+**Use when:** Complex operations where mistakes are costly and verification matters.
+
+```markdown
+### Plan Phase
+1. Analyze requirements
+2. Generate structured execution plan
+3. Save plan to temporary file
+
+### Validate Phase
+1. Run validation script: `scripts/validate-plan.py`
+2. Check for: missing steps, invalid parameters, dependency conflicts
+3. Present plan to user for approval
+
+### Execute Phase
+1. Execute each step from the validated plan
+2. Verify output at each stage
+3. Log results for audit trail
+```
+
+**Key techniques:** Structured plan output, script-based validation before execution, user confirmation gate, step-by-step verification.
+
+## MCP Tool Naming
+
+When referencing MCP tools in skill instructions, use **fully qualified names** in the format `ServerName:tool_name`. This avoids "tool not found" errors when multiple MCP servers are available.
+
+```markdown
+# Good — unambiguous
+Use Linear:create_issue to file the bug.
+Call BigQuery:bigquery_schema to retrieve table schemas.
+
+# Risky — ambiguous if multiple servers provide similar tools
+Use the create_issue tool to file the bug.
+```
+
+## Subagent Execution with context: fork
+
+Skills can run in an isolated subagent using frontmatter:
+
+```yaml
+context: fork
+agent: Explore    # or Plan, general-purpose
+```
+
+The skill content becomes the subagent's task prompt. The subagent does not have access to conversation history but does receive CLAUDE.md context.
+
+**Important:** `context: fork` only works for skills with explicit task instructions. Skills containing only guidelines (e.g., "follow these API conventions") won't produce useful results — the subagent needs an actionable prompt.

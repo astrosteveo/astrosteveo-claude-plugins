@@ -66,3 +66,30 @@ If the skill enhances an MCP integration:
 **Without skills:** Users connect MCP but don't know what to do next, results are inconsistent, each conversation starts from scratch.
 
 **With skills:** Pre-built workflows activate automatically, consistent and reliable tool usage, best practices embedded in every interaction.
+
+## Distribution Precedence
+
+Skills can be installed at different scopes. Higher-priority locations override lower ones:
+
+| Priority | Location | Path | Scope |
+|---|---|---|---|
+| 1 (Highest) | Enterprise | Managed settings (admin config) | Organization |
+| 2 | Personal | `~/.claude/skills/<skill-name>/SKILL.md` | All projects |
+| 3 | Project | `.claude/skills/<skill-name>/SKILL.md` | This project |
+| 4 (Lowest) | Plugin | `<plugin>/skills/<skill-name>/SKILL.md` | Where enabled |
+
+If a personal and project skill share the same name, the personal skill wins.
+
+## Nested Discovery
+
+Claude Code automatically discovers skills from nested `.claude/skills/` directories. For example, editing `packages/frontend/src/button.tsx` loads skills from both `packages/frontend/.claude/skills/` and the project root `.claude/skills/`. This supports monorepo setups where packages have their own skills.
+
+Skills in `--add-dir` directories are picked up automatically and changes are detected immediately — no restart needed.
+
+## Reference File Depth
+
+Keep reference files one level deep from SKILL.md. Deeply nested references (e.g., `SKILL.md → advanced.md → details.md → actual_info.md`) may be partially read by Claude, resulting in incomplete information.
+
+## Backward Compatibility
+
+Files in `.claude/commands/` still work and support the same frontmatter as skills. If both a skill and a command share the same name, the skill takes precedence.

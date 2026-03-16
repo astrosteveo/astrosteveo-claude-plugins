@@ -8,6 +8,21 @@ The `description` field is the most impactful part of your skill. It's the first
 [What it does] + [When to use it / trigger phrases] + [Key capabilities]
 ```
 
+## Point of View
+
+Write descriptions in **third person**. The description is injected into Claude's system prompt — first or second person creates confusion about who is speaking.
+
+```yaml
+# Correct — third person
+description: Analyzes Figma design files and generates developer handoff docs.
+
+# Wrong — first person
+description: I can help you analyze Figma design files.
+
+# Wrong — second person
+description: You can use this to analyze Figma design files.
+```
+
 ## Good Descriptions
 
 ```yaml

@@ -21,6 +21,7 @@ The `---` delimiters are mandatory. Missing them is a common upload error.
 - No spaces, capitals, or underscores
 - Must match the folder name
 - Cannot contain "claude" or "anthropic" (reserved)
+- Maximum 64 characters
 
 ```yaml
 # Correct
@@ -75,6 +76,83 @@ metadata:
   mcp-server: linear
   category: productivity
   tags: [project-management, automation]
+```
+
+### allowed-tools (optional)
+
+Restricts which tools Claude can use without permission prompts when the skill is active.
+
+```yaml
+allowed-tools: "Bash(python:*) Bash(npm:*) WebFetch"
+# or as a list:
+allowed-tools: Read, Grep, Glob
+```
+
+### disable-model-invocation (optional)
+
+Prevents Claude from automatically loading the skill. The skill can only be triggered manually via `/skill-name`.
+
+```yaml
+disable-model-invocation: true
+```
+
+Use when:
+- The skill performs destructive or irreversible actions
+- You want explicit user intent before activation
+- The skill overlaps with other skills and causes over-triggering
+
+### user-invocable (optional)
+
+Controls whether the skill appears in the `/` menu. Default is `true`. Set to `false` to hide from users — the skill can still be loaded by Claude automatically based on the description.
+
+```yaml
+user-invocable: false
+```
+
+### argument-hint (optional)
+
+Shows a hint during autocomplete when the user types `/skill-name`.
+
+```yaml
+argument-hint: "[issue-number]"
+# or
+argument-hint: "[filename] [format]"
+```
+
+### model (optional)
+
+Specifies which Claude model to use when the skill is active.
+
+```yaml
+model: claude-sonnet-4-5-20250514
+```
+
+### context and agent (optional)
+
+Runs the skill in an isolated subagent context. The subagent receives SKILL.md content as its task prompt but does not have access to the current conversation history.
+
+```yaml
+context: fork
+agent: Explore    # Options: Explore, Plan, general-purpose
+```
+
+Use when:
+- Complex multi-step processes that benefit from fresh context
+- Research or exploration workflows
+- Long-running operations
+
+**Important:** `context: fork` only makes sense for skills with explicit task instructions. Guidelines-only skills won't produce useful results in a subagent.
+
+### hooks (optional)
+
+Scoped hooks for skill lifecycle events.
+
+```yaml
+hooks:
+  pre-tool-use:
+    - command: echo "Tool being used"
+  post-tool-use:
+    - command: echo "Tool completed"
 ```
 
 ## Complete Example
