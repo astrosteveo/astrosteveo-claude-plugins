@@ -32,9 +32,9 @@ Defined in `plugins/astrocode/hooks/hooks.json`, backed by Bash scripts in `plug
 
 | Hook | Script | Behavior |
 |------|--------|----------|
-| SessionStart | `session-start.sh` | Outputs `.agents/CONTEXT.md` to orient the agent |
-| Stop | `stop-gate.sh` | Blocks stop if `.agents/` exists but wasn't updated in last 5 min |
-| SessionEnd | `session-end.sh` | Best-effort timestamp update on CONTEXT.md |
+| SessionStart | `session-start.sh` | Surfaces resume notes from CLAUDE.md, then outputs `.agents/CONTEXT.md` to orient the agent |
+| Stop | `stop-gate.sh` | Blocks stop if source files changed but `.agents/` wasn't updated |
+| SessionEnd | `session-end.sh` | Commits all uncommitted work and adds a resume note to CLAUDE.md for the next session |
 
 ### `.agents/` Directory
 
@@ -64,7 +64,7 @@ Test scripts live in the skills-creator skill since it owns the testing framewor
 - Folder names are kebab-case and must match the `name` field in SKILL.md frontmatter
 - No XML angle brackets in SKILL.md files
 - Conventional commit messages (e.g., `feat(skill-name):`, `fix(skill-name):`, `chore:`)
-- Hook scripts must handle both macOS (`stat -f`) and Linux (`stat -c`) for cross-platform support
+- Hook scripts must handle both macOS and Linux (e.g., `sed -i ''` vs `sed -i` for in-place edits)
 
 ## Project State
 

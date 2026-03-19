@@ -1,13 +1,41 @@
 #!/bin/bash
-# SessionStart hook: Orient agent from .agents/CONTEXT.md if it exists
+# SessionStart hook: Surface resume notes and orient agent with project context
 #
-# If the project has been bootstrapped with .agents/, output the context
-# so the agent starts the session with full project orientation.
+# 1. Check CLAUDE.md for a session resume note from a previous session
+#    that ended with uncommitted work. Surface it and clean it up.
+# 2. If .agents/CONTEXT.md exists, output project context.
 
 AGENTS_DIR=".agents"
 CONTEXT_FILE="$AGENTS_DIR/CONTEXT.md"
 
-# No .agents/ directory — nothing to do
+# Check for session resume note in CLAUDE.md
+if [ -f "CLAUDE.md" ] && grep -q "^## Session Resume Note$" CLAUDE.md; then
+  echo "=== Session Resume Note ==="
+  # Extract content between the markers, excluding the markers themselves
+  sed -n '/^## Session Resume Note$/,/^## End Session Resume Note$/{
+    /^## Session Resume Note$/d
+    /^## End Session Resume Note$/d
+    p
+  }' CLAUDE.md
+  echo "=== End Session Resume Note ==="
+  echo ""
+
+  # Remove the resume note from CLAUDE.md
+  if [ "$(uname)" = "Darwin" ]; then
+    sed -i '' '/^## Session Resume Note$/,/^## End Session Resume Note$/d' CLAUDE.md
+  else
+    sed -i '/^## Session Resume Note$/,/^## End Session Resume Note$/d' CLAUDE.md
+  fi
+
+  # Commit the cleanup
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    git add CLAUDE.md
+    git commit -m "chore: remove session resume note" >/dev/null 2>&1
+    git push >/dev/null 2>&1
+  fi
+fi
+
+# No .agents/ directory — nothing more to do
 if [ ! -d "$AGENTS_DIR" ]; then
   exit 0
 fi
