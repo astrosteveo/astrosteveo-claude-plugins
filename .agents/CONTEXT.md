@@ -17,7 +17,6 @@ Curated Claude Code plugins for engineers. The main plugin (`astrocode`) provide
 ```
 astrosteveo-claude-plugins/
 ├── .agents/                  # Persistent agent state (this directory)
-├── .claude/                  # Claude Code session state (PROGRESS.md)
 ├── .claude-plugin/           # Top-level plugin marketplace metadata
 │   └── marketplace.json
 ├── plugins/

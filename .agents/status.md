@@ -11,14 +11,16 @@
 
 | Date | Change | Commit |
 |------|--------|--------|
-| 2026-03-19 | Project-state SKILL.md trimmed: removed inline agent table, pointer template, optional topic list, examples, troubleshooting — all delegated to reference files | pending |
-| 2026-03-19 | Session-end hook: commit all uncommitted work + add resume note to CLAUDE.md; session-start hook: surface and clean up resume notes | pending |
-| 2026-03-19 | Removed timestamp logic from session-end hook and CONTEXT.md — state is commit-based, not time-based | `94adba3` |
-| 2026-03-19 | Session-end hook now commits and pushes all uncommitted work | `89fb892` |
-| 2026-03-19 | Stop-gate rewritten to use git-diff detection; `.agents/` and `CLAUDE.md` committed | `010b772`, `404639a` |
+| 2026-03-19 | Project-state SKILL.md trimmed — delegated detail to reference files | `e35c3cd` |
+| 2026-03-19 | Stop-gate: added commit enforcement (two-phase gate) | `847f02c` |
+| 2026-03-19 | Hook testing framework added; stop-gate blocking fix | `0c53d60` |
+| 2026-03-19 | Session resume handoff between session-end and session-start | `aba8359` |
+| 2026-03-19 | Removed timestamp logic — state is commit-based | `94adba3` |
+| 2026-03-19 | Session-end hook: commit and push all changes | `89fb892` |
+| 2026-03-19 | Stop-gate rewritten to git-diff detection | `010b772` |
 | 2026-03-18 | Added project-state skill with agent detection and context structure references | `e3aa0db` |
 | 2026-03-18 | Added skill testing framework with real `claude -p` integration | `14578d6` |
-| 2026-03-18 | Removed deprecated skills (migration-check, perf-audit, plan, pre-deploy, review, session-reflect) | `b249036` |
+| 2026-03-18 | Removed deprecated skills | `b249036` |
 
 ## Known Issues
 
@@ -26,7 +28,6 @@
 
 ## Next Steps
 
-1. Test session-end → session-start resume note handoff end-to-end
-2. Test `project-state` skill bootstrap and update flows in real projects
-3. Iterate on skills-creator based on usage feedback
-4. Consider adding more skills to the astrocode plugin as workflows stabilize
+1. Test `project-state` skill bootstrap and update flows in real projects
+2. Iterate on skills-creator based on usage feedback
+3. Consider adding more skills to the astrocode plugin as workflows stabilize
