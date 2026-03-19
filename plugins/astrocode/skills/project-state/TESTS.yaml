@@ -1,0 +1,40 @@
+version: 1
+skill: project-state
+
+config:
+  default_model: sonnet
+  default_max_turns: 5
+  max_budget_per_test: 0.25
+  max_budget_total: 3.00
+  permission_mode: bypassPermissions
+
+triggers:
+  should_trigger:
+    - "bootstrap this project"
+    - "initialize project state"
+    - "set up agent state"
+    - "initialize .agents"
+    - "update project state"
+    - "sync agent context"
+    - "refresh .agents"
+    - "update the .agents state"
+
+  should_not_trigger:
+    - "what does this function do"
+    - "fix the bug in auth.ts"
+    - "run the tests"
+    - "commit these changes"
+    - "explain the project structure"
+
+  edge_cases:
+    - query: "tell me about the project"
+      expect: no_trigger
+      note: "General project question, not a state management request"
+    - query: "what's the project status"
+      expect: no_trigger
+      note: "Asking about status, not asking to update .agents/ state"
+    - query: "show me the project files"
+      expect: no_trigger
+      note: "File browsing, not state management"
+
+behavioral: []

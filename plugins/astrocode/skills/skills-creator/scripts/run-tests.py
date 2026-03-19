@@ -140,6 +140,20 @@ def run_layer1(skill_dir, config):
     return results
 
 
+def detect_plugin_dir(skill_dir):
+    """Walk up from skill_dir to find the plugin root (.claude-plugin/plugin.json)."""
+    current = os.path.abspath(skill_dir)
+    while True:
+        candidate = os.path.join(current, ".claude-plugin", "plugin.json")
+        if os.path.isfile(candidate):
+            return current
+        parent = os.path.dirname(current)
+        if parent == current:
+            break
+        current = parent
+    return None
+
+
 # ── Layer 2: Trigger Tests ────────────────────────────────────────
 
 def run_claude_p(prompt, output_format="stream-json", max_turns=1,
@@ -220,12 +234,13 @@ def detect_skill_trigger(events, skill_name):
     return False
 
 
-def run_trigger_test(query, skill_name, expect_trigger, model=None, max_budget=None):
+def run_trigger_test(query, skill_name, expect_trigger, model=None, max_budget=None,
+                     extra_flags=None):
     """Run a single trigger test case."""
     start = time.time()
     stdout, stderr, rc = run_claude_p(
         query, output_format="stream-json", max_turns=1,
-        model=model, max_budget=max_budget
+        model=model, max_budget=max_budget, extra_flags=extra_flags
     )
     elapsed = int((time.time() - start) * 1000)
 
@@ -258,7 +273,7 @@ def run_trigger_test(query, skill_name, expect_trigger, model=None, max_budget=N
     )
 
 
-def run_layer2(skill_dir, config):
+def run_layer2(skill_dir, config, extra_flags=None):
     """Run all trigger tests."""
     triggers = config.get("triggers", {})
     skill_name = config.get("skill", os.path.basename(skill_dir))
@@ -268,15 +283,18 @@ def run_layer2(skill_dir, config):
     results = []
 
     for query in triggers.get("should_trigger", []):
-        results.append(run_trigger_test(query, skill_name, True, model, max_budget))
+        results.append(run_trigger_test(query, skill_name, True, model, max_budget,
+                                        extra_flags=extra_flags))
 
     for query in triggers.get("should_not_trigger", []):
-        results.append(run_trigger_test(query, skill_name, False, model, max_budget))
+        results.append(run_trigger_test(query, skill_name, False, model, max_budget,
+                                        extra_flags=extra_flags))
 
     for edge in triggers.get("edge_cases", []):
         query = edge.get("query", "")
         expect = edge.get("expect", "trigger") == "trigger"
-        result = run_trigger_test(query, skill_name, expect, model, max_budget)
+        result = run_trigger_test(query, skill_name, expect, model, max_budget,
+                                  extra_flags=extra_flags)
         result.severity = "warning"  # Edge cases are advisory
         if edge.get("note"):
             result.details["note"] = edge["note"]
@@ -434,7 +452,7 @@ ASSERTION_TYPE: PASS|FAIL - explanation"""
     return results
 
 
-def run_behavioral_test(test_case, config):
+def run_behavioral_test(test_case, config, extra_flags=None):
     """Run a single behavioral test case."""
     name = test_case.get("name", "unnamed")
     input_text = test_case.get("input", "")
@@ -447,7 +465,7 @@ def run_behavioral_test(test_case, config):
     start = time.time()
     stdout, stderr, rc = run_claude_p(
         input_text, output_format="stream-json", max_turns=max_turns,
-        model=model, max_budget=max_budget
+        model=model, max_budget=max_budget, extra_flags=extra_flags
     )
     elapsed = int((time.time() - start) * 1000)
 
@@ -486,12 +504,12 @@ def run_behavioral_test(test_case, config):
     return results
 
 
-def run_layer3(skill_dir, config):
+def run_layer3(skill_dir, config, extra_flags=None):
     """Run all behavioral tests."""
     behavioral = config.get("behavioral", [])
     results = []
     for test_case in behavioral:
-        results.extend(run_behavioral_test(test_case, config))
+        results.extend(run_behavioral_test(test_case, config, extra_flags=extra_flags))
     return results
 
 
@@ -584,6 +602,8 @@ def main():
     parser.add_argument("--model", help="Override model for test runs")
     parser.add_argument("--dry-run", action="store_true",
                         help="Show what would be tested without running")
+    parser.add_argument("--plugin-dir",
+                        help="Plugin directory to pass to claude -p (auto-detected if omitted)")
     args = parser.parse_args()
 
     skill_dir = os.path.abspath(args.skill_dir)
@@ -619,6 +639,14 @@ def main():
         print(f"Estimated cost: ~${est_cost:.2f}")
         return
 
+    # Detect plugin directory for --plugin-dir flag
+    plugin_dir = args.plugin_dir or detect_plugin_dir(skill_dir)
+    extra_flags = []
+    if plugin_dir:
+        extra_flags.extend(["--plugin-dir", plugin_dir])
+        if not args.json and not args.dry_run:
+            print(f"  Plugin directory: {plugin_dir}\n")
+
     # Run tests
     results = []
     total_cost = 0.0
@@ -629,7 +657,7 @@ def main():
 
     if args.layer is None or args.layer == 2:
         if config.get("triggers"):
-            results.extend(run_layer2(skill_dir, config))
+            results.extend(run_layer2(skill_dir, config, extra_flags=extra_flags or None))
             total_cost = sum(r.cost for r in results)
             if total_cost >= budget_total:
                 if not args.json:
@@ -637,7 +665,7 @@ def main():
 
     if (args.layer is None or args.layer == 3) and total_cost < budget_total:
         if config.get("behavioral"):
-            results.extend(run_layer3(skill_dir, config))
+            results.extend(run_layer3(skill_dir, config, extra_flags=extra_flags or None))
 
     # Generate report
     report = generate_report(results, config, skill_dir)
