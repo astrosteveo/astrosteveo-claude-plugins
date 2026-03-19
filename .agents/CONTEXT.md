@@ -1,7 +1,5 @@
 # Project Context
 
-> Last updated: 2026-03-19
-
 ## Overview
 
 Curated Claude Code plugins for engineers. The main plugin (`astrocode`) provides skills and hook-based workflows for cold-starting Claude Code in any project — including a skills-creator for building new skills and a project-state manager for persistent agent context.
@@ -36,11 +34,9 @@ astrosteveo-claude-plugins/
 
 ## Active Work
 
-- Stop-gate hook rewritten to use git-diff detection instead of timestamp heuristic
-- `.agents/` bootstrapped with CONTEXT.md, architecture.md, status.md
-- `CLAUDE.md` created with project state pointer
 - Two active skills: `project-state` and `skills-creator`
-- Uncommitted changes pending: `.agents/`, `CLAUDE.md`, `stop-gate.sh`
+- Stop-gate uses git-diff detection (no timestamps)
+- Session-end hook commits and pushes all uncommitted work
 
 ## Topics
 
