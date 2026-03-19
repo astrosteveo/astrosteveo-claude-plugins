@@ -26,4 +26,10 @@ else
   sed -i "s/> Last updated:.*/> Last updated: $date_str/" "$CONTEXT_FILE"
 fi
 
+# Commit and push everything so no dirty state is left behind
+git add -A
+git diff --cached --quiet && exit 0
+git commit -m "chore: update .agents/ state (session-end)" >/dev/null 2>&1
+git push >/dev/null 2>&1
+
 exit 0
