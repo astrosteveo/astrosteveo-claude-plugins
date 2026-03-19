@@ -32,7 +32,7 @@ Defined in `plugins/astrocode/hooks/hooks.json`, backed by Bash scripts in `plug
 
 | Hook | Script | Behavior |
 |------|--------|----------|
-| SessionStart | `session-start.sh` | Surfaces resume notes from CLAUDE.md, then outputs `.agents/CONTEXT.md` to orient the agent |
+| SessionStart | `session-start.sh` | Surfaces resume notes, outputs curated context from CONTEXT.md, and dynamically generates structure tree and recent activity |
 | Stop | `stop-gate.sh` | Blocks stop if source files changed but `.agents/` wasn't updated |
 | SessionEnd | `session-end.sh` | Commits all uncommitted work and adds a resume note to CLAUDE.md for the next session |
 

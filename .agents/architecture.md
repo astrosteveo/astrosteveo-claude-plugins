@@ -26,13 +26,23 @@ Hooks are defined in `plugins/astrocode/hooks/hooks.json` and backed by Bash scr
 
 | Script | Purpose |
 |--------|---------|
-| `session-start.sh` | Surfaces resume notes from CLAUDE.md, then outputs `.agents/CONTEXT.md` to orient the agent |
+| `session-start.sh` | Surfaces resume notes, outputs curated context from CONTEXT.md, dynamically generates structure tree and recent activity, and runs freshness checks on topic file references |
 | `session-end.sh` | Commits all uncommitted work and adds a resume note to CLAUDE.md for the next session |
 | `stop-gate.sh` | Two-phase gate: blocks stop if source files changed but `.agents/` wasn't updated (git-diff), and enforces commit before session end |
 
 ## Hook Testing
 
 Hook tests are defined in `plugins/astrocode/hooks/TESTS.yaml` with structural and scenario layers. The test runner (`plugins/astrocode/scripts/test-hooks.py`) validates `hooks.json` schema, script syntax, and runs scenarios in isolated git repos.
+
+## Dynamic vs Curated Context
+
+CONTEXT.md contains only curated, slow-changing content (Overview, Stack, Topics table). The session-start hook supplements it with live data generated from the actual project state:
+
+- **Structure** — directory tree generated from the filesystem via `tree` (with `find` fallback)
+- **Recent Activity** — last 10 commits from `git log`
+- **Freshness warnings** — alerts when topic files exist on disk but aren't linked in CONTEXT.md, or vice versa
+
+This eliminates staleness for the most volatile context. Curated sections are maintained by the `project-state` skill's update flow.
 
 ## Key Conventions
 

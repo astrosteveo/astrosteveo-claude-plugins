@@ -56,12 +56,10 @@ IMPORTANT: `.agents/` is committed to git. It represents shared project knowledg
 
 ### Step 4: Generate CONTEXT.md
 
-Create `.agents/CONTEXT.md` as the thin context index. Keep it focused and scannable.
+Create `.agents/CONTEXT.md` as the thin context index. Include only curated, slow-changing content — directory structure and recent activity are generated dynamically by the session-start hook.
 
 ```
 # Project Context
-
-> Last updated: {YYYY-MM-DD}
 
 ## Overview
 
@@ -75,17 +73,6 @@ Create `.agents/CONTEXT.md` as the thin context index. Keep it focused and scann
 - **Test:** {test framework}
 - **CI/CD:** {pipeline tool}
 
-## Structure
-
-{project root}/
-├── {dir}/          # {purpose}
-├── {dir}/          # {purpose}
-└── {file}          # {purpose}
-
-## Active Work
-
-{Current priorities, in-progress features, known issues}
-
 ## Topics
 
 | Topic | File | Description |
@@ -93,6 +80,8 @@ Create `.agents/CONTEXT.md` as the thin context index. Keep it focused and scann
 | Architecture | [architecture.md](architecture.md) | Structure, patterns, conventions |
 | Status | [status.md](status.md) | Current work streams, recent changes |
 ```
+
+NOTE: Do not add Structure or Active Work sections to CONTEXT.md. These are injected dynamically by the session-start hook from the filesystem and git log, so they are always fresh.
 
 ### Step 5: Create Initial Topic Files
 
@@ -130,9 +119,8 @@ Read `.agents/CONTEXT.md` and all topic files it references.
 ### Step 2: Assess What Changed
 
 Compare documented state against reality:
-- Check `git log` since the last update timestamp in CONTEXT.md
-- Compare documented directory structure against actual
-- Identify new, removed, or changed files and patterns
+- Check recent `git log` for changes since the last state update
+- Identify new, removed, or changed patterns
 - Check if documented dependencies still match config files
 
 ### Step 3: Update Topic Files
@@ -145,9 +133,8 @@ For each topic file:
 
 ### Step 4: Refresh CONTEXT.md
 
-- Update the `Last updated` timestamp
 - Refresh Overview if the project's purpose has evolved
 - Update Stack if dependencies changed
-- Regenerate Structure from current directory layout
-- Update Active Work with current priorities
 - Ensure all topic file links are accurate
+
+NOTE: Do not add Structure or Active Work sections — these are generated dynamically by the session-start hook.

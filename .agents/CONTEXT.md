@@ -12,32 +12,6 @@ Curated Claude Code plugins for engineers. The main plugin (`astrocode`) provide
 - **Test:** Manual via Claude Code conversations; Python-based test runner for skill validation
 - **CI/CD:** None
 
-## Structure
-
-```
-astrosteveo-claude-plugins/
-├── .agents/                  # Persistent agent state (this directory)
-├── .claude-plugin/           # Top-level plugin marketplace metadata
-│   └── marketplace.json
-├── plugins/
-│   └── astrocode/            # Main plugin
-│       ├── .claude-plugin/   # Plugin manifest
-│       ├── hooks/            # Hook definitions (hooks.json)
-│       ├── scripts/          # Bash hook scripts (session-start, session-end, stop-gate)
-│       └── skills/           # Skill definitions
-│           ├── project-state/  # Persistent agent state management
-│           └── skills-creator/ # Interactive skill building guide
-│               └── templates/  # Reusable templates (e.g., TESTS.yaml)
-├── .gitignore
-└── The-Complete-Guide-to-Building-Skills-for-Claude.md
-```
-
-## Active Work
-
-- Two active skills: `project-state` and `skills-creator`
-- Stop-gate uses git-diff detection (no timestamps)
-- Session-end hook commits and pushes all uncommitted work
-
 ## Topics
 
 | Topic | File | Description |

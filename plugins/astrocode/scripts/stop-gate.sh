@@ -30,7 +30,7 @@ if [ -d "$AGENTS_DIR" ]; then
       echo "BLOCKED: Source files have changed but .agents/ has not been updated." >&2
       echo "You must update project state before stopping:" >&2
       echo "  1. Update the relevant topic files in .agents/ to reflect your changes" >&2
-      echo "  2. Refresh .agents/CONTEXT.md with current status" >&2
+      echo "  2. Ensure .agents/ topic files reflect your changes" >&2
       exit 2
     fi
   fi
