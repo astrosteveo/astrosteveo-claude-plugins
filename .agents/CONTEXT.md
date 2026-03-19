@@ -27,6 +27,7 @@ astrosteveo-claude-plugins/
 │       └── skills/           # Skill definitions
 │           ├── project-state/  # Persistent agent state management
 │           └── skills-creator/ # Interactive skill building guide
+│               └── templates/  # Reusable templates (e.g., TESTS.yaml)
 ├── .gitignore
 └── The-Complete-Guide-to-Building-Skills-for-Claude.md
 ```

@@ -14,7 +14,7 @@ Currently one plugin exists: **astrocode** (`plugins/astrocode/`).
 - Required: `SKILL.md` with frontmatter (name, description, triggers)
 - Optional: `references/` for progressive-disclosure docs, `scripts/` for automation, `assets/` for static files, `TESTS.yaml` for validation
 - Skills set `user-invocable: false` — they don't appear un-namespaced in the `/` menu
-- Commands (thin `.md` wrappers in `plugins/{plugin}/commands/`) are the user-facing entry points, namespaced as `plugin:command`
+- Skills are invoked directly via namespace (e.g., `astrocode:project-state`). The earlier `commands/` wrapper approach was removed
 
 ## Progressive Disclosure
 
