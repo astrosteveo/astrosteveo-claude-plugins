@@ -35,11 +35,9 @@ if [ -n "$agents_changes" ] || [ -n "$untracked_agents" ]; then
   exit 0
 fi
 
-# Source changed but .agents/ didn't — prompt update
-echo "Source files have changed but .agents/ has not been updated." >&2
-echo "Before finishing, update .agents/ with the work you've done:" >&2
-echo "  1. Update relevant topic files in .agents/" >&2
+# Source changed but .agents/ didn't — block stop, tell agent to fix it
+echo "BLOCKED: Source files have changed but .agents/ has not been updated." >&2
+echo "You must update project state before stopping:" >&2
+echo "  1. Update the relevant topic files in .agents/ to reflect your changes" >&2
 echo "  2. Refresh .agents/CONTEXT.md with current status" >&2
-echo "" >&2
-echo "Or run: /astrocode:project-state update" >&2
-exit 1
+exit 2

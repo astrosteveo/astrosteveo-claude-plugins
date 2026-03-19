@@ -1,0 +1,288 @@
+version: 1
+type: hooks
+
+hooks:
+  # ── SessionStart ──────────────────────────────────────────────────
+  session-start:
+    script: session-start.sh
+    event: SessionStart
+    scenarios:
+      - name: resume-note-surfaces-and-cleans
+        description: Surfaces resume note from CLAUDE.md, removes it, and commits cleanup
+        setup:
+          git_init: true
+          files:
+            "CLAUDE.md": |
+              # My Project
+
+              ## Session Resume Note
+
+              Previous session worked on auth module.
+
+              ## End Session Resume Note
+            ".agents/CONTEXT.md": "# Project Context"
+          commit: true
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - "=== Session Resume Note ==="
+            - "Previous session worked on auth module"
+            - "=== End Session Resume Note ==="
+            - "=== Project Context (from .agents/CONTEXT.md) ==="
+          file_not_contains:
+            "CLAUDE.md":
+              - "Session Resume Note"
+          git_log_contains:
+            - "chore: remove session resume note"
+
+      - name: no-resume-note
+        description: No resume note in CLAUDE.md — outputs project context only
+        setup:
+          git_init: true
+          files:
+            "CLAUDE.md": "# My Project"
+            ".agents/CONTEXT.md": "# Project Context"
+          commit: true
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - "=== Project Context (from .agents/CONTEXT.md) ==="
+          stdout_not_contains:
+            - "Session Resume Note"
+
+      - name: no-agents-directory
+        description: No .agents/ directory — exits cleanly with no context output
+        setup:
+          git_init: true
+          files:
+            "CLAUDE.md": "# My Project"
+          commit: true
+        expect:
+          exit_code: 0
+          stdout_not_contains:
+            - "Project Context"
+            - "WARNING"
+
+      - name: agents-dir-missing-context
+        description: .agents/ exists but CONTEXT.md is missing — shows warning
+        setup:
+          git_init: true
+          files:
+            ".agents/status.md": "# Status"
+          commit: true
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - "WARNING"
+            - "CONTEXT.md is missing"
+
+      - name: lists-topic-files
+        description: Lists topic files from .agents/ excluding CONTEXT.md
+        setup:
+          git_init: true
+          files:
+            ".agents/CONTEXT.md": "# Context"
+            ".agents/architecture.md": "# Architecture"
+            ".agents/status.md": "# Status"
+          commit: true
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - "Topic files available in .agents/"
+            - "- architecture.md"
+            - "- status.md"
+          stdout_not_contains:
+            - "- CONTEXT.md"
+
+  # ── Stop Gate ─────────────────────────────────────────────────────
+  stop-gate:
+    script: stop-gate.sh
+    event: Stop
+    scenarios:
+      - name: no-changes
+        description: No changes at all — allows stop
+        setup:
+          git_init: true
+          files:
+            ".agents/CONTEXT.md": "# Context"
+            "app.js": "console.log('hello')"
+          commit: true
+        expect:
+          exit_code: 0
+
+      - name: source-and-agents-both-modified
+        description: Both source and .agents/ modified — allows stop
+        setup:
+          git_init: true
+          files:
+            ".agents/CONTEXT.md": "# Context"
+            "app.js": "console.log('hello')"
+          commit: true
+          modifications:
+            "app.js": "console.log('changed')"
+            ".agents/CONTEXT.md": "# Updated Context"
+        expect:
+          exit_code: 0
+
+      - name: source-modified-agents-unchanged
+        description: Source modified but .agents/ unchanged — blocks stop
+        setup:
+          git_init: true
+          files:
+            ".agents/CONTEXT.md": "# Context"
+            "app.js": "console.log('hello')"
+          commit: true
+          modifications:
+            "app.js": "console.log('changed')"
+        expect:
+          exit_code: 2
+          stderr_contains:
+            - "BLOCKED: Source files have changed but .agents/ has not been updated"
+            - "You must update project state before stopping"
+
+      - name: no-agents-directory
+        description: No .agents/ directory — allows stop regardless of source changes
+        setup:
+          git_init: true
+          files:
+            "app.js": "console.log('hello')"
+          commit: true
+          modifications:
+            "app.js": "console.log('changed')"
+        expect:
+          exit_code: 0
+
+      - name: untracked-source-agents-unchanged
+        description: New untracked source file with .agents/ unchanged — blocks stop
+        setup:
+          git_init: true
+          files:
+            ".agents/CONTEXT.md": "# Context"
+            "app.js": "console.log('hello')"
+          commit: true
+          new_files:
+            "newfile.js": "// new file"
+        expect:
+          exit_code: 2
+          stderr_contains:
+            - "BLOCKED: Source files have changed"
+
+      - name: both-source-and-agents-untracked
+        description: Both source and .agents/ have untracked files — allows stop
+        setup:
+          git_init: true
+          files:
+            ".agents/CONTEXT.md": "# Context"
+            "app.js": "console.log('hello')"
+          commit: true
+          new_files:
+            "newfile.js": "// new file"
+            ".agents/newtopic.md": "# New Topic"
+        expect:
+          exit_code: 0
+
+      - name: only-agents-changed
+        description: Only .agents/ changed with no source changes — allows stop
+        setup:
+          git_init: true
+          files:
+            ".agents/CONTEXT.md": "# Context"
+            "app.js": "console.log('hello')"
+          commit: true
+          modifications:
+            ".agents/CONTEXT.md": "# Updated Context"
+        expect:
+          exit_code: 0
+
+  # ── SessionEnd ────────────────────────────────────────────────────
+  session-end:
+    script: session-end.sh
+    event: SessionEnd
+    scenarios:
+      - name: commits-uncommitted-and-adds-resume-note
+        description: Commits uncommitted changes and adds resume note to CLAUDE.md
+        setup:
+          git_init: true
+          files:
+            "app.js": "console.log('hello')"
+            "CLAUDE.md": "# My Project"
+          commit: true
+          modifications:
+            "app.js": "console.log('changed')"
+        expect:
+          exit_code: 0
+          file_contains:
+            "CLAUDE.md":
+              - "## Session Resume Note"
+              - "app.js"
+              - "## End Session Resume Note"
+          git_log_contains:
+            - "chore: commit uncommitted work (session-end)"
+            - "chore: add session resume note"
+          working_tree_clean: true
+
+      - name: no-changes-exits-cleanly
+        description: No uncommitted changes — exits without any commits
+        setup:
+          git_init: true
+          files:
+            "app.js": "console.log('hello')"
+          commit: true
+        expect:
+          exit_code: 0
+          git_log_not_contains:
+            - "session-end"
+
+      - name: replaces-existing-resume-note
+        description: Removes old resume note and writes a new one
+        setup:
+          git_init: true
+          files:
+            "app.js": "console.log('hello')"
+            "CLAUDE.md": |
+              # My Project
+
+              ## Session Resume Note
+
+              Old note that should be replaced.
+
+              ## End Session Resume Note
+          commit: true
+          modifications:
+            "app.js": "console.log('changed')"
+        expect:
+          exit_code: 0
+          file_contains:
+            "CLAUDE.md":
+              - "## Session Resume Note"
+              - "app.js"
+          file_not_contains:
+            "CLAUDE.md":
+              - "Old note that should be replaced"
+
+      - name: creates-claude-md-if-missing
+        description: Creates CLAUDE.md with resume note when it does not exist
+        setup:
+          git_init: true
+          files:
+            "app.js": "console.log('hello')"
+          commit: true
+          modifications:
+            "app.js": "console.log('changed')"
+        expect:
+          exit_code: 0
+          file_exists:
+            - "CLAUDE.md"
+          file_contains:
+            "CLAUDE.md":
+              - "## Session Resume Note"
+              - "app.js"
+
+      - name: not-a-git-repo
+        description: Not in a git repo — exits cleanly with no side effects
+        setup:
+          git_init: false
+          files:
+            "app.js": "console.log('hello')"
+        expect:
+          exit_code: 0

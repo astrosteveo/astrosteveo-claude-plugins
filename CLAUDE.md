@@ -57,6 +57,30 @@ python plugins/astrocode/skills/skills-creator/scripts/run-tests.py /path/to/ski
 
 Test scripts live in the skills-creator skill since it owns the testing framework.
 
+## Testing Hooks
+
+Hook tests use a YAML-based spec (`hooks/TESTS.yaml`) with two layers:
+
+- **Structural** — validates `hooks.json` schema and script syntax (free, no execution)
+- **Scenarios** — runs each hook script in an isolated git repo, asserting on exit codes, stdout/stderr, file state, and git history
+
+```bash
+# Run all hook tests
+python plugins/astrocode/scripts/test-hooks.py
+
+# Run tests for a specific hook
+python plugins/astrocode/scripts/test-hooks.py --hook stop-gate
+
+# Run a single scenario
+python plugins/astrocode/scripts/test-hooks.py --scenario source-modified-agents-unchanged
+
+# JSON output
+python plugins/astrocode/scripts/test-hooks.py --json
+
+# Show plan without running
+python plugins/astrocode/scripts/test-hooks.py --dry-run
+```
+
 ## Conventions
 
 - All skills must be project-agnostic — no language-specific, SaaS-specific, or business-specific assumptions
