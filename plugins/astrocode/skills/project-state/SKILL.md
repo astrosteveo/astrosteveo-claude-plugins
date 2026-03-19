@@ -46,20 +46,7 @@ Explore the project to understand:
 
 ### Step 2: Detect Agent Configuration Files
 
-Search the project root for agent markdown files:
-
-| File | Agent |
-|------|-------|
-| `CLAUDE.md` | Claude Code |
-| `AGENTS.md` | Generic / multi-agent |
-| `.cursorrules` | Cursor |
-| `.github/copilot-instructions.md` | GitHub Copilot |
-| `GEMINI.md` | Gemini |
-| `.windsurfrules` | Windsurf |
-
-Consult `references/agent-detection.md` for the complete list and injection templates.
-
-Record which files exist — you will inject pointers into all of them in Step 6.
+Search the project root for agent configuration files per `references/agent-detection.md`. Record which files exist — you will inject pointers into all of them in Step 6.
 
 ### Step 3: Create .agents/ Directory
 
@@ -114,30 +101,13 @@ Create topic files based on what you discovered. Start with these defaults:
 - **`.agents/architecture.md`** — Project structure, key patterns, conventions, design decisions
 - **`.agents/status.md`** — Current work streams, recent changes, known issues, next steps
 
-Additional topic files to create only if relevant:
-- `dependencies.md` — Key dependencies and their roles
-- `testing.md` — Test strategy, coverage, how to run tests
-- `deployment.md` — Deployment process, environments, configuration
-- `api.md` — API surface, endpoints, data models
-
-Keep each topic file focused. If one grows beyond ~200 lines, split it.
-
-Consult `references/context-structure.md` for topic file templates and guidelines.
+Create additional topic files if the project warrants them. Consult `references/context-structure.md` for optional topic files, templates, and guidelines.
 
 ### Step 6: Inject State Pointer
 
 For each agent file detected in Step 2, inject a pointer section. If no agent file exists, create `CLAUDE.md`.
 
-Pointer template:
-```
-## Project State
-
-This project maintains persistent agent state in `.agents/`.
-Read `.agents/CONTEXT.md` at the start of each session to orient yourself.
-Update the relevant files in `.agents/` after completing meaningful units of work.
-```
-
-Consult `references/agent-detection.md` for agent-specific injection formats.
+Consult `references/agent-detection.md` for pointer templates, injection rules, and fallback behavior.
 
 ### Step 7: Verify
 
@@ -181,39 +151,3 @@ For each topic file:
 - Regenerate Structure from current directory layout
 - Update Active Work with current priorities
 - Ensure all topic file links are accurate
-
-## Examples
-
-### Example 1: First-time Bootstrap
-
-User says: "bootstrap this project"
-
-1. Scan — discover TypeScript monorepo with React frontend, Node API, PostgreSQL
-2. Detect `CLAUDE.md` in project root
-3. Create `.agents/` with CONTEXT.md, architecture.md, status.md
-4. Inject pointer section into `CLAUDE.md`
-5. Present summary
-
-### Example 2: Mid-session Update
-
-User says: "update project state"
-
-1. Read current `.agents/CONTEXT.md` — last updated 3 days ago
-2. Git log shows 8 commits: new API endpoint, dependency bump, test additions
-3. Update `architecture.md` with new endpoint pattern
-4. Update `status.md` with recent work
-5. Refresh CONTEXT.md timestamp and Active Work section
-
-## Troubleshooting
-
-**No agent configuration file found**
-Cause: Project has no CLAUDE.md, AGENTS.md, or similar.
-Solution: Create `CLAUDE.md` in the project root with the state pointer.
-
-**`.agents/` already exists during bootstrap**
-Cause: State was previously initialized.
-Solution: Switch to update mode. Ask user if they want to re-bootstrap (destructive) or update.
-
-**Topic files out of sync with CONTEXT.md**
-Cause: Files created or deleted without updating the index.
-Solution: During update, regenerate the Topics table from actual files in `.agents/`.

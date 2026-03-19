@@ -4,13 +4,14 @@
 
 ## Current Work Streams
 
-- **Project-state skill** — Manages vendor-neutral persistent state in `.agents/` with bootstrap and update flows. Supports multi-agent detection (Claude, Cursor, Copilot, Gemini, Windsurf).
+- **Project-state skill** — Manages vendor-neutral persistent state in `.agents/` with bootstrap and update flows. Supports multi-agent detection (Claude, Cursor, Copilot, Gemini, Windsurf). SKILL.md trimmed to delegate detail to reference files via progressive disclosure.
 - **Skills-creator skill** — Stable. Interactive guide for building new Claude skills with progressive reference docs and a Python-based testing framework.
 
 ## Recent Changes
 
 | Date | Change | Commit |
 |------|--------|--------|
+| 2026-03-19 | Project-state SKILL.md trimmed: removed inline agent table, pointer template, optional topic list, examples, troubleshooting — all delegated to reference files | pending |
 | 2026-03-19 | Session-end hook: commit all uncommitted work + add resume note to CLAUDE.md; session-start hook: surface and clean up resume notes | pending |
 | 2026-03-19 | Removed timestamp logic from session-end hook and CONTEXT.md — state is commit-based, not time-based | `94adba3` |
 | 2026-03-19 | Session-end hook now commits and pushes all uncommitted work | `89fb892` |
