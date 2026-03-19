@@ -110,22 +110,10 @@ hooks:
         expect:
           exit_code: 0
 
-      - name: source-and-agents-both-modified
-        description: Both source and .agents/ modified — allows stop
-        setup:
-          git_init: true
-          files:
-            ".agents/CONTEXT.md": "# Context"
-            "app.js": "console.log('hello')"
-          commit: true
-          modifications:
-            "app.js": "console.log('changed')"
-            ".agents/CONTEXT.md": "# Updated Context"
-        expect:
-          exit_code: 0
+      # ── Phase 1 scenarios: .agents/ freshness ──
 
       - name: source-modified-agents-unchanged
-        description: Source modified but .agents/ unchanged — blocks stop
+        description: "Phase 1 blocks: source modified but .agents/ not updated"
         setup:
           git_init: true
           files:
@@ -140,20 +128,8 @@ hooks:
             - "BLOCKED: Source files have changed but .agents/ has not been updated"
             - "You must update project state before stopping"
 
-      - name: no-agents-directory
-        description: No .agents/ directory — allows stop regardless of source changes
-        setup:
-          git_init: true
-          files:
-            "app.js": "console.log('hello')"
-          commit: true
-          modifications:
-            "app.js": "console.log('changed')"
-        expect:
-          exit_code: 0
-
       - name: untracked-source-agents-unchanged
-        description: New untracked source file with .agents/ unchanged — blocks stop
+        description: "Phase 1 blocks: untracked source file with .agents/ unchanged"
         setup:
           git_init: true
           files:
@@ -165,10 +141,29 @@ hooks:
         expect:
           exit_code: 2
           stderr_contains:
-            - "BLOCKED: Source files have changed"
+            - "BLOCKED: Source files have changed but .agents/ has not been updated"
+
+      # ── Phase 2 scenarios: uncommitted work ──
+
+      - name: source-and-agents-both-modified
+        description: "Phase 2 blocks: both modified but uncommitted"
+        setup:
+          git_init: true
+          files:
+            ".agents/CONTEXT.md": "# Context"
+            "app.js": "console.log('hello')"
+          commit: true
+          modifications:
+            "app.js": "console.log('changed')"
+            ".agents/CONTEXT.md": "# Updated Context"
+        expect:
+          exit_code: 2
+          stderr_contains:
+            - "BLOCKED: You have uncommitted changes"
+            - "targeted commit"
 
       - name: both-source-and-agents-untracked
-        description: Both source and .agents/ have untracked files — allows stop
+        description: "Phase 2 blocks: untracked files in both source and .agents/"
         setup:
           git_init: true
           files:
@@ -179,10 +174,12 @@ hooks:
             "newfile.js": "// new file"
             ".agents/newtopic.md": "# New Topic"
         expect:
-          exit_code: 0
+          exit_code: 2
+          stderr_contains:
+            - "BLOCKED: You have uncommitted changes"
 
       - name: only-agents-changed
-        description: Only .agents/ changed with no source changes — allows stop
+        description: "Phase 2 blocks: .agents/ modified but uncommitted"
         setup:
           git_init: true
           files:
@@ -191,6 +188,33 @@ hooks:
           commit: true
           modifications:
             ".agents/CONTEXT.md": "# Updated Context"
+        expect:
+          exit_code: 2
+          stderr_contains:
+            - "BLOCKED: You have uncommitted changes"
+
+      - name: no-agents-dir-uncommitted
+        description: "Phase 2 blocks: no .agents/ but uncommitted source changes"
+        setup:
+          git_init: true
+          files:
+            "app.js": "console.log('hello')"
+          commit: true
+          modifications:
+            "app.js": "console.log('changed')"
+        expect:
+          exit_code: 2
+          stderr_contains:
+            - "BLOCKED: You have uncommitted changes"
+
+      # ── Bypass scenarios: stop allowed ──
+
+      - name: not-a-git-repo
+        description: Not in a git repo — allows stop (cannot enforce)
+        setup:
+          git_init: false
+          files:
+            "app.js": "console.log('hello')"
         expect:
           exit_code: 0
 
