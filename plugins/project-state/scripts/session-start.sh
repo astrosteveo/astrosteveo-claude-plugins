@@ -44,7 +44,7 @@ fi
 # ── No CONTEXT.md — warn but don't block ─────────────────────
 if [ ! -f "$CONTEXT_FILE" ]; then
   echo "WARNING: .agents/ directory exists but CONTEXT.md is missing."
-  echo "Run /astrocode:project-state bootstrap to reinitialize."
+  echo "Run /project-state:project-state bootstrap to reinitialize."
   exit 0
 fi
 

@@ -7,13 +7,22 @@
     },
     "plugins": [
         {
-            "name": "astrocode",
-            "description": "Workflow for coldstarting Claude Code",
+            "name": "project-state",
+            "description": "Persistent, vendor-neutral project state management for AI agent session continuity",
             "author": {
                 "name": "AstroSteveo",
                 "email": "astrosteveo@noreply.users.github.com"
             },
-            "source": "./plugins/astrocode"
+            "source": "./plugins/project-state"
+        },
+        {
+            "name": "skills-creator",
+            "description": "Interactive guide for creating new Claude Code skills",
+            "author": {
+                "name": "AstroSteveo",
+                "email": "astrosteveo@noreply.users.github.com"
+            },
+            "source": "./plugins/skills-creator"
         }
     ]
 }

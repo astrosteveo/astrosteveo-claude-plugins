@@ -1,6 +1,6 @@
 {
-    "name": "astrocode",
-    "description": "Workflow for coldstarting Claude Code",
+    "name": "skills-creator",
+    "description": "Interactive guide for creating new Claude Code skills",
     "author": {
         "name": "AstroSteveo",
         "email": "astrosteveo@noreply.users.github.com"

@@ -6,15 +6,16 @@
 
 Each plugin lives under `plugins/{name}/` with its own `.claude-plugin/plugin.json` manifest. The top-level `.claude-plugin/marketplace.json` indexes all plugins in the repository.
 
-Currently one plugin exists: **astrocode** (`plugins/astrocode/`).
+Two plugins:
+- **project-state** (`plugins/project-state/`) — agent state management + session hooks
+- **skills-creator** (`plugins/skills-creator/`) — interactive skill builder
 
 ## Skills Pattern
 
 - Each skill is a kebab-case folder under `plugins/{plugin}/skills/{skill-name}/`
 - Required: `SKILL.md` with frontmatter (name, description, triggers)
 - Optional: `references/` for progressive-disclosure docs, `scripts/` for automation, `assets/` for static files, `TESTS.yaml` for validation
-- Skills set `user-invocable: false` — they don't appear un-namespaced in the `/` menu
-- Skills are invoked directly via namespace (e.g., `astrocode:project-state`). The earlier `commands/` wrapper approach was removed
+- Skills are invoked via namespace (e.g., `project-state:project-state`, `skills-creator:skills-creator`)
 
 ## Progressive Disclosure
 
@@ -22,7 +23,7 @@ Large reference material is decomposed into numbered `references/*.md` files (e.
 
 ## Hook System
 
-Hooks are defined in `plugins/astrocode/hooks/hooks.json` and backed by Bash scripts in `plugins/astrocode/scripts/`:
+Hooks are defined in `plugins/project-state/hooks/hooks.json` and backed by Bash scripts in `plugins/project-state/scripts/`:
 
 | Script | Purpose |
 |--------|---------|
@@ -32,7 +33,7 @@ Hooks are defined in `plugins/astrocode/hooks/hooks.json` and backed by Bash scr
 
 ## Hook Testing
 
-Hook tests are defined in `plugins/astrocode/hooks/TESTS.yaml` with structural and scenario layers. The test runner (`plugins/astrocode/scripts/test-hooks.py`) validates `hooks.json` schema, script syntax, and runs scenarios in isolated git repos.
+Hook tests are defined in `plugins/project-state/hooks/TESTS.yaml` with structural and scenario layers. The test runner (`plugins/project-state/scripts/test-hooks.py`) validates `hooks.json` schema, script syntax, and runs scenarios in isolated git repos.
 
 ## Dynamic vs Curated Context
 

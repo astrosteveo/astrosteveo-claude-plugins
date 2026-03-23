@@ -1,0 +1,8 @@
+{
+    "name": "project-state",
+    "description": "Persistent, vendor-neutral project state management for AI agent session continuity",
+    "author": {
+        "name": "AstroSteveo",
+        "email": "astrosteveo@noreply.users.github.com"
+    }
+}
