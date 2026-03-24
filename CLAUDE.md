@@ -36,7 +36,9 @@ Defined in `plugins/project-state/hooks/hooks.json`, backed by Bash scripts in `
 | Stop | `stop-gate.sh` | Blocks stop if there are any uncommitted changes; reports all dirty state categorized for single-turn resolution |
 | SessionEnd | `session-end.sh` | Records uncommitted state in a CLAUDE.md resume note; does not commit or push |
 
-Key design principle: hooks never auto-commit or auto-push. They record state and let the agent/user decide what to do.
+Key design principles:
+- Hooks never auto-commit or auto-push. They record state and let the agent/user decide what to do.
+- Hooks are generic about git conventions — they enforce *that* you commit, not *how* you format the message. Commit style is left to the user's personal rules or project CLAUDE.md.
 
 ## Testing Skills
 
