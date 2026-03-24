@@ -47,6 +47,12 @@ python plugins/project-state/scripts/test-hooks.py --hook stop-gate
 
 # Single scenario
 python plugins/project-state/scripts/test-hooks.py --scenario unstaged-modifications
+
+# JSON output
+python plugins/project-state/scripts/test-hooks.py --json
+
+# Show plan without running
+python plugins/project-state/scripts/test-hooks.py --dry-run
 ```
 
 ### Skill tests

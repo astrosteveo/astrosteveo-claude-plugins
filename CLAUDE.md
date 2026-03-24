@@ -39,6 +39,8 @@ Defined in `plugins/project-state/hooks/hooks.json`, backed by Bash scripts in `
 Key design principles:
 - Hooks never auto-commit or auto-push. They record state and let the agent/user decide what to do.
 - Hooks are generic about git conventions — they enforce *that* you commit, not *how* you format the message. Commit style is left to the user's personal rules or project CLAUDE.md.
+- PreToolUse hook receives JSON tool input on `stdin` (relevant for debugging and writing test scenarios).
+- `session-end.sh` has macOS/Linux branching for `sed -i` — the only script with platform-specific logic.
 
 ## Testing Skills
 
@@ -55,7 +57,7 @@ python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/t
 python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/to/skill
 ```
 
-Test scripts live in the skills-creator skill since it owns the testing framework.
+Test scripts live in the skills-creator skill since it owns the testing framework. Skill `TESTS.yaml` files configure model, max turns, and per-test/total cost budgets.
 
 ## Testing Hooks
 
