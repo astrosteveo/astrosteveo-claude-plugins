@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Claude Code plugin repository providing two plugins — **project-state** (persistent agent context management with hooks) and **skills-creator** (interactive skill builder). The codebase is pure Markdown (skills), Bash (hook scripts), and Python (test tooling). There is no build step; plugins are loaded directly by Claude Code.
+Claude Code plugin repository with two plugins — **project-state** (session continuity and git discipline hooks) and **skills-creator** (interactive skill builder). The codebase is pure Markdown (skills), Bash (hook scripts), and Python (test tooling). There is no build step; plugins are loaded directly by Claude Code.
 
 ## Architecture
 
@@ -13,7 +13,7 @@ This is a Claude Code plugin repository providing two plugins — **project-stat
 Each plugin lives under `plugins/{name}/` with its own `.claude-plugin/plugin.json` manifest. The top-level `.claude-plugin/marketplace.json` is the registry index.
 
 Two plugins:
-- **`project-state`** (`plugins/project-state/`) — bootstraps/updates vendor-neutral `.agents/` state for multi-agent session continuity; includes all hooks
+- **`project-state`** (`plugins/project-state/`) — session continuity and git discipline hooks; no skills
 - **`skills-creator`** (`plugins/skills-creator/`) — interactive 6-phase workflow for building new Claude skills
 
 ### Skills
@@ -30,13 +30,13 @@ Defined in `plugins/project-state/hooks/hooks.json`, backed by Bash scripts in `
 
 | Hook | Script | Behavior |
 |------|--------|----------|
-| SessionStart | `session-start.sh` | Surfaces resume notes, outputs curated context from CONTEXT.md, and dynamically generates structure tree and recent activity |
-| Stop | `stop-gate.sh` | Blocks stop if source files changed but `.agents/` wasn't updated |
-| SessionEnd | `session-end.sh` | Commits all uncommitted work and adds a resume note to CLAUDE.md for the next session |
+| SessionStart | `session-start.sh` | Surfaces resume notes from previous sessions; does not auto-clean them |
+| PreToolUse | `pre-tool-guard.sh` | Blocks dangerous git commands (broad staging, force push, hard reset, git clean, checkout --) |
+| PostCompact | `post-compact.sh` | Re-injects dirty state and recent commits after context compaction |
+| Stop | `stop-gate.sh` | Blocks stop if there are any uncommitted changes; reports all dirty state categorized for single-turn resolution |
+| SessionEnd | `session-end.sh` | Records uncommitted state in a CLAUDE.md resume note; does not commit or push |
 
-### `.agents/` Directory
-
-Committed to git. Contains `CONTEXT.md` (thin index) and topic files (`architecture.md`, `status.md`). This is the vendor-neutral project state that any AI agent can read. The stop hook enforces freshness.
+Key design principle: hooks never auto-commit or auto-push. They record state and let the agent/user decide what to do.
 
 ## Testing Skills
 
@@ -60,7 +60,7 @@ Test scripts live in the skills-creator skill since it owns the testing framewor
 Hook tests use a YAML-based spec (`hooks/TESTS.yaml`) with two layers:
 
 - **Structural** — validates `hooks.json` schema and script syntax (free, no execution)
-- **Scenarios** — runs each hook script in an isolated git repo, asserting on exit codes, stdout/stderr, file state, and git history
+- **Scenarios** — runs each hook script in an isolated git repo, asserting on exit codes, stdout/stderr, file state, and git history. PreToolUse scenarios use `stdin` to pass JSON tool input.
 
 ```bash
 # Run all hook tests
@@ -70,7 +70,7 @@ python plugins/project-state/scripts/test-hooks.py
 python plugins/project-state/scripts/test-hooks.py --hook stop-gate
 
 # Run a single scenario
-python plugins/project-state/scripts/test-hooks.py --scenario source-modified-agents-unchanged
+python plugins/project-state/scripts/test-hooks.py --scenario unstaged-modifications
 
 # JSON output
 python plugins/project-state/scripts/test-hooks.py --json
@@ -87,9 +87,3 @@ python plugins/project-state/scripts/test-hooks.py --dry-run
 - No XML angle brackets in SKILL.md files
 - Conventional commit messages (e.g., `feat(skill-name):`, `fix(skill-name):`, `chore:`)
 - Hook scripts must handle both macOS and Linux (e.g., `sed -i ''` vs `sed -i` for in-place edits)
-
-## Project State
-
-This project maintains persistent agent state in `.agents/`.
-Read `.agents/CONTEXT.md` at the start of each session to orient yourself.
-Update the relevant files in `.agents/` after completing meaningful units of work.
