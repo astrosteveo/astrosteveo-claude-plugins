@@ -1,6 +1,6 @@
 {
     "name": "project-state",
-    "description": "Persistent, vendor-neutral project state management for AI agent session continuity",
+    "description": "Session continuity and git discipline hooks for Claude Code",
     "author": {
         "name": "AstroSteveo",
         "email": "astrosteveo@noreply.users.github.com"

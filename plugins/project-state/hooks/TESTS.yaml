@@ -7,8 +7,8 @@ hooks:
     script: session-start.sh
     event: SessionStart
     scenarios:
-      - name: resume-note-surfaces-and-cleans
-        description: Surfaces resume note from CLAUDE.md, removes it, and commits cleanup
+      - name: resume-note-surfaces-without-cleanup
+        description: Surfaces resume note from CLAUDE.md but does not modify it
         setup:
           git_init: true
           files:
@@ -20,7 +20,6 @@ hooks:
               Previous session worked on auth module.
 
               ## End Session Resume Note
-            ".agents/CONTEXT.md": "# Project Context"
           commit: true
         expect:
           exit_code: 0
@@ -28,71 +27,220 @@ hooks:
             - "=== Session Resume Note ==="
             - "Previous session worked on auth module"
             - "=== End Session Resume Note ==="
-            - "=== Project Context (from .agents/CONTEXT.md) ==="
-          file_not_contains:
+            - "ACTION: After reviewing with the user"
+          file_contains:
             "CLAUDE.md":
               - "Session Resume Note"
-          git_log_contains:
+          git_log_not_contains:
             - "chore: remove session resume note"
 
       - name: no-resume-note
-        description: No resume note in CLAUDE.md — outputs project context only
+        description: No resume note in CLAUDE.md — no output
         setup:
           git_init: true
           files:
             "CLAUDE.md": "# My Project"
-            ".agents/CONTEXT.md": "# Project Context"
           commit: true
         expect:
           exit_code: 0
-          stdout_contains:
-            - "=== Project Context (from .agents/CONTEXT.md) ==="
           stdout_not_contains:
             - "Session Resume Note"
 
-      - name: no-agents-directory
-        description: No .agents/ directory — exits cleanly with no context output
+      - name: no-claude-md
+        description: No CLAUDE.md at all — exits cleanly
         setup:
           git_init: true
           files:
-            "CLAUDE.md": "# My Project"
+            "app.js": "console.log('hello')"
           commit: true
         expect:
           exit_code: 0
           stdout_not_contains:
-            - "Project Context"
-            - "WARNING"
+            - "Session Resume Note"
 
-      - name: agents-dir-missing-context
-        description: .agents/ exists but CONTEXT.md is missing — shows warning
+  # ── PreToolUse Guard ──────────────────────────────────────────────
+  pre-tool-guard:
+    script: pre-tool-guard.sh
+    event: PreToolUse
+    scenarios:
+      - name: blocks-git-add-all
+        description: Blocks git add -A
         setup:
-          git_init: true
-          files:
-            ".agents/status.md": "# Status"
-          commit: true
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git add -A"}'
         expect:
           exit_code: 0
           stdout_contains:
-            - "WARNING"
-            - "CONTEXT.md is missing"
+            - '"decision":"block"'
+            - "Broad staging commands"
 
-      - name: lists-topic-files
-        description: Lists topic files from .agents/ excluding CONTEXT.md
+      - name: blocks-git-add-dot
+        description: Blocks git add .
         setup:
-          git_init: true
-          files:
-            ".agents/CONTEXT.md": "# Context"
-            ".agents/architecture.md": "# Architecture"
-            ".agents/status.md": "# Status"
-          commit: true
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git add ."}'
         expect:
           exit_code: 0
           stdout_contains:
-            - "Topic files available in .agents/"
-            - "- architecture.md"
-            - "- status.md"
+            - '"decision":"block"'
+
+      - name: blocks-force-push
+        description: Blocks git push --force
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git push --force origin main"}'
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - '"decision":"block"'
+            - "Force push"
+
+      - name: blocks-force-push-short
+        description: Blocks git push -f
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git push -f"}'
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - '"decision":"block"'
+
+      - name: blocks-hard-reset
+        description: Blocks git reset --hard
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git reset --hard HEAD~1"}'
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - '"decision":"block"'
+            - "Hard reset"
+
+      - name: blocks-git-clean
+        description: Blocks git clean -f
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git clean -fd"}'
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - '"decision":"block"'
+            - "git clean"
+
+      - name: blocks-checkout-dot
+        description: Blocks git checkout -- .
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git checkout -- ."}'
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - '"decision":"block"'
+
+      - name: allows-targeted-git-add
+        description: Allows git add with specific files
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git add src/app.js src/lib.js"}'
+        expect:
+          exit_code: 0
           stdout_not_contains:
-            - "- CONTEXT.md"
+            - '"decision":"block"'
+
+      - name: allows-normal-push
+        description: Allows normal git push
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git push origin feature-branch"}'
+        expect:
+          exit_code: 0
+          stdout_not_contains:
+            - '"decision":"block"'
+
+      - name: allows-non-git-commands
+        description: Allows non-git bash commands
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"npm test"}'
+        expect:
+          exit_code: 0
+          stdout_not_contains:
+            - '"decision":"block"'
+
+  # ── PostCompact ───────────────────────────────────────────────────
+  post-compact:
+    script: post-compact.sh
+    event: PostCompact
+    scenarios:
+      - name: clean-tree-shows-recent-commits
+        description: Clean working tree — shows recent commits for orientation
+        setup:
+          git_init: true
+          files:
+            "app.js": "console.log('hello')"
+          commit: true
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - "=== Post-Compaction Context ==="
+            - "Working tree is clean"
+            - "=== End Post-Compaction Context ==="
+          stdout_not_contains:
+            - "IMPORTANT"
+
+      - name: dirty-tree-shows-uncommitted
+        description: Dirty working tree — surfaces uncommitted files with urgency
+        setup:
+          git_init: true
+          files:
+            "app.js": "console.log('hello')"
+          commit: true
+          modifications:
+            "app.js": "console.log('changed')"
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - "=== Post-Compaction Context ==="
+            - "IMPORTANT: You have uncommitted changes"
+            - "app.js"
+            - "=== End Post-Compaction Context ==="
+
+      - name: untracked-files-surfaced
+        description: Untracked files are surfaced after compaction
+        setup:
+          git_init: true
+          files:
+            "app.js": "console.log('hello')"
+          commit: true
+          new_files:
+            "scratch.js": "// temp"
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - "IMPORTANT"
+            - "Untracked"
+            - "scratch.js"
+
+      - name: not-a-git-repo
+        description: Not in a git repo — exits cleanly
+        setup:
+          git_init: false
+          files:
+            "app.js": "console.log('hello')"
+        expect:
+          exit_code: 0
+          stdout_not_contains:
+            - "Post-Compaction Context"
 
   # ── Stop Gate ─────────────────────────────────────────────────────
   stop-gate:
@@ -104,20 +252,16 @@ hooks:
         setup:
           git_init: true
           files:
-            ".agents/CONTEXT.md": "# Context"
             "app.js": "console.log('hello')"
           commit: true
         expect:
           exit_code: 0
 
-      # ── Phase 1 scenarios: .agents/ freshness ──
-
-      - name: source-modified-agents-unchanged
-        description: "Phase 1 blocks: source modified but .agents/ not updated"
+      - name: unstaged-modifications
+        description: Blocks with categorized file list when files are modified
         setup:
           git_init: true
           files:
-            ".agents/CONTEXT.md": "# Context"
             "app.js": "console.log('hello')"
           commit: true
           modifications:
@@ -125,15 +269,16 @@ hooks:
         expect:
           exit_code: 2
           stderr_contains:
-            - "BLOCKED: Source files have changed but .agents/ has not been updated"
-            - "You must update project state before stopping"
+            - "BLOCKED: You have uncommitted changes"
+            - "Modified (not staged)"
+            - "app.js"
+            - "Resolve ALL of the above in a single turn"
 
-      - name: untracked-source-agents-unchanged
-        description: "Phase 1 blocks: untracked source file with .agents/ unchanged"
+      - name: untracked-files
+        description: Blocks when there are untracked files
         setup:
           git_init: true
           files:
-            ".agents/CONTEXT.md": "# Context"
             "app.js": "console.log('hello')"
           commit: true
           new_files:
@@ -141,76 +286,31 @@ hooks:
         expect:
           exit_code: 2
           stderr_contains:
-            - "BLOCKED: Source files have changed but .agents/ has not been updated"
+            - "BLOCKED: You have uncommitted changes"
+            - "Untracked (new files)"
+            - "newfile.js"
 
-      # ── Phase 2 scenarios: uncommitted work ──
-
-      - name: source-and-agents-both-modified
-        description: "Phase 2 blocks: both modified but uncommitted"
+      - name: mixed-state
+        description: Reports all categories at once for single-turn resolution
         setup:
           git_init: true
           files:
-            ".agents/CONTEXT.md": "# Context"
             "app.js": "console.log('hello')"
+            "lib.js": "module.exports = {}"
           commit: true
           modifications:
             "app.js": "console.log('changed')"
-            ".agents/CONTEXT.md": "# Updated Context"
-        expect:
-          exit_code: 2
-          stderr_contains:
-            - "BLOCKED: You have uncommitted changes"
-            - "targeted commit"
-
-      - name: both-source-and-agents-untracked
-        description: "Phase 2 blocks: untracked files in both source and .agents/"
-        setup:
-          git_init: true
-          files:
-            ".agents/CONTEXT.md": "# Context"
-            "app.js": "console.log('hello')"
-          commit: true
           new_files:
-            "newfile.js": "// new file"
-            ".agents/newtopic.md": "# New Topic"
+            "newfile.js": "// new"
         expect:
           exit_code: 2
           stderr_contains:
-            - "BLOCKED: You have uncommitted changes"
-
-      - name: only-agents-changed
-        description: "Phase 2 blocks: .agents/ modified but uncommitted"
-        setup:
-          git_init: true
-          files:
-            ".agents/CONTEXT.md": "# Context"
-            "app.js": "console.log('hello')"
-          commit: true
-          modifications:
-            ".agents/CONTEXT.md": "# Updated Context"
-        expect:
-          exit_code: 2
-          stderr_contains:
-            - "BLOCKED: You have uncommitted changes"
-
-      - name: no-agents-dir-uncommitted
-        description: "Phase 2 blocks: no .agents/ but uncommitted source changes"
-        setup:
-          git_init: true
-          files:
-            "app.js": "console.log('hello')"
-          commit: true
-          modifications:
-            "app.js": "console.log('changed')"
-        expect:
-          exit_code: 2
-          stderr_contains:
-            - "BLOCKED: You have uncommitted changes"
-
-      # ── Bypass scenarios: stop allowed ──
+            - "Modified (not staged)"
+            - "Untracked (new files)"
+            - "Resolve ALL"
 
       - name: not-a-git-repo
-        description: Not in a git repo — allows stop (cannot enforce)
+        description: Not in a git repo — allows stop
         setup:
           git_init: false
           files:
@@ -223,8 +323,8 @@ hooks:
     script: session-end.sh
     event: SessionEnd
     scenarios:
-      - name: commits-uncommitted-and-adds-resume-note
-        description: Commits uncommitted changes and adds resume note to CLAUDE.md
+      - name: records-unstaged-changes
+        description: Records modified files in resume note without committing
         setup:
           git_init: true
           files:
@@ -239,23 +339,44 @@ hooks:
             "CLAUDE.md":
               - "## Session Resume Note"
               - "app.js"
+              - "Modified (not staged)"
+              - "Review these changes with the user"
               - "## End Session Resume Note"
-          git_log_contains:
-            - "chore: commit uncommitted work (session-end)"
-            - "chore: add session resume note"
-          working_tree_clean: true
+          git_log_not_contains:
+            - "session-end"
 
-      - name: no-changes-exits-cleanly
-        description: No uncommitted changes — exits without any commits
+      - name: records-untracked-files
+        description: Lists untracked files in the resume note
         setup:
           git_init: true
           files:
             "app.js": "console.log('hello')"
+            "CLAUDE.md": "# My Project"
+          commit: true
+          new_files:
+            "newfile.js": "// brand new"
+        expect:
+          exit_code: 0
+          file_contains:
+            "CLAUDE.md":
+              - "## Session Resume Note"
+              - "Untracked (new files)"
+              - "newfile.js"
+              - "## End Session Resume Note"
+
+      - name: no-changes-exits-cleanly
+        description: No uncommitted changes — does not modify CLAUDE.md
+        setup:
+          git_init: true
+          files:
+            "app.js": "console.log('hello')"
+            "CLAUDE.md": "# My Project"
           commit: true
         expect:
           exit_code: 0
-          git_log_not_contains:
-            - "session-end"
+          file_not_contains:
+            "CLAUDE.md":
+              - "Session Resume Note"
 
       - name: replaces-existing-resume-note
         description: Removes old resume note and writes a new one
@@ -303,7 +424,7 @@ hooks:
               - "app.js"
 
       - name: not-a-git-repo
-        description: Not in a git repo — exits cleanly with no side effects
+        description: Not in a git repo — exits cleanly
         setup:
           git_init: false
           files:

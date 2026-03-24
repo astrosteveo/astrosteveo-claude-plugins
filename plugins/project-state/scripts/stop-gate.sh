@@ -1,50 +1,53 @@
 #!/bin/bash
-# Stop hook: Two-phase gate ensuring work is documented and committed
+# Stop hook: Ensure work is committed before the agent stops
 #
-# Phase 1: If source files changed but .agents/ wasn't updated, block
-#          until the agent updates project state.
-# Phase 2: If there are any uncommitted changes, block until the agent
-#          commits with a descriptive message.
-#
-# This ensures each unit of work is both documented (.agents/) and
-# committed before the agent finishes responding.
-
-AGENTS_DIR=".agents"
+# Checks all dirty state in a single pass and reports everything at once,
+# so the agent can resolve it all in one turn.
 
 # Not a git repo — can't enforce, allow stop
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   exit 0
 fi
 
-# ── Phase 1: .agents/ freshness ──────────────────────────────────
-# Only enforced when .agents/ directory exists
-if [ -d "$AGENTS_DIR" ]; then
-  source_changes=$(git diff HEAD --name-only -- . ':(exclude).agents' 2>/dev/null)
-  untracked_source=$(git ls-files --others --exclude-standard -- . ':(exclude).agents' 2>/dev/null)
+# Collect all dirty state in one pass
+staged=$(git diff --cached --name-only 2>/dev/null)
+unstaged=$(git diff --name-only 2>/dev/null)
+untracked=$(git ls-files --others --exclude-standard 2>/dev/null)
 
-  if [ -n "$source_changes" ] || [ -n "$untracked_source" ]; then
-    agents_changes=$(git diff HEAD --name-only -- .agents/ 2>/dev/null)
-    untracked_agents=$(git ls-files --others --exclude-standard -- .agents/ 2>/dev/null)
+# Nothing dirty — allow stop
+if [ -z "$staged" ] && [ -z "$unstaged" ] && [ -z "$untracked" ]; then
+  exit 0
+fi
 
-    if [ -z "$agents_changes" ] && [ -z "$untracked_agents" ]; then
-      echo "BLOCKED: Source files have changed but .agents/ has not been updated." >&2
-      echo "You must update project state before stopping:" >&2
-      echo "  1. Update the relevant topic files in .agents/ to reflect your changes" >&2
-      echo "  2. Ensure .agents/ topic files reflect your changes" >&2
-      exit 2
-    fi
+# Report everything at once so the agent can fix it in one turn
+{
+  echo "BLOCKED: You have uncommitted changes."
+  echo ""
+
+  if [ -n "$staged" ]; then
+    echo "Staged (ready to commit):"
+    echo "$staged" | sed 's/^/  /'
+    echo ""
   fi
-fi
 
-# ── Phase 2: Uncommitted work ───────────────────────────────────
-# Block if there are staged, unstaged, or untracked changes
-if ! git diff --cached --quiet 2>/dev/null \
-   || ! git diff --quiet 2>/dev/null \
-   || [ -n "$(git ls-files --others --exclude-standard 2>/dev/null)" ]; then
-  echo "BLOCKED: You have uncommitted changes." >&2
-  echo "Stage only the files from your current unit of work and commit with a descriptive message." >&2
-  echo "Do not use 'git add -A'. Make a targeted commit for the work you just completed." >&2
-  exit 2
-fi
+  if [ -n "$unstaged" ]; then
+    echo "Modified (not staged):"
+    echo "$unstaged" | sed 's/^/  /'
+    echo ""
+  fi
 
-exit 0
+  if [ -n "$untracked" ]; then
+    echo "Untracked (new files):"
+    echo "$untracked" | sed 's/^/  /'
+    echo ""
+  fi
+
+  echo "Resolve ALL of the above in a single turn:"
+  echo "  1. Stage the files that belong to your current unit of work"
+  echo "  2. Commit with a descriptive conventional commit message"
+  echo "  3. If any files should NOT be committed (scratch files, experiments),"
+  echo "     add them to .gitignore or ask the user what to do"
+  echo "  4. Do not use 'git add -A' or 'git add .'"
+} >&2
+
+exit 2

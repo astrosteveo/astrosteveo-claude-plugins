@@ -267,12 +267,13 @@ def setup_scenario(workdir, setup):
 
 # ── Hook Execution ───────────────────────────────────────────────────
 
-def run_hook_script(script_path, workdir, timeout=30):
+def run_hook_script(script_path, workdir, stdin_data=None, timeout=30):
     """Execute a hook script in the given working directory."""
     try:
         proc = subprocess.run(
             ["bash", script_path],
             cwd=workdir,
+            input=stdin_data,
             capture_output=True,
             text=True,
             timeout=timeout,
@@ -475,7 +476,10 @@ def run_scenario(hook_name, scenario, script_path, verbose=False):
 
     try:
         setup_scenario(workdir, setup)
-        stdout, stderr, exit_code = run_hook_script(script_path, workdir)
+        stdin_data = scenario.get("stdin")
+        stdout, stderr, exit_code = run_hook_script(
+            script_path, workdir, stdin_data=stdin_data,
+        )
         assertion_results = check_assertions(
             workdir, stdout, stderr, exit_code, expect,
         )
