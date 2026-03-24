@@ -85,5 +85,4 @@ python plugins/project-state/scripts/test-hooks.py --dry-run
 - SKILL.md files must stay under 500 lines; decompose into `references/` for large docs
 - Folder names are kebab-case and must match the `name` field in SKILL.md frontmatter
 - No XML angle brackets in SKILL.md files
-- Conventional commit messages (e.g., `feat(skill-name):`, `fix(skill-name):`, `chore:`)
 - Hook scripts must handle both macOS and Linux (e.g., `sed -i ''` vs `sed -i` for in-place edits)

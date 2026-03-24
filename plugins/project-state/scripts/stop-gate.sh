@@ -44,7 +44,7 @@ fi
 
   echo "Resolve ALL of the above in a single turn:"
   echo "  1. Stage the files that belong to your current unit of work"
-  echo "  2. Commit with a descriptive conventional commit message"
+  echo "  2. Commit with a descriptive commit message"
   echo "  3. If any files should NOT be committed (scratch files, experiments),"
   echo "     add them to .gitignore or ask the user what to do"
   echo "  4. Do not use 'git add -A' or 'git add .'"
