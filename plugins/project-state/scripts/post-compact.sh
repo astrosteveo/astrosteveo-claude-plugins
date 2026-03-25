@@ -1,12 +1,19 @@
 #!/bin/bash
-# PostCompact hook: Re-inject git state awareness after context compaction
+# PostCompact hook: Re-inject git state and memory awareness after compaction
 #
 # When the context window gets compacted, the agent may lose track of
-# uncommitted work. This hook re-injects the current dirty state so the
-# agent stays oriented.
+# uncommitted work and learnings from earlier in the conversation. This
+# hook re-injects the current dirty state and reminds the agent to persist
+# important context to auto-memory before it is lost.
 
-# Not a git repo — nothing to inject
+# Not a git repo — still remind about memory
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "=== Post-Compaction Context ==="
+  echo "MEMORY: Context was just compacted. If you learned anything important"
+  echo "earlier in this conversation — user preferences, feedback on your approach,"
+  echo "project decisions, or external references — save it to auto-memory now"
+  echo "before it is permanently lost."
+  echo "=== End Post-Compaction Context ==="
   exit 0
 fi
 
@@ -20,6 +27,11 @@ if [ -z "$staged" ] && [ -z "$unstaged" ] && [ -z "$untracked" ]; then
   echo "=== Post-Compaction Context ==="
   echo "Working tree is clean. Recent commits:"
   git log --oneline -5 2>/dev/null
+  echo ""
+  echo "MEMORY: Context was just compacted. If you learned anything important"
+  echo "earlier in this conversation — user preferences, feedback on your approach,"
+  echo "project decisions, or external references — save it to auto-memory now"
+  echo "before it is permanently lost."
   echo "=== End Post-Compaction Context ==="
   exit 0
 fi
@@ -49,6 +61,11 @@ fi
 
 echo "Recent commits:"
 git log --oneline -5 2>/dev/null
+echo ""
+echo "MEMORY: Context was just compacted. If you learned anything important"
+echo "earlier in this conversation — user preferences, feedback on your approach,"
+echo "project decisions, or external references — save it to auto-memory now"
+echo "before it is permanently lost."
 echo ""
 echo "=== End Post-Compaction Context ==="
 

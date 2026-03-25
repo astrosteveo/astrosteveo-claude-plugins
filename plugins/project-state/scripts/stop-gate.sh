@@ -1,8 +1,9 @@
 #!/bin/bash
-# Stop hook: Ensure work is committed before the agent stops
+# Stop hook: Ensure work is committed and memory is evaluated before stopping
 #
 # Checks all dirty state in a single pass and reports everything at once,
-# so the agent can resolve it all in one turn.
+# so the agent can resolve it all in one turn. Also prompts the agent to
+# evaluate whether session learnings should be saved to auto-memory.
 
 # Not a git repo — can't enforce, allow stop
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -48,6 +49,14 @@ fi
   echo "  3. If any files should NOT be committed (scratch files, experiments),"
   echo "     add them to .gitignore or ask the user what to do"
   echo "  4. Do not use 'git add -A' or 'git add .'"
+  echo ""
+  echo "MEMORY: Before stopping, evaluate whether you learned anything this session"
+  echo "that should be saved to auto-memory:"
+  echo "  - User preferences, role, or expertise (user type)"
+  echo "  - Feedback on your approach — corrections or confirmations (feedback type)"
+  echo "  - Project context, decisions, or deadlines (project type)"
+  echo "  - External resources or references (reference type)"
+  echo "Save any relevant learnings before attempting to stop again."
 } >&2
 
 exit 2
