@@ -1,6 +1,6 @@
 {
     "name": "project-state",
-    "description": "Session continuity and git discipline hooks for Claude Code",
+    "description": "Auto-memory awareness hooks for Claude Code",
     "author": {
         "name": "AstroSteveo",
         "email": "astrosteveo@noreply.users.github.com"

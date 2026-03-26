@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Claude Code plugin repository with two plugins — **project-state** (session continuity and git discipline hooks) and **skills-creator** (interactive skill builder). The codebase is pure Markdown (skills), Bash (hook scripts), and Python (test tooling). There is no build step; plugins are loaded directly by Claude Code.
+Claude Code plugin repository with two plugins — **project-state** (auto-memory hooks) and **skills-creator** (interactive skill builder). The codebase is pure Markdown (skills), Bash (hook scripts), and Python (test tooling). There is no build step; plugins are loaded directly by Claude Code.
 
 ## Architecture
 
@@ -13,7 +13,7 @@ Claude Code plugin repository with two plugins — **project-state** (session co
 Each plugin lives under `plugins/{name}/` with its own `.claude-plugin/plugin.json` manifest. The top-level `.claude-plugin/marketplace.json` is the registry index.
 
 Two plugins:
-- **`project-state`** (`plugins/project-state/`) — session continuity and git discipline hooks; no skills
+- **`project-state`** (`plugins/project-state/`) — auto-memory awareness hooks; no skills
 - **`skills-creator`** (`plugins/skills-creator/`) — interactive 6-phase workflow for building new Claude skills
 
 ### Skills
@@ -30,18 +30,13 @@ Defined in `plugins/project-state/hooks/hooks.json`, backed by Bash scripts in `
 
 | Hook | Script | Behavior |
 |------|--------|----------|
-| SessionStart | `session-start.sh` | Surfaces resume notes from previous sessions; primes auto-memory awareness for the session |
-| PreToolUse | `pre-tool-guard.sh` | Blocks dangerous git commands (broad staging, force push, hard reset, git clean, checkout --) |
-| PostCompact | `post-compact.sh` | Re-injects dirty state and recent commits after context compaction; reminds agent to persist learnings to auto-memory before they are lost |
-| Stop | `stop-gate.sh` | Blocks stop if there are any uncommitted changes; reports all dirty state categorized for single-turn resolution; prompts auto-memory evaluation |
-| SessionEnd | `session-end.sh` | Records uncommitted state in a CLAUDE.md resume note; does not commit or push |
+| SessionStart | `session-start.sh` | Primes auto-memory awareness for the session |
+| PostCompact | `post-compact.sh` | Shows recent commits for orientation; reminds agent to persist learnings to auto-memory before they are lost |
+| Stop | `stop-gate.sh` | Prompts auto-memory evaluation before stopping; does not block |
 
 Key design principles:
-- Hooks never auto-commit or auto-push. They record state and let the agent/user decide what to do.
-- Hooks are generic about git conventions — they enforce *that* you commit, not *how* you format the message. Commit style is left to the user's personal rules or project CLAUDE.md.
+- Hooks never block, auto-commit, or auto-push. They prompt the agent and let it decide what to do.
 - Hooks actively prompt auto-memory maintenance at three points: session start (prime awareness), post-compaction (persist before context loss), and stop (final evaluation). Memory prompts instruct but do not auto-write memories — the agent evaluates what is worth saving.
-- PreToolUse hook receives JSON tool input on `stdin` (relevant for debugging and writing test scenarios).
-- `session-end.sh` has macOS/Linux branching for `sed -i` — the only script with platform-specific logic.
 
 ## Testing Skills
 

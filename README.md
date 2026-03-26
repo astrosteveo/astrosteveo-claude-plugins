@@ -1,24 +1,22 @@
 # astrosteveo-claude-plugins
 
-Claude Code plugins for session continuity, git discipline, and skill creation.
+Claude Code plugins for auto-memory awareness and skill creation.
 
 ## Plugins
 
 ### project-state
 
-Session continuity and git discipline hooks for Claude Code. No skills — just hooks that keep your work safe across sessions.
+Auto-memory awareness hooks for Claude Code. No skills — just hooks that prompt the agent to maintain its memory system.
 
 **Hooks:**
 
 | Hook | What it does |
 |------|-------------|
-| **SessionStart** | Surfaces resume notes from previous sessions so you can pick up where you left off |
-| **PreToolUse** | Blocks dangerous git commands — broad staging (`git add -A`), force push, hard reset, `git clean`, `checkout -- .` |
-| **PostCompact** | Re-injects dirty state and recent commits after context compaction |
-| **Stop** | Blocks the agent from stopping if there are uncommitted changes; categorizes all dirty state for single-turn resolution |
-| **SessionEnd** | Records uncommitted state in a CLAUDE.md resume note for the next session |
+| **SessionStart** | Primes auto-memory awareness for the session |
+| **PostCompact** | Shows recent commits for orientation; reminds agent to persist learnings before they are lost |
+| **Stop** | Prompts auto-memory evaluation before stopping; does not block |
 
-Hooks never auto-commit or auto-push. They surface state and let you decide what to do.
+Hooks never block, auto-commit, or auto-push. They prompt the agent and let it decide what to do.
 
 ### skills-creator
 
@@ -46,7 +44,7 @@ python plugins/project-state/scripts/test-hooks.py
 python plugins/project-state/scripts/test-hooks.py --hook stop-gate
 
 # Single scenario
-python plugins/project-state/scripts/test-hooks.py --scenario unstaged-modifications
+python plugins/project-state/scripts/test-hooks.py --scenario outputs-memory-prompt
 
 # JSON output
 python plugins/project-state/scripts/test-hooks.py --json
