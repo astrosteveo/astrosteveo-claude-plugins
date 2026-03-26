@@ -26,7 +26,7 @@ Create Conventional Commits for each logical unit of work identified in the curr
 !`git ls-files --others --exclude-standard | while read -r f; do echo "=== $f ==="; head -20 "$f"; echo; done`
 
 ### Recent Commits
-!`git log --oneline -10`
+!`git log --oneline -10 2>/dev/null || echo "(no commits yet — this is a fresh repository)"`
 
 ## Instructions
 
