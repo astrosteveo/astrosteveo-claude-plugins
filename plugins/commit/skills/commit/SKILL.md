@@ -7,24 +7,41 @@ description: "Creates Conventional Commits for each logical unit of work in the 
 
 Create Conventional Commits for each logical unit of work identified in the current git diff.
 
+## Current State
+
+### Git Status
+!`git status`
+
+### Change Overview
+!`git diff --cached --stat`
+!`git diff --stat`
+
+### Staged Changes
+!`git diff --cached`
+
+### Unstaged Changes
+!`git diff`
+
+### Untracked Files
+!`git ls-files --others --exclude-standard | while read -r f; do echo "=== $f ==="; head -20 "$f" 2>/dev/null; echo; done`
+
+### Recent Commits
+!`git log --oneline -10`
+
 ## Instructions
 
-### Step 1: Gather State
+### Step 1: Review State
 
-Run these commands in parallel to understand the current state:
+Review the git state above. If there are no changes (clean working tree), inform the user and stop.
 
-1. `git status` — see all tracked/untracked changes (never use `-uall` flag)
-2. `git diff` — see unstaged changes
-3. `git diff --cached` — see staged changes
-4. `git log --oneline -10` — see recent commits for context and style
+If the Staged Changes section is non-empty, the user has intentionally staged those files. Treat the pre-staged files as a distinct first commit group. Do not unstage them or re-stage other files into that group.
 
-If there are no changes (clean working tree), inform the user and stop.
+### Step 2: Analyze, Group, and Classify
 
-### Step 2: Analyze and Group Changes
-
-Review all changes and group them into logical units of work. A unit of work is a cohesive set of changes that belong together in a single commit.
+Review all changes and group them into logical units of work, assigning each unit a Conventional Commit type in the same pass.
 
 Grouping guidelines:
+- If changes are already staged, those files form the first commit group
 - Changes to the same feature or component typically belong together
 - A bug fix and its test belong in the same commit
 - Documentation updates for a code change belong with that change
@@ -32,9 +49,7 @@ Grouping guidelines:
 - Refactoring should be separate from feature/fix commits
 - If all changes are part of one logical unit, create one commit
 
-### Step 3: Determine Commit Types
-
-For each unit of work, assign a Conventional Commit type:
+Assign each unit a type:
 
 | Type | When to use |
 |------|------------|
@@ -53,7 +68,7 @@ Scope is optional. Use it when the change is clearly scoped to a specific area (
 
 For breaking changes, add `!` before the colon: `feat!:` or `feat(api)!:`
 
-### Step 4: Present the Commit Plan
+### Step 3: Present the Commit Plan
 
 Present the plan to the user in this format:
 
@@ -62,14 +77,18 @@ Commit Plan:
 
 1. type(scope): description
    Files: file1.js, file2.js
+   Why: brief rationale for the type choice
 
 2. type(scope): description
    Files: file3.js
+   Why: brief rationale for the type choice
 ```
+
+The "Why" line is especially important for borderline decisions (e.g., refactor vs. feat, fix vs. chore). Keep it to one sentence.
 
 Wait for user approval before proceeding. If the user wants changes, adjust and re-present.
 
-### Step 5: Execute Commits
+### Step 4: Execute Commits
 
 For each approved unit of work, in order:
 
@@ -78,12 +97,14 @@ For each approved unit of work, in order:
 3. Verify the commit succeeded
 
 Rules:
+- If a commit group consists entirely of pre-staged files, skip `git add` — they are already staged
+- For groups mixing pre-staged and unstaged files, only `git add` the files not yet staged
 - Never use `git add -A`, `git add --all`, or `git add .` — stage specific files by name
 - Do not add Co-Authored-By trailers — Claude Code attribution settings handle this
 - Pass multi-line commit messages via a HEREDOC
 - If a pre-commit hook fails, fix the issue and create a NEW commit (do not use --amend)
 
-### Step 6: Summary
+### Step 5: Summary
 
 After all commits are created, show the new commits via `git log --oneline`.
 
@@ -100,23 +121,36 @@ After all commits are created, show the new commits via `git log --oneline`.
 ### Example 1: Single unit of work
 User says: "/commit"
 Git diff shows: auth module changes + its tests
-Plan: `feat(auth): add JWT token refresh on expiry`
-Files: src/auth.js, tests/auth.test.js
+Plan:
+1. `feat(auth): add JWT token refresh on expiry`
+   Files: src/auth.js, tests/auth.test.js
+   Why: new capability, not modifying existing refresh behavior
 
 ### Example 2: Multiple units of work
 User says: "commit my changes"
 Git diff shows: bug fix in API + unrelated README update + new config file
 Plan:
 1. `fix(api): handle null response from upstream service`
+   Files: src/api/handler.js
+   Why: fixes a crash when upstream returns null, not a new feature
 2. `docs: update setup instructions in README`
+   Files: README.md
+   Why: only markdown changes, no code affected
 3. `chore: add production config template`
+   Files: config/production.template.json
+   Why: config template, not a source or test change
 
-### Example 3: Refactor with tests
-User says: "create commits for this work"
-Git diff shows: extracted utility functions + updated imports + new tests
+### Example 3: Pre-staged changes
+User says: "/commit"
+Staged changes: two files the user already staged via `git add`
+Unstaged changes: unrelated formatting fix
 Plan:
-1. `refactor: extract date formatting into shared utilities`
-2. `test: add unit tests for date formatting utilities`
+1. `feat(auth): add session timeout configuration`
+   Files: src/auth.js, src/config.js (pre-staged)
+   Why: new capability — user intentionally staged these together
+2. `style: fix whitespace in utils`
+   Files: src/utils.js
+   Why: formatting only, no logic change
 
 ## Troubleshooting
 
