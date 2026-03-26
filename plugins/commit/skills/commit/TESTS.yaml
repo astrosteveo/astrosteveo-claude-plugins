@@ -5,11 +5,10 @@ config:
   default_model: sonnet
   default_max_turns: 1
   max_budget_per_test: 0.02
-  max_budget_total: 0.20
+  max_budget_total: 0.60
 
 triggers:
   should_trigger:
-    - "/commit"
     - "commit my changes"
     - "create commits"
     - "commit this work"

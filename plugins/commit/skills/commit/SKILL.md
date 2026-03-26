@@ -1,6 +1,6 @@
 ---
 name: commit
-description: "Creates Conventional Commits for each logical unit of work in the current git diff. Use when the user says 'commit', 'commit my changes', 'create commits', 'commit this work', or runs /commit. Analyzes staged and unstaged changes, groups them into logical units, presents a commit plan for approval, then creates one well-formatted commit per unit. Follows the Conventional Commits specification (type(scope): description)."
+description: "Creates Conventional Commits for each logical unit of work in the current git diff. Use when the user says 'commit', 'commit my changes', 'create commits', 'commit this work', or runs /commit. Do NOT trigger for questions about commits — e.g. explaining commit history, writing commit messages, reverting commits, or understanding conventions. Analyzes staged and unstaged changes, groups them into logical units, presents a commit plan for approval, then creates one well-formatted commit per unit. Follows the Conventional Commits specification (type(scope): description)."
 ---
 
 # Commit
@@ -23,7 +23,7 @@ Create Conventional Commits for each logical unit of work identified in the curr
 !`git diff`
 
 ### Untracked Files
-!`git ls-files --others --exclude-standard | while read -r f; do echo "=== $f ==="; head -20 "$f" 2>/dev/null; echo; done`
+!`git ls-files --others --exclude-standard | while read -r f; do echo "=== $f ==="; head -20 "$f"; echo; done`
 
 ### Recent Commits
 !`git log --oneline -10`
