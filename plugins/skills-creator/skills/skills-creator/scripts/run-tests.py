@@ -51,8 +51,6 @@ def parse_yaml_file(path):
         content = f.read()
     if HAS_YAML:
         return yaml.safe_load(content)
-    # Minimal parser for TESTS.yaml — handles common patterns
-    # For production use, install PyYAML
     raise RuntimeError(
         "PyYAML is required for parsing TESTS.yaml. "
         "Install with: pip install pyyaml\n"
@@ -60,7 +58,7 @@ def parse_yaml_file(path):
     )
 
 
-# ── Result Types ──────────────────────────────────────────────────
+# Result Types
 
 class TestResult:
     """A single test result."""
@@ -93,7 +91,7 @@ class TestResult:
         return d
 
 
-# ── Layer 1: Structural ──────────────────────────────────────────
+# Layer 1: Structural
 
 def run_layer1(skill_dir, config):
     """Run structural validation checks."""
@@ -154,7 +152,7 @@ def detect_plugin_dir(skill_dir):
     return None
 
 
-# ── Layer 2: Trigger Tests ────────────────────────────────────────
+# Layer 2: Trigger Tests
 
 def run_claude_p(prompt, output_format="stream-json", max_turns=1,
                  model=None, max_budget=None, extra_flags=None):
@@ -303,7 +301,7 @@ def run_layer2(skill_dir, config, extra_flags=None):
     return results
 
 
-# ── Layer 3: Behavioral Tests ─────────────────────────────────────
+# Layer 3: Behavioral Tests
 
 def get_full_response_text(events):
     """Extract all assistant text from stream events."""
@@ -513,7 +511,7 @@ def run_layer3(skill_dir, config, extra_flags=None):
     return results
 
 
-# ── Report Generation ─────────────────────────────────────────────
+# Report Generation
 
 def generate_report(results, config, skill_dir):
     """Generate a full test report."""
@@ -591,7 +589,7 @@ def print_report(report):
         print(f"  {s['errors']} error(s) must be fixed.\n")
 
 
-# ── Main ──────────────────────────────────────────────────────────
+# Main
 
 def main():
     parser = argparse.ArgumentParser(description="Run skill tests from TESTS.yaml")

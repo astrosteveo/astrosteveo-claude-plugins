@@ -140,9 +140,8 @@ def validate_skill(skill_dir):
     skill_dir = os.path.abspath(skill_dir)
     folder_name = os.path.basename(skill_dir)
 
-    # ── Directory checks ──────────────────────────────────────────
+    # Directory checks
 
-    # Check folder exists
     if not os.path.isdir(skill_dir):
         checks.append(Check(
             "folder_exists", "structure", False,
@@ -150,7 +149,6 @@ def validate_skill(skill_dir):
         ))
         return checks  # Can't continue without the folder
 
-    # Check folder is kebab-case
     kebab_re = re.compile(r"^[a-z][a-z0-9]*(-[a-z0-9]+)*$")
     checks.append(Check(
         "folder_kebab_case", "structure",
@@ -158,7 +156,6 @@ def validate_skill(skill_dir):
         f"Folder name '{folder_name}' {'is' if kebab_re.match(folder_name) else 'is not'} kebab-case"
     ))
 
-    # Check no README.md
     readme_exists = os.path.exists(os.path.join(skill_dir, "README.md"))
     checks.append(Check(
         "no_readme", "structure",
@@ -166,7 +163,7 @@ def validate_skill(skill_dir):
         "README.md found in skill folder (not allowed)" if readme_exists else "No README.md in skill folder"
     ))
 
-    # ── SKILL.md checks ──────────────────────────────────────────
+    # SKILL.md checks
 
     skill_md_path = os.path.join(skill_dir, "SKILL.md")
 
@@ -187,12 +184,10 @@ def validate_skill(skill_dir):
         ))
         return checks  # Can't continue without SKILL.md
 
-    # Read file content
     with open(skill_md_path, "r", encoding="utf-8") as f:
         content = f.read()
     lines = content.split("\n")
 
-    # Check line count
     line_count = len(lines)
     checks.append(Check(
         "line_count", "structure",
@@ -218,9 +213,8 @@ def validate_skill(skill_dir):
         else "No XML angle brackets outside code blocks"
     ))
 
-    # ── Frontmatter checks ────────────────────────────────────────
+    # Frontmatter checks
 
-    # Check frontmatter delimiters
     has_frontmatter = content.startswith("---")
     second_delimiter = content.find("---", 3)
     has_closing = second_delimiter > 0
@@ -236,7 +230,6 @@ def validate_skill(skill_dir):
     if not (has_frontmatter and has_closing):
         return checks  # Can't parse frontmatter
 
-    # Parse YAML
     frontmatter_text = content[3:second_delimiter].strip()
     try:
         fm = parse_frontmatter(frontmatter_text)
@@ -253,7 +246,7 @@ def validate_skill(skill_dir):
         ))
         return checks
 
-    # ── Name field checks ─────────────────────────────────────────
+    # Name field checks
 
     name = fm.get("name")
 
@@ -292,7 +285,7 @@ def validate_skill(skill_dir):
             else "name does not contain reserved words (claude/anthropic)"
         ))
 
-    # ── Description field checks ──────────────────────────────────
+    # Description field checks
 
     desc = fm.get("description")
 
@@ -345,7 +338,7 @@ def validate_skill(skill_dir):
             severity="warning"
         ))
 
-    # ── Optional field checks ─────────────────────────────────────
+    # Optional field checks
 
     compatibility = fm.get("compatibility")
     if compatibility is not None:
@@ -375,7 +368,7 @@ def validate_skill(skill_dir):
             severity="warning"
         ))
 
-    # ── Reference integrity checks ────────────────────────────────
+    # Reference integrity checks
 
     # Find all referenced files in SKILL.md body (after frontmatter)
     # Only check references OUTSIDE code blocks
@@ -409,7 +402,7 @@ def validate_skill(skill_dir):
         severity="warning"  # Warning by default; use TESTS.yaml required_references for strict
     ))
 
-    # ── Path style checks ─────────────────────────────────────────
+    # Path style checks
 
     # Check for Windows-style backslash paths in body (outside code blocks)
     in_code_block = False

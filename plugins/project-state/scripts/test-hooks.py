@@ -42,7 +42,7 @@ def parse_yaml_file(path):
     )
 
 
-# ── Result Type ──────────────────────────────────────────────────────
+# Result Type
 
 class TestResult:
     """A single test assertion result."""
@@ -70,7 +70,7 @@ class TestResult:
         return d
 
 
-# ── Structural Validation ────────────────────────────────────────────
+# Structural Validation
 
 VALID_EVENTS = {
     "SessionStart", "InstructionsLoaded", "UserPromptSubmit",
@@ -220,7 +220,7 @@ def run_structural_checks(plugin_dir, hooks_config):
     return results
 
 
-# ── Scenario Setup ───────────────────────────────────────────────────
+# Scenario Setup
 
 def setup_scenario(workdir, setup):
     """Prepare an isolated test environment from the scenario spec."""
@@ -265,7 +265,7 @@ def setup_scenario(workdir, setup):
             f.write(content)
 
 
-# ── Hook Execution ───────────────────────────────────────────────────
+# Hook Execution
 
 def run_hook_script(script_path, workdir, stdin_data=None, timeout=30):
     """Execute a hook script in the given working directory."""
@@ -283,13 +283,13 @@ def run_hook_script(script_path, workdir, stdin_data=None, timeout=30):
         return "", "Script timed out", -1
 
 
-# ── Assertion Checking ───────────────────────────────────────────────
+# Assertion Checking
 
 def check_assertions(workdir, stdout, stderr, exit_code, expect):
     """Evaluate all assertions for a scenario. Returns list of TestResults."""
     results = []
 
-    # ── Exit code ──
+    # Exit code
     if "exit_code" in expect:
         expected = expect["exit_code"]
         passed = exit_code == expected
@@ -299,7 +299,7 @@ def check_assertions(workdir, stdout, stderr, exit_code, expect):
             message=f"exit {exit_code}" + ("" if passed else f" (expected {expected})"),
         ))
 
-    # ── stdout assertions ──
+    # stdout assertions
     for s in expect.get("stdout_contains", []):
         found = s in stdout
         results.append(TestResult(
@@ -317,7 +317,7 @@ def check_assertions(workdir, stdout, stderr, exit_code, expect):
             else "unexpectedly found in stdout",
         ))
 
-    # ── stderr assertions ──
+    # stderr assertions
     for s in expect.get("stderr_contains", []):
         found = s in stderr
         results.append(TestResult(
@@ -335,7 +335,7 @@ def check_assertions(workdir, stdout, stderr, exit_code, expect):
             else "unexpectedly found in stderr",
         ))
 
-    # ── File existence ──
+    # File existence
     for filepath in expect.get("file_exists", []):
         exists = os.path.exists(os.path.join(workdir, filepath))
         results.append(TestResult(
@@ -353,7 +353,7 @@ def check_assertions(workdir, stdout, stderr, exit_code, expect):
             else f"{filepath} unexpectedly exists",
         ))
 
-    # ── File content ──
+    # File content
     for filepath, patterns in expect.get("file_contains", {}).items():
         content = _read_file(workdir, filepath)
         for p in patterns:
@@ -390,7 +390,7 @@ def check_assertions(workdir, stdout, stderr, exit_code, expect):
                     else f"unexpectedly found in {filepath}",
                 ))
 
-    # ── Git log ──
+    # Git log
     git_log = _git_log(workdir)
 
     for s in expect.get("git_log_contains", []):
@@ -410,7 +410,7 @@ def check_assertions(workdir, stdout, stderr, exit_code, expect):
             else "unexpectedly found in git log",
         ))
 
-    # ── Working tree clean ──
+    # Working tree clean
     if "working_tree_clean" in expect:
         is_clean = _working_tree_clean(workdir)
         expected_clean = expect["working_tree_clean"]
@@ -463,7 +463,7 @@ def _working_tree_clean(workdir):
         return False
 
 
-# ── Scenario Runner ──────────────────────────────────────────────────
+# Scenario Runner
 
 def run_scenario(hook_name, scenario, script_path, verbose=False):
     """Run a single scenario in an isolated temp directory."""
@@ -512,7 +512,7 @@ def run_scenario(hook_name, scenario, script_path, verbose=False):
     return assertion_results
 
 
-# ── Report ───────────────────────────────────────────────────────────
+# Report
 
 def generate_report(all_results, hooks_tested):
     """Generate a structured test report."""
@@ -587,7 +587,7 @@ def print_report(report):
         print(f"  {s['errors']} error(s) must be fixed.\n")
 
 
-# ── Main ─────────────────────────────────────────────────────────────
+# Main
 
 def main():
     parser = argparse.ArgumentParser(
@@ -657,7 +657,7 @@ def main():
         print(f"\n  Total: {total} scenarios (+ structural checks)")
         return
 
-    # ── Run structural checks ──
+    # Run structural checks
     all_results = []
     hooks_tested = ["structural"]
 
@@ -671,7 +671,7 @@ def main():
         print(f"    [{icon}] {len([r for r in structural_results if r.passed])}"
               f"/{len(structural_results)} checks passed\n")
 
-    # ── Run scenario tests ──
+    # Run scenario tests
     scripts_dir = os.path.join(plugin_dir, "scripts")
 
     for hook_name, hook_data in hooks_config.items():
@@ -710,7 +710,7 @@ def main():
 
         hooks_tested.append(hook_name)
 
-    # ── Report ──
+    # Report
     report = generate_report(all_results, hooks_tested)
 
     if args.json:
