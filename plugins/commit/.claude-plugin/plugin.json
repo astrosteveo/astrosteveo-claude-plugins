@@ -1,0 +1,8 @@
+{
+    "name": "commit",
+    "description": "Conventional Commits skill for Claude Code",
+    "author": {
+        "name": "AstroSteveo",
+        "email": "astrosteveo@noreply.users.github.com"
+    }
+}

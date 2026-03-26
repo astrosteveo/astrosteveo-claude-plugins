@@ -16,6 +16,15 @@
             "source": "./plugins/project-state"
         },
         {
+            "name": "commit",
+            "description": "Conventional Commits skill for Claude Code",
+            "author": {
+                "name": "AstroSteveo",
+                "email": "astrosteveo@noreply.users.github.com"
+            },
+            "source": "./plugins/commit"
+        },
+        {
             "name": "skills-creator",
             "description": "Interactive guide for creating new Claude Code skills",
             "author": {
