@@ -1,39 +1,38 @@
 version: 1
-type: skill
+skill: commit
 
 config:
-  model: sonnet
-  max_turns: 1
-  max_cost_per_test: 0.02
-  max_total_cost: 0.20
+  default_model: sonnet
+  default_max_turns: 1
+  max_budget_per_test: 0.02
+  max_budget_total: 0.20
 
-tests:
-  trigger:
-    should_trigger:
-      - "/commit"
-      - "commit my changes"
-      - "create commits"
-      - "commit this work"
-      - "commit the changes"
-      - "make commits for these changes"
-      - "commit what I've done"
-      - "can you commit this"
+triggers:
+  should_trigger:
+    - "/commit"
+    - "commit my changes"
+    - "create commits"
+    - "commit this work"
+    - "commit the changes"
+    - "make commits for these changes"
+    - "commit what I've done"
+    - "can you commit this"
 
-    should_not_trigger:
-      - "what is a conventional commit?"
-      - "explain the commit history"
-      - "revert the last commit"
-      - "show me the git log"
-      - "how do I write a good commit message?"
-      - "undo my last commit"
+  should_not_trigger:
+    - "what is a conventional commit?"
+    - "explain the commit history"
+    - "revert the last commit"
+    - "show me the git log"
+    - "how do I write a good commit message?"
+    - "undo my last commit"
 
-    edge_cases:
-      - query: "help me write a commit message"
-        should_trigger: false
-        reason: "Asking about message format, not requesting a commit"
-      - query: "commit"
-        should_trigger: true
-        reason: "Single-word trigger should activate the skill"
-      - query: "stage and commit these files"
-        should_trigger: true
-        reason: "Explicit commit request with staging intent"
+  edge_cases:
+    - query: "help me write a commit message"
+      expect: no_trigger
+      note: "Asking about message format, not requesting a commit"
+    - query: "commit"
+      expect: trigger
+      note: "Single-word trigger should activate the skill"
+    - query: "stage and commit these files"
+      expect: trigger
+      note: "Explicit commit request with staging intent"
