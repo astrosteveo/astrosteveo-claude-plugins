@@ -384,9 +384,13 @@ def run_claude_p(prompt, output_format="stream-json", max_turns=1,
     if extra_flags:
         cmd.extend(extra_flags)
 
+    # Prevent MSYS/Git Bash from mangling slash-prefixed args (e.g. /commit -> C:/Program Files/Git/commit)
+    env = os.environ.copy()
+    env["MSYS_NO_PATHCONV"] = "1"
+
     try:
         proc = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=120, cwd=cwd
+            cmd, capture_output=True, text=True, timeout=120, cwd=cwd, env=env
         )
         return proc.stdout, proc.stderr, proc.returncode
     except subprocess.TimeoutExpired:
