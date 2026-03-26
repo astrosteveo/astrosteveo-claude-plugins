@@ -12,20 +12,27 @@ Usage:
     python run-tests.py /path/to/skill-folder --json
     python run-tests.py /path/to/skill-folder --layer 2
     python run-tests.py /path/to/skill-folder --model haiku --dry-run
+    python run-tests.py /path/to/skill-folder --parallel 4
+    python run-tests.py /path/to/skill-folder --runs 3
+    python run-tests.py /path/to/skill-folder --save-results
+    python run-tests.py /path/to/skill-folder --compare latest
 """
 
 import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
+import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Import the structural validator from the same directory
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
-from importlib import import_module
 
 
 def load_validate_structure():
@@ -91,15 +98,211 @@ class TestResult:
         return d
 
 
+# TESTS.yaml Schema Validation
+
+CANONICAL_TOP_LEVEL_KEYS = {"version", "skill", "config", "structural", "triggers", "behavioral"}
+
+CANONICAL_CONFIG_KEYS = {
+    "default_model": str,
+    "default_max_turns": int,
+    "max_budget_per_test": (int, float),
+    "max_budget_total": (int, float),
+    "permission_mode": str,
+}
+
+DEPRECATED_KEYS = {
+    "type": ("skill", "Rename 'type' to 'skill' and set value to the skill name"),
+    "tests": ("triggers", "Move 'tests.trigger' contents to top-level 'triggers'"),
+}
+
+DEPRECATED_CONFIG_KEYS = {
+    "model": ("default_model", "Rename 'config.model' to 'config.default_model'"),
+    "max_turns": ("default_max_turns", "Rename 'config.max_turns' to 'config.default_max_turns'"),
+    "max_cost_per_test": ("max_budget_per_test", "Rename 'config.max_cost_per_test' to 'config.max_budget_per_test'"),
+    "max_total_cost": ("max_budget_total", "Rename 'config.max_total_cost' to 'config.max_budget_total'"),
+}
+
+DEPRECATED_EDGE_CASE_KEYS = {
+    "should_trigger": ("expect", "Replace 'should_trigger: true/false' with 'expect: trigger/no_trigger'"),
+    "reason": ("note", "Rename 'reason' to 'note'"),
+}
+
+
+def validate_tests_yaml(raw_config, tests_path):
+    """Validate TESTS.yaml schema. Returns list of TestResult."""
+    results = []
+
+    if raw_config is None:
+        results.append(TestResult(
+            name="schema/parse_error", layer=1, passed=False,
+            message=f"TESTS.yaml at {tests_path} parsed as empty/null",
+        ))
+        return results
+
+    # Check version
+    version = raw_config.get("version")
+    results.append(TestResult(
+        name="schema/version_present", layer=1,
+        passed=version is not None,
+        message="version field present" if version is not None else "Missing 'version' field",
+    ))
+    if version is not None and version != 1:
+        results.append(TestResult(
+            name="schema/version_value", layer=1, passed=False,
+            message=f"Unsupported schema version: {version} (expected 1)",
+        ))
+
+    # Check skill identifier
+    has_skill = "skill" in raw_config
+    has_type = "type" in raw_config
+    results.append(TestResult(
+        name="schema/skill_identifier", layer=1,
+        passed=has_skill or has_type,
+        message=(
+            "skill field present" if has_skill
+            else "Missing 'skill' field (found deprecated 'type')" if has_type
+            else "Missing 'skill' field — add 'skill: your-skill-name'"
+        ),
+        severity="error" if not (has_skill or has_type) else ("warning" if has_type and not has_skill else "error"),
+    ))
+
+    # Check for deprecated top-level keys
+    for old_key, (new_key, migration) in DEPRECATED_KEYS.items():
+        if old_key in raw_config:
+            results.append(TestResult(
+                name=f"schema/deprecated_key:{old_key}", layer=1, passed=False,
+                message=f"Deprecated key '{old_key}'. {migration}",
+                severity="warning",
+            ))
+
+    # Check for unrecognized top-level keys
+    known_keys = CANONICAL_TOP_LEVEL_KEYS | set(DEPRECATED_KEYS.keys())
+    for key in raw_config:
+        if key not in known_keys:
+            results.append(TestResult(
+                name=f"schema/unknown_key:{key}", layer=1, passed=False,
+                message=f"Unrecognized top-level key '{key}'",
+                severity="warning",
+            ))
+
+    # Validate config section
+    config_section = raw_config.get("config", {})
+    if isinstance(config_section, dict):
+        known_config = set(CANONICAL_CONFIG_KEYS.keys()) | set(DEPRECATED_CONFIG_KEYS.keys())
+        for key in config_section:
+            if key in DEPRECATED_CONFIG_KEYS:
+                _, migration = DEPRECATED_CONFIG_KEYS[key]
+                results.append(TestResult(
+                    name=f"schema/deprecated_config:{key}", layer=1, passed=False,
+                    message=f"Deprecated config key '{key}'. {migration}",
+                    severity="warning",
+                ))
+            elif key not in CANONICAL_CONFIG_KEYS:
+                results.append(TestResult(
+                    name=f"schema/unknown_config:{key}", layer=1, passed=False,
+                    message=f"Unrecognized config key '{key}'",
+                    severity="warning",
+                ))
+            else:
+                expected_type = CANONICAL_CONFIG_KEYS[key]
+                val = config_section[key]
+                if not isinstance(val, expected_type):
+                    results.append(TestResult(
+                        name=f"schema/config_type:{key}", layer=1, passed=False,
+                        message=f"config.{key} should be {expected_type.__name__ if isinstance(expected_type, type) else 'number'}, got {type(val).__name__}",
+                        severity="warning",
+                    ))
+
+    # Validate triggers section
+    triggers = raw_config.get("triggers", {})
+    if isinstance(triggers, dict):
+        for key in ["should_trigger", "should_not_trigger"]:
+            val = triggers.get(key)
+            if val is not None and not isinstance(val, list):
+                results.append(TestResult(
+                    name=f"schema/triggers_type:{key}", layer=1, passed=False,
+                    message=f"triggers.{key} should be a list, got {type(val).__name__}",
+                ))
+
+        for i, edge in enumerate(triggers.get("edge_cases", [])):
+            if not isinstance(edge, dict):
+                results.append(TestResult(
+                    name=f"schema/edge_case_type:{i}", layer=1, passed=False,
+                    message=f"Edge case {i} should be a mapping, got {type(edge).__name__}",
+                ))
+                continue
+            if "query" not in edge:
+                results.append(TestResult(
+                    name=f"schema/edge_case_query:{i}", layer=1, passed=False,
+                    message=f"Edge case {i} missing required 'query' field",
+                ))
+            if "expect" not in edge and "should_trigger" not in edge:
+                results.append(TestResult(
+                    name=f"schema/edge_case_expect:{i}", layer=1, passed=False,
+                    message=f"Edge case {i} missing 'expect' field (defaults to 'trigger')",
+                    severity="warning",
+                ))
+            for old_key, (new_key, migration) in DEPRECATED_EDGE_CASE_KEYS.items():
+                if old_key in edge:
+                    results.append(TestResult(
+                        name=f"schema/deprecated_edge:{old_key}:{i}", layer=1, passed=False,
+                        message=f"Edge case {i}: deprecated key '{old_key}'. {migration}",
+                        severity="warning",
+                    ))
+
+    # Check for old-style nested triggers (tests.trigger instead of triggers)
+    tests_section = raw_config.get("tests", {})
+    if isinstance(tests_section, dict) and "trigger" in tests_section:
+        results.append(TestResult(
+            name="schema/deprecated_nested_triggers", layer=1, passed=False,
+            message="Deprecated: 'tests.trigger' detected. Move contents to top-level 'triggers'",
+            severity="warning",
+        ))
+
+    # Validate behavioral section
+    behavioral = raw_config.get("behavioral", [])
+    if isinstance(behavioral, list):
+        for i, test in enumerate(behavioral):
+            if not isinstance(test, dict):
+                results.append(TestResult(
+                    name=f"schema/behavioral_type:{i}", layer=1, passed=False,
+                    message=f"Behavioral test {i} should be a mapping",
+                ))
+                continue
+            if "name" not in test:
+                results.append(TestResult(
+                    name=f"schema/behavioral_name:{i}", layer=1, passed=False,
+                    message=f"Behavioral test {i} missing required 'name' field",
+                ))
+            if "input" not in test:
+                results.append(TestResult(
+                    name=f"schema/behavioral_input:{i}", layer=1, passed=False,
+                    message=f"Behavioral test {i} missing required 'input' field",
+                ))
+            if "assertions" not in test:
+                results.append(TestResult(
+                    name=f"schema/behavioral_assertions:{i}", layer=1, passed=False,
+                    message=f"Behavioral test {i} missing 'assertions' field",
+                    severity="warning",
+                ))
+
+    return results
+
+
 # Layer 1: Structural
 
-def run_layer1(skill_dir, config):
+def run_layer1(skill_dir, config, tests_path=None):
     """Run structural validation checks."""
+    results = []
+
+    # Schema validation (if TESTS.yaml exists)
+    if tests_path and os.path.exists(tests_path):
+        results.extend(validate_tests_yaml(config, tests_path))
+
     vs = load_validate_structure()
     checks = vs.validate_skill(skill_dir)
     report = vs.generate_report(checks, skill_dir)
 
-    results = []
     for check in report["checks"]:
         results.append(TestResult(
             name=f"structural/{check['name']}",
@@ -110,7 +313,7 @@ def run_layer1(skill_dir, config):
         ))
 
     # Check required_references from TESTS.yaml (upgrade to errors)
-    structural_config = config.get("structural", {})
+    structural_config = (config.get("structural") or {}) if config else {}
     required_refs = structural_config.get("required_references", [])
     for ref in required_refs:
         ref_path = os.path.join(skill_dir, ref)
@@ -155,32 +358,71 @@ def detect_plugin_dir(skill_dir):
 # Layer 2: Trigger Tests
 
 def run_claude_p(prompt, output_format="stream-json", max_turns=1,
-                 model=None, max_budget=None, extra_flags=None):
+                 model=None, max_budget=None, extra_flags=None, cwd=None,
+                 session_id=None, resume=False):
     """Spawn a claude -p process and return parsed output."""
     cmd = ["claude", "-p", prompt, "--output-format", output_format,
-           "--no-session-persistence", "--permission-mode", "bypassPermissions"]
+           "--permission-mode", "bypassPermissions"]
+
+    if not resume and not session_id:
+        cmd.append("--no-session-persistence")
+
+    if session_id:
+        cmd.extend(["--session-id", session_id])
+    if resume:
+        cmd.append("--resume")
 
     if output_format == "stream-json":
         cmd.append("--verbose")
 
-    if max_turns:
+    if max_turns is not None:
         cmd.extend(["--max-turns", str(max_turns)])
     if model:
         cmd.extend(["--model", model])
-    if max_budget:
+    if max_budget is not None:
         cmd.extend(["--max-budget-usd", str(max_budget)])
     if extra_flags:
         cmd.extend(extra_flags)
 
     try:
         proc = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=120
+            cmd, capture_output=True, text=True, timeout=120, cwd=cwd
         )
         return proc.stdout, proc.stderr, proc.returncode
     except subprocess.TimeoutExpired:
         return "", "Process timed out after 120s", -1
     except FileNotFoundError:
         return "", "claude CLI not found. Is Claude Code installed?", -2
+
+
+def run_claude_p_multiturn(messages, output_format="stream-json", max_turns=1,
+                           model=None, max_budget=None, extra_flags=None, cwd=None):
+    """Run a multi-turn conversation using --session-id and --resume.
+
+    Args:
+        messages: list of str, each a user message in sequence
+    Returns:
+        combined_stdout, combined_stderr, last_returncode
+    """
+    sid = str(uuid.uuid4())
+    all_stdout = []
+    all_stderr = []
+    last_rc = 0
+
+    for i, msg in enumerate(messages):
+        is_first = (i == 0)
+        stdout, stderr, rc = run_claude_p(
+            msg, output_format=output_format, max_turns=max_turns,
+            model=model, max_budget=max_budget, extra_flags=extra_flags,
+            cwd=cwd, session_id=sid, resume=not is_first,
+        )
+        all_stdout.append(stdout)
+        all_stderr.append(stderr)
+        last_rc = rc
+        if rc == -2:
+            break
+
+    return "\n".join(all_stdout), "\n".join(all_stderr), last_rc
 
 
 def parse_stream_json(output):
@@ -215,8 +457,9 @@ def parse_stream_json(output):
 
         elif msg_type == "result":
             events["result"] = obj
-            events["cost"] = obj.get("total_cost_usd", 0.0)
-            events["duration_ms"] = obj.get("duration_ms", 0)
+            # Accumulate cost/duration across multi-turn results
+            events["cost"] += obj.get("total_cost_usd", 0.0)
+            events["duration_ms"] += obj.get("duration_ms", 0)
 
     return events
 
@@ -244,7 +487,7 @@ def run_trigger_test(query, skill_name, expect_trigger, model=None, max_budget=N
 
     if rc == -2:
         return TestResult(
-            name=f"trigger/{'should' if expect_trigger else 'should_not'}: {query[:50]}",
+            name=f"trigger/{'should' if expect_trigger else 'should_not'}: {query[:60]}",
             layer=2, passed=False,
             message=f"claude CLI not found: {stderr}",
             severity="error", duration_ms=elapsed,
@@ -271,33 +514,64 @@ def run_trigger_test(query, skill_name, expect_trigger, model=None, max_budget=N
     )
 
 
-def run_layer2(skill_dir, config, extra_flags=None):
+def run_layer2(skill_dir, config, extra_flags=None, parallel=1):
     """Run all trigger tests."""
     triggers = config.get("triggers", {})
     skill_name = config.get("skill", os.path.basename(skill_dir))
     model = config.get("config", {}).get("default_model")
     max_budget = config.get("config", {}).get("max_budget_per_test", 0.50)
 
-    results = []
-
+    # Build work items: (query, expect_trigger, is_edge, edge_data)
+    work = []
     for query in triggers.get("should_trigger", []):
-        results.append(run_trigger_test(query, skill_name, True, model, max_budget,
-                                        extra_flags=extra_flags))
-
+        work.append((query, True, False, None))
     for query in triggers.get("should_not_trigger", []):
-        results.append(run_trigger_test(query, skill_name, False, model, max_budget,
-                                        extra_flags=extra_flags))
-
+        work.append((query, False, False, None))
     for edge in triggers.get("edge_cases", []):
         query = edge.get("query", "")
         expect = edge.get("expect", "trigger") == "trigger"
+        work.append((query, expect, True, edge))
+
+    if parallel > 1 and len(work) > 1:
+        return _run_trigger_tests_parallel(work, skill_name, model, max_budget,
+                                           extra_flags, parallel)
+    else:
+        return _run_trigger_tests_sequential(work, skill_name, model, max_budget,
+                                             extra_flags)
+
+
+def _run_trigger_tests_sequential(work, skill_name, model, max_budget, extra_flags):
+    """Run trigger tests one at a time."""
+    results = []
+    for query, expect, is_edge, edge_data in work:
         result = run_trigger_test(query, skill_name, expect, model, max_budget,
                                   extra_flags=extra_flags)
-        result.severity = "warning"  # Edge cases are advisory
-        if edge.get("note"):
-            result.details["note"] = edge["note"]
+        if is_edge:
+            result.severity = "warning"
+            if edge_data and edge_data.get("note"):
+                result.details["note"] = edge_data["note"]
         results.append(result)
+    return results
 
+
+def _run_trigger_tests_parallel(work, skill_name, model, max_budget, extra_flags, parallel):
+    """Run trigger tests concurrently."""
+    results = []
+    with ThreadPoolExecutor(max_workers=parallel) as pool:
+        future_map = {}
+        for query, expect, is_edge, edge_data in work:
+            f = pool.submit(run_trigger_test, query, skill_name, expect, model,
+                            max_budget, extra_flags)
+            future_map[f] = (is_edge, edge_data)
+
+        for future in as_completed(future_map):
+            is_edge, edge_data = future_map[future]
+            result = future.result()
+            if is_edge:
+                result.severity = "warning"
+                if edge_data and edge_data.get("note"):
+                    result.details["note"] = edge_data["note"]
+            results.append(result)
     return results
 
 
@@ -318,12 +592,20 @@ def get_tool_names_called(events):
     return {call["tool"] for call in events.get("tool_calls", [])}
 
 
-def check_hard_assertion(assertion, events):
+def get_tool_call_sequence(events):
+    """Get ordered list of tool names invoked."""
+    return [call["tool"] for call in events.get("tool_calls", [])]
+
+
+FILESYSTEM_ASSERTION_TYPES = {"file_exists", "file_not_exists", "directory_exists", "file_contains"}
+
+
+def check_hard_assertion(assertion, events, workdir=None):
     """Check a deterministic assertion against stream data."""
     atype = assertion.get("type", "")
 
     if atype == "no_errors":
-        result_obj = events.get("result", {})
+        result_obj = events.get("result") or {}
         is_error = result_obj.get("is_error", False)
         return not is_error, "No errors detected" if not is_error else "Errors detected in output"
 
@@ -344,17 +626,89 @@ def check_hard_assertion(assertion, events):
         matched = bool(re.search(pattern, text, re.IGNORECASE))
         return matched, f"Output matches pattern '{pattern}'" if matched else f"Output does NOT match pattern '{pattern}'"
 
+    elif atype == "output_does_not_match":
+        pattern = assertion.get("pattern", "")
+        text = get_full_response_text(events)
+        matched = bool(re.search(pattern, text, re.IGNORECASE))
+        return not matched, (
+            f"Output correctly does not match pattern '{pattern}'"
+            if not matched
+            else f"Output unexpectedly matches pattern '{pattern}'"
+        )
+
     elif atype == "exit_success":
-        result_obj = events.get("result", {})
+        result_obj = events.get("result") or {}
         subtype = result_obj.get("subtype", "")
         passed = subtype == "success"
         return passed, f"Exit: {subtype}"
 
     elif atype == "max_turns_ok":
-        result_obj = events.get("result", {})
+        result_obj = events.get("result") or {}
         subtype = result_obj.get("subtype", "")
         passed = subtype != "error_max_turns"
         return passed, "Completed within turn limit" if passed else "Hit max turns limit"
+
+    elif atype == "tool_sequence":
+        expected_seq = assertion.get("value", [])
+        actual_seq = get_tool_call_sequence(events)
+        it = iter(actual_seq)
+        matched = all(tool in it for tool in expected_seq)
+        return matched, (
+            f"Tool sequence {expected_seq} found in order"
+            if matched
+            else f"Tool sequence {expected_seq} not found. Actual: {actual_seq}"
+        )
+
+    elif atype == "tool_call_count":
+        tool = assertion.get("value", "")
+        expected_count = assertion.get("count", 0)
+        actual_count = sum(1 for c in events.get("tool_calls", []) if c["tool"] == tool)
+        op = assertion.get("op", "eq")
+        if op == "gte":
+            passed = actual_count >= expected_count
+        elif op == "lte":
+            passed = actual_count <= expected_count
+        else:
+            passed = actual_count == expected_count
+        return passed, f"Tool '{tool}' called {actual_count} times (expected {op} {expected_count})"
+
+    # Filesystem assertions
+    elif atype in FILESYSTEM_ASSERTION_TYPES:
+        if not workdir:
+            return False, f"{atype} requires test isolation (add a 'setup' block to the test case)"
+
+        if atype == "file_exists":
+            filepath = assertion.get("value", "")
+            exists = os.path.exists(os.path.join(workdir, filepath))
+            return exists, f"File '{filepath}' {'exists' if exists else 'does not exist'}"
+
+        elif atype == "file_not_exists":
+            filepath = assertion.get("value", "")
+            exists = os.path.exists(os.path.join(workdir, filepath))
+            return not exists, f"File '{filepath}' {'does not exist' if not exists else 'unexpectedly exists'}"
+
+        elif atype == "directory_exists":
+            dirpath = assertion.get("value", "")
+            exists = os.path.isdir(os.path.join(workdir, dirpath))
+            return exists, f"Directory '{dirpath}' {'exists' if exists else 'does not exist'}"
+
+        elif atype == "file_contains":
+            filepath = assertion.get("value", "")
+            pattern = assertion.get("pattern", "")
+            full_path = os.path.join(workdir, filepath)
+            if not os.path.exists(full_path):
+                return False, f"File '{filepath}' does not exist"
+            try:
+                with open(full_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+            except (OSError, UnicodeDecodeError) as e:
+                return False, f"Cannot read '{filepath}': {e}"
+            matched = bool(re.search(pattern, content, re.IGNORECASE))
+            return matched, (
+                f"File '{filepath}' contains pattern '{pattern}'"
+                if matched
+                else f"File '{filepath}' does not contain pattern '{pattern}'"
+            )
 
     return None, None  # Not a hard assertion
 
@@ -378,7 +732,7 @@ def check_soft_assertions(assertions, events, model=None):
             name=f"behavioral/soft:{a['type']}",
             layer=3, passed=False,
             message="No response text to evaluate",
-            severity="warning",
+            severity=a.get("severity", "warning"),
         ) for a in soft]
 
     # Build evaluation prompt
@@ -413,7 +767,7 @@ ASSERTION_TYPE: PASS|FAIL - explanation"""
                 name=f"behavioral/soft:{a['type']}",
                 layer=3, passed=False,
                 message=f"Evaluator failed (rc={rc})",
-                severity="warning",
+                severity=a.get("severity", "warning"),
             ))
         return results
 
@@ -443,11 +797,42 @@ ASSERTION_TYPE: PASS|FAIL - explanation"""
             name=f"behavioral/soft:{atype}",
             layer=3, passed=passed,
             message=explanation,
-            severity="warning",  # Soft assertions are advisory
+            severity=a.get("severity", "warning"),
             cost=eval_cost / max(len(soft), 1),
         ))
 
     return results
+
+
+def setup_test_environment(workdir, setup):
+    """Prepare a test environment in workdir. Mirrors test-hooks.py pattern."""
+    if setup.get("git_init"):
+        subprocess.run(["git", "init"], cwd=workdir, capture_output=True, text=True)
+        subprocess.run(["git", "config", "user.email", "test@test.local"],
+                       cwd=workdir, capture_output=True, text=True)
+        subprocess.run(["git", "config", "user.name", "Test Runner"],
+                       cwd=workdir, capture_output=True, text=True)
+
+    for filepath, content in (setup.get("files") or {}).items():
+        full = os.path.join(workdir, filepath)
+        os.makedirs(os.path.dirname(full), exist_ok=True)
+        with open(full, "w", encoding="utf-8") as f:
+            f.write(content)
+
+    if setup.get("commit") and setup.get("git_init"):
+        subprocess.run(["git", "add", "-A"], cwd=workdir, capture_output=True, text=True)
+        subprocess.run(["git", "commit", "-m", "initial"],
+                       cwd=workdir, capture_output=True, text=True)
+
+
+def _needs_workdir(test_case):
+    """Check if a behavioral test needs an isolated working directory."""
+    if test_case.get("setup"):
+        return True
+    for a in test_case.get("assertions", []):
+        if a.get("type", "") in FILESYSTEM_ASSERTION_TYPES:
+            return True
+    return False
 
 
 def run_behavioral_test(test_case, config, extra_flags=None):
@@ -458,57 +843,97 @@ def run_behavioral_test(test_case, config, extra_flags=None):
     model = config.get("config", {}).get("default_model")
     max_budget = test_case.get("max_budget", config.get("config", {}).get("max_budget_per_test", 0.50))
     assertions = test_case.get("assertions", [])
+    setup = test_case.get("setup", {})
 
-    # Run the skill
-    start = time.time()
-    stdout, stderr, rc = run_claude_p(
-        input_text, output_format="stream-json", max_turns=max_turns,
-        model=model, max_budget=max_budget, extra_flags=extra_flags
-    )
-    elapsed = int((time.time() - start) * 1000)
+    workdir = None
+    try:
+        if _needs_workdir(test_case):
+            safe_name = re.sub(r'[^a-zA-Z0-9_-]', '-', name[:20])
+            workdir = tempfile.mkdtemp(prefix=f"skill-test-{safe_name}-")
+            if setup:
+                setup_test_environment(workdir, setup)
 
-    if rc == -2:
-        return [TestResult(
-            name=f"behavioral/{name}",
-            layer=3, passed=False,
-            message=f"claude CLI not found: {stderr}",
-            severity="error", duration_ms=elapsed,
-        )]
+        # Run the skill
+        start = time.time()
+        if isinstance(input_text, list):
+            stdout, stderr, rc = run_claude_p_multiturn(
+                input_text, output_format="stream-json", max_turns=max_turns,
+                model=model, max_budget=max_budget, extra_flags=extra_flags,
+                cwd=workdir,
+            )
+        else:
+            stdout, stderr, rc = run_claude_p(
+                input_text, output_format="stream-json", max_turns=max_turns,
+                model=model, max_budget=max_budget, extra_flags=extra_flags,
+                cwd=workdir,
+            )
+        elapsed = int((time.time() - start) * 1000)
 
-    events = parse_stream_json(stdout)
-    cost = events.get("cost", 0.0)
-    results = []
+        if rc == -2:
+            return [TestResult(
+                name=f"behavioral/{name}",
+                layer=3, passed=False,
+                message=f"claude CLI not found: {stderr}",
+                severity="error", duration_ms=elapsed,
+            )]
 
-    # Check hard assertions
-    for assertion in assertions:
-        passed, message = check_hard_assertion(assertion, events)
-        if passed is not None:
-            results.append(TestResult(
-                name=f"behavioral/{name}/{assertion['type']}",
-                layer=3, passed=passed, message=message,
-                cost=0, duration_ms=0,
-                details={"assertion": assertion},
-            ))
+        events = parse_stream_json(stdout)
+        cost = events.get("cost", 0.0)
+        results = []
 
-    # Check soft assertions
-    soft_results = check_soft_assertions(assertions, events, model)
-    results.extend(soft_results)
+        # Check hard assertions
+        for assertion in assertions:
+            atype = assertion.get("type", "")
+            passed, message = check_hard_assertion(assertion, events, workdir=workdir)
+            if passed is not None:
+                results.append(TestResult(
+                    name=f"behavioral/{name}/{atype}",
+                    layer=3, passed=passed, message=message,
+                    cost=0, duration_ms=0,
+                    details={"assertion": assertion},
+                ))
+            elif atype not in SOFT_ASSERTION_TYPES:
+                results.append(TestResult(
+                    name=f"behavioral/{name}/{atype}",
+                    layer=3, passed=False,
+                    message=f"Unknown assertion type '{atype}'",
+                    severity="warning",
+                ))
 
-    # Add metadata to first result
-    if results:
-        results[0].cost = cost
-        results[0].duration_ms = elapsed
+        # Check soft assertions
+        soft_results = check_soft_assertions(assertions, events, model)
+        results.extend(soft_results)
 
-    return results
+        # Add metadata to first result
+        if results:
+            results[0].cost = cost
+            results[0].duration_ms = elapsed
+
+        return results
+
+    finally:
+        if workdir:
+            shutil.rmtree(workdir, ignore_errors=True)
 
 
-def run_layer3(skill_dir, config, extra_flags=None):
+def run_layer3(skill_dir, config, extra_flags=None, parallel=1):
     """Run all behavioral tests."""
     behavioral = config.get("behavioral", [])
-    results = []
-    for test_case in behavioral:
-        results.extend(run_behavioral_test(test_case, config, extra_flags=extra_flags))
-    return results
+    if parallel > 1 and len(behavioral) > 1:
+        results = []
+        with ThreadPoolExecutor(max_workers=parallel) as pool:
+            futures = {
+                pool.submit(run_behavioral_test, tc, config, extra_flags): tc
+                for tc in behavioral
+            }
+            for future in as_completed(futures):
+                results.extend(future.result())
+        return results
+    else:
+        results = []
+        for test_case in behavioral:
+            results.extend(run_behavioral_test(test_case, config, extra_flags=extra_flags))
+        return results
 
 
 # Report Generation
@@ -538,6 +963,7 @@ def generate_report(results, config, skill_dir):
     return {
         "skill_dir": skill_dir,
         "skill_name": config.get("skill", os.path.basename(skill_dir)),
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "summary": {
             "total": len(results),
             "passed": len(passed),
@@ -589,6 +1015,186 @@ def print_report(report):
         print(f"  {s['errors']} error(s) must be fixed.\n")
 
 
+# Flakiness Detection
+
+def run_flakiness_analysis(all_runs):
+    """Analyze per-test stability across multiple runs.
+
+    Args:
+        all_runs: list of list[TestResult], one inner list per run
+    Returns:
+        dict with per-test pass rates and flaky test list
+    """
+    test_passes = {}  # name -> [bool, ...]
+    num_runs = len(all_runs)
+
+    for run_results in all_runs:
+        for r in run_results:
+            test_passes.setdefault(r.name, []).append(r.passed)
+
+    tests = {}
+    flaky = []
+    for name, passes in test_passes.items():
+        rate = sum(passes) / len(passes)
+        entry = {"pass_rate": round(rate, 2), "runs": len(passes)}
+        if 0 < rate < 1.0:
+            entry["flaky"] = True
+            flaky.append(name)
+        tests[name] = entry
+
+    return {
+        "num_runs": num_runs,
+        "total_tests": len(tests),
+        "flaky_count": len(flaky),
+        "flaky_tests": flaky,
+        "stability": round(1.0 - len(flaky) / max(len(tests), 1), 2),
+        "tests": tests,
+    }
+
+
+def print_flakiness_report(flakiness):
+    """Print human-readable flakiness report."""
+    print(f"\n{'=' * 70}")
+    print(f"  Flakiness Report ({flakiness['num_runs']} runs)")
+    print(f"{'=' * 70}")
+    print(f"  {flakiness['total_tests']} tests  |  "
+          f"{flakiness['flaky_count']} flaky  |  "
+          f"stability: {flakiness['stability'] * 100:.0f}%\n")
+
+    if flakiness["flaky_tests"]:
+        print("  FLAKY TESTS:")
+        for name in flakiness["flaky_tests"]:
+            rate = flakiness["tests"][name]["pass_rate"]
+            print(f"    {name}: {rate * 100:.0f}% pass rate")
+        print()
+    else:
+        print("  No flaky tests detected.\n")
+
+
+# Regression Tracking
+
+def save_results(report, skill_dir):
+    """Save test results to skill_dir/test-results/."""
+    results_dir = os.path.join(skill_dir, "test-results")
+    os.makedirs(results_dir, exist_ok=True)
+
+    timestamp = time.strftime("%Y-%m-%d_%H%M%S")
+    filepath = os.path.join(results_dir, f"{timestamp}.json")
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2)
+
+    # Write latest.json
+    latest_path = os.path.join(results_dir, "latest.json")
+    with open(latest_path, "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2)
+
+    return filepath
+
+
+def compare_results(current_report, baseline_path):
+    """Compare current results against a baseline.
+
+    Returns:
+        dict with regressions, improvements, new_tests, removed_tests
+    """
+    try:
+        with open(baseline_path, "r", encoding="utf-8") as f:
+            baseline = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        return {"error": f"Cannot load baseline: {e}"}
+
+    baseline_map = {r["name"]: r["passed"] for r in baseline.get("results", [])}
+    current_map = {r["name"]: r["passed"] for r in current_report.get("results", [])}
+
+    regressions = []
+    improvements = []
+    for name, passed in current_map.items():
+        if name in baseline_map:
+            if baseline_map[name] and not passed:
+                regressions.append(name)
+            elif not baseline_map[name] and passed:
+                improvements.append(name)
+
+    new_tests = [n for n in current_map if n not in baseline_map]
+    removed_tests = [n for n in baseline_map if n not in current_map]
+
+    return {
+        "baseline_timestamp": baseline.get("timestamp", "unknown"),
+        "regressions": regressions,
+        "improvements": improvements,
+        "new_tests": new_tests,
+        "removed_tests": removed_tests,
+        "regression_count": len(regressions),
+        "improvement_count": len(improvements),
+    }
+
+
+def print_comparison(diff):
+    """Print human-readable comparison."""
+    if "error" in diff:
+        print(f"\n  Comparison error: {diff['error']}\n")
+        return
+
+    print(f"\n{'=' * 70}")
+    print(f"  Comparison vs baseline ({diff['baseline_timestamp']})")
+    print(f"{'=' * 70}")
+
+    if diff["regressions"]:
+        print(f"\n  REGRESSIONS ({diff['regression_count']}):")
+        for name in diff["regressions"]:
+            print(f"    [REGR] {name}")
+
+    if diff["improvements"]:
+        print(f"\n  IMPROVEMENTS ({diff['improvement_count']}):")
+        for name in diff["improvements"]:
+            print(f"    [IMPR] {name}")
+
+    if diff["new_tests"]:
+        print(f"\n  NEW TESTS ({len(diff['new_tests'])}):")
+        for name in diff["new_tests"]:
+            print(f"    [NEW]  {name}")
+
+    if diff["removed_tests"]:
+        print(f"\n  REMOVED TESTS ({len(diff['removed_tests'])}):")
+        for name in diff["removed_tests"]:
+            print(f"    [DEL]  {name}")
+
+    if not any([diff["regressions"], diff["improvements"], diff["new_tests"], diff["removed_tests"]]):
+        print("\n  No changes from baseline.")
+
+    print()
+
+
+# Suite Execution
+
+def execute_suite(skill_dir, config, layer=None, extra_flags=None,
+                  budget_total=5.00, parallel=1, quiet=False, tests_path=None):
+    """Run all requested layers and return list of TestResult.
+
+    This is the core test execution loop, isolated from CLI concerns.
+    """
+    results = []
+    total_cost = 0.0
+
+    if layer is None or layer == 1:
+        results.extend(run_layer1(skill_dir, config, tests_path=tests_path))
+
+    if layer is None or layer == 2:
+        if config.get("triggers"):
+            results.extend(run_layer2(skill_dir, config, extra_flags=extra_flags,
+                                      parallel=parallel))
+            total_cost = sum(r.cost for r in results)
+            if total_cost >= budget_total and not quiet:
+                print(f"\n  Budget cap reached (${total_cost:.4f} >= ${budget_total:.2f}). Stopping.\n")
+
+    if (layer is None or layer == 3) and total_cost < budget_total:
+        if config.get("behavioral"):
+            results.extend(run_layer3(skill_dir, config, extra_flags=extra_flags,
+                                      parallel=parallel))
+
+    return results
+
+
 # Main
 
 def main():
@@ -602,6 +1208,14 @@ def main():
                         help="Show what would be tested without running")
     parser.add_argument("--plugin-dir",
                         help="Plugin directory to pass to claude -p (auto-detected if omitted)")
+    parser.add_argument("--parallel", type=int, default=1, metavar="N",
+                        help="Number of parallel test workers (default: 1)")
+    parser.add_argument("--runs", type=int, default=1, metavar="N",
+                        help="Run suite N times and report per-test stability")
+    parser.add_argument("--save-results", action="store_true",
+                        help="Save results to test-results/ in the skill folder")
+    parser.add_argument("--compare", metavar="BASELINE",
+                        help="Compare results against a baseline file (path or 'latest')")
     args = parser.parse_args()
 
     skill_dir = os.path.abspath(args.skill_dir)
@@ -613,8 +1227,9 @@ def main():
         if not args.json:
             print(f"No TESTS.yaml found in {skill_dir}. Running structural checks only.\n")
         config = {"skill": os.path.basename(skill_dir)}
+        tests_path = None
     else:
-        config = parse_yaml_file(tests_path)
+        config = parse_yaml_file(tests_path) or {"skill": os.path.basename(skill_dir)}
 
     # Apply CLI overrides
     if args.model:
@@ -624,17 +1239,21 @@ def main():
     if args.dry_run:
         triggers = config.get("triggers", {})
         behavioral = config.get("behavioral", [])
+        total_trigger = (len(triggers.get('should_trigger', [])) +
+                         len(triggers.get('should_not_trigger', [])) +
+                         len(triggers.get('edge_cases', [])))
         print(f"Skill: {config.get('skill', os.path.basename(skill_dir))}")
-        print(f"Layer 1: {20}+ structural checks")
+        print(f"Layer 1: structural checks (including schema validation)")
         print(f"Layer 2: {len(triggers.get('should_trigger', []))} should-trigger, "
               f"{len(triggers.get('should_not_trigger', []))} should-not-trigger, "
               f"{len(triggers.get('edge_cases', []))} edge cases")
         print(f"Layer 3: {len(behavioral)} behavioral tests")
-        est_cost = (len(triggers.get('should_trigger', [])) +
-                    len(triggers.get('should_not_trigger', [])) +
-                    len(triggers.get('edge_cases', []))) * 0.02
-        est_cost += len(behavioral) * 0.10
+        est_cost = total_trigger * 0.02 + len(behavioral) * 0.10
         print(f"Estimated cost: ~${est_cost:.2f}")
+        if args.parallel > 1:
+            print(f"Parallel workers: {args.parallel}")
+        if args.runs > 1:
+            print(f"Runs: {args.runs} (est. total: ~${est_cost * args.runs:.2f})")
         return
 
     # Detect plugin directory for --plugin-dir flag
@@ -645,33 +1264,65 @@ def main():
         if not args.json and not args.dry_run:
             print(f"  Plugin directory: {plugin_dir}\n")
 
-    # Run tests
-    results = []
-    total_cost = 0.0
     budget_total = config.get("config", {}).get("max_budget_total", 5.00)
 
-    if args.layer is None or args.layer == 1:
-        results.extend(run_layer1(skill_dir, config))
-
-    if args.layer is None or args.layer == 2:
-        if config.get("triggers"):
-            results.extend(run_layer2(skill_dir, config, extra_flags=extra_flags or None))
-            total_cost = sum(r.cost for r in results)
-            if total_cost >= budget_total:
+    # Flakiness detection: multiple runs
+    if args.runs > 1:
+        all_runs = []
+        cumulative_cost = 0.0
+        for i in range(args.runs):
+            if cumulative_cost >= budget_total:
                 if not args.json:
-                    print(f"\n  Budget cap reached (${total_cost:.4f} >= ${budget_total:.2f}). Stopping.\n")
+                    print(f"\n  Budget cap reached after {i} runs. Stopping.\n")
+                break
+            if not args.json:
+                print(f"  Run {i + 1}/{args.runs}...")
+            run_results = execute_suite(
+                skill_dir, config, layer=args.layer, extra_flags=extra_flags or None,
+                budget_total=budget_total - cumulative_cost, parallel=args.parallel,
+                quiet=args.json, tests_path=tests_path,
+            )
+            cumulative_cost += sum(r.cost for r in run_results)
+            all_runs.append(run_results)
 
-    if (args.layer is None or args.layer == 3) and total_cost < budget_total:
-        if config.get("behavioral"):
-            results.extend(run_layer3(skill_dir, config, extra_flags=extra_flags or None))
+        flakiness = run_flakiness_analysis(all_runs)
 
-    # Generate report
-    report = generate_report(results, config, skill_dir)
+        # Use the last run for the primary report
+        results = all_runs[-1] if all_runs else []
+        report = generate_report(results, config, skill_dir)
+        report["flakiness"] = flakiness
+    else:
+        # Single run
+        results = execute_suite(
+            skill_dir, config, layer=args.layer, extra_flags=extra_flags or None,
+            budget_total=budget_total, parallel=args.parallel,
+            quiet=args.json, tests_path=tests_path,
+        )
+        report = generate_report(results, config, skill_dir)
 
+    # Save results
+    if args.save_results:
+        path = save_results(report, skill_dir)
+        if not args.json:
+            print(f"  Results saved to {path}\n")
+
+    # Compare against baseline (mutate report before printing)
+    if args.compare:
+        baseline_path = args.compare
+        if baseline_path == "latest":
+            baseline_path = os.path.join(skill_dir, "test-results", "latest.json")
+        diff = compare_results(report, baseline_path)
+        report["comparison"] = diff
+
+    # Output: JSON once at the end, or human-readable
     if args.json:
         print(json.dumps(report, indent=2))
     else:
         print_report(report)
+        if args.runs > 1:
+            print_flakiness_report(report.get("flakiness", {}))
+        if args.compare:
+            print_comparison(report.get("comparison", {}))
 
     sys.exit(0 if report["summary"]["result"] == "PASS" else 1)
 
