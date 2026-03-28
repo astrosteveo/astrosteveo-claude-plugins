@@ -1,16 +1,6 @@
 ---
 name: godot-dev
-description: |
-  Guides Godot 4.x development toward proper use of the engine's node and scene
-  system instead of hiding everything in GDScript files. Ensures scenes have visible,
-  editable node trees rather than single nodes with monolithic scripts that construct
-  everything at runtime. Enforces scene composition, component architecture, and
-  data-driven design with custom Resources. Use when working in a Godot project,
-  writing GDScript, creating scenes or nodes, building procedural generation systems,
-  designing game architecture, or using Godot MCP tools. Triggers on "create a scene",
-  "add a node", "build a system", "generate terrain", "loot tables", "enemy waves",
-  "procedural", "GDScript", "Godot", or any .gd/.tscn/.tres file work.
-  Do NOT use for non-Godot projects or general programming unrelated to game development.
+description: "Enforces proper Godot 4.x node-and-scene architecture so game structure is visible in the editor, not hidden in scripts. TRIGGER when: code imports or references .gd/.tscn/.tres files, project has a project.godot file, or user asks to build game objects, scenes, enemies, levels, spawning, loot, or procedural content in Godot. Also triggers on 'add an enemy', 'create a scene', 'write a GDScript', 'build a level', 'set up a spawner', 'make a player controller', 'help me with my Godot game', 'how should I structure this in Godot', or any Godot MCP tool usage. DO NOT trigger for non-Godot projects, general programming, or game development in other engines (Unity, Unreal, Pygame)."
 compatibility: Requires Godot 4.x project. Godot MCP server recommended for editor integration.
 metadata:
   author: astrosteveo
