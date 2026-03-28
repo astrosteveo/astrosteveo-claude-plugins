@@ -1,17 +1,20 @@
 ---
 name: godot-dev
-description: >
-  Guides all Godot 4.x development with engine conventions, architecture patterns,
-  and the Recipe-Generator pattern for scalable procedural content. Use when working
-  in a Godot project, writing GDScript, creating scenes or nodes, building procedural
-  generation systems, designing game architecture, or using Godot MCP tools. Triggers
-  on "create a scene", "add a node", "build a system", "generate terrain", "loot tables",
-  "enemy waves", "procedural", "GDScript", "Godot", or any .gd/.tscn/.tres file work.
+description: |
+  Guides Godot 4.x development toward proper use of the engine's node and scene
+  system instead of hiding everything in GDScript files. Ensures scenes have visible,
+  editable node trees rather than single nodes with monolithic scripts that construct
+  everything at runtime. Enforces scene composition, component architecture, and
+  data-driven design with custom Resources. Use when working in a Godot project,
+  writing GDScript, creating scenes or nodes, building procedural generation systems,
+  designing game architecture, or using Godot MCP tools. Triggers on "create a scene",
+  "add a node", "build a system", "generate terrain", "loot tables", "enemy waves",
+  "procedural", "GDScript", "Godot", or any .gd/.tscn/.tres file work.
   Do NOT use for non-Godot projects or general programming unrelated to game development.
 compatibility: Requires Godot 4.x project. Godot MCP server recommended for editor integration.
 metadata:
   author: astrosteveo
-  version: 1.0.0
+  version: 2.0.0
   mcp-server: godot-mcp
   category: game-development
   tags: [godot, gdscript, game-dev, procedural-generation, architecture]
@@ -19,64 +22,60 @@ metadata:
 
 # Godot Dev
 
-Comprehensive development guidance for Godot 4.x projects. Enforces engine conventions, idiomatic architecture, and the Recipe-Generator pattern for all procedural content.
+Development guidance for Godot 4.x projects. The core goal: build games using Godot's node and scene system so the editor reflects the actual structure of the game. Scripts add behavior to nodes — they do not replace them.
 
-## Non-Negotiable Rules
+## The Core Problem This Skill Solves
 
-These rules are absolute. No exceptions. No shortcuts.
+Claude's default behavior in Godot projects is to put everything in `.gd` scripts. Instead of creating nodes in the editor or via MCP, it writes scripts that programmatically construct the entire scene tree at runtime. The user opens their project and sees a barren scene tree — one node, one script, everything hidden inside code.
 
-### 1. NEVER Create Visual Assets in Code
+This is wrong. Godot's strength is its node and scene system. A game's structure should be visible, inspectable, and editable in the editor. Scripts add logic to nodes. They do not replace the scene tree.
 
-No `new()` calls for meshes, materials, textures, shaders, or any visual resource. NEVER.
+### The Rule
 
-- No `BoxMesh.new()`, `SphereMesh.new()`, `PlaneMesh.new()`
-- No `StandardMaterial3D.new()` with hardcoded colors
-- No `ShaderMaterial.new()` with inline shader code
-- No `Gradient.new()`, `GradientTexture2D.new()`
-- No `SurfaceTool` or `ImmediateMesh` for permanent geometry
+**Build with nodes and scenes first. Add scripts for behavior.**
 
-Visual assets MUST be editor-created `.tscn` scenes or `.tres` resources, visible in the inspector, authored by a human or imported from external tools.
+- When the user needs a game object, create it as nodes in a scene (`.tscn`), not as runtime code in a script
+- When using MCP tools, use `godot-mcp:create_scene`, `godot-mcp:add_node`, etc. to build the scene tree — do not write a script that calls `add_child()` for everything
+- The Godot editor's scene tree should reflect the game's actual structure
+- A user should be able to open any `.tscn` file and see what it contains, select nodes, move them, inspect their properties
 
-**The only exception:** Truly transient runtime visuals (debug draws, temporary indicators) that are never part of the shipped game's art.
+### What This Looks Like
 
-### 2. All Procedural Content Uses the Recipe-Generator Pattern
+**Wrong — everything hidden in a script:**
+```
+main.tscn
+└── GameManager (Node)     ← one node, one script, everything else created at runtime
+```
 
-When content needs variation, build a **system**, not a script that spits out random stuff. See `references/recipe-pattern.md` for the full pattern.
-
-- **Recipe** = A Resource defining rules, parameters, and constraints (pure data, no logic)
-- **Generator** = A system that reads Recipes and produces deterministic output
-- Same Recipe + same seed = same result, every time
-- All Recipe parameters are `@export`ed, designer-facing, inspector-editable
-
-### 3. All Scripts Follow Conventions
-
-Every GDScript file must have:
-- `@tool` — editor visibility is required
-- `class_name` — for type safety and editor integration
-- Full static typing — variables, parameters, return types, no exceptions
-- `@export` for all tunable values — zero hardcoded gameplay numbers
-
-See `references/conventions.md` for the complete convention set.
-
-### 4. No Code-Generated Assets Means NO CODE-GENERATED ASSETS
-
-This is worth repeating because it is the most commonly violated rule.
-
-A script's job is **logic**. An asset's job is **visuals**. These do not cross. If you need a mesh, material, particle system, or any visual element — it is a `.tscn` or `.tres` file created in the editor. Period.
-
-Read `references/anti-patterns.md` for a catalog of what NOT to do and why.
+**Right — scene tree reflects the game:**
+```
+main.tscn
+├── Player (CharacterBody3D)
+│   ├── CollisionShape3D
+│   ├── MeshInstance3D
+│   ├── HealthComponent (Node)
+│   └── Camera3D
+├── Environment (Node3D)
+│   ├── Ground (StaticBody3D)
+│   ├── DirectionalLight3D
+│   └── WorldEnvironment
+├── EnemySpawner (Node3D)
+└── HUD (CanvasLayer)
+    ├── HealthBar (ProgressBar)
+    └── ScoreLabel (Label)
+```
 
 ## Architecture Principles
 
-### Resources for Data, Nodes for Behavior, Scenes for Composition
+### Nodes for Structure, Scripts for Behavior, Resources for Data
 
 | Godot Type | Role | Example |
 |------------|------|---------|
-| Resource | Pure data container, serializable, shareable | GearData, ZoneData, SpawnRecipe |
-| Node | Behavior, logic, lifecycle hooks | EnemyController, HealthComponent |
-| Scene (.tscn) | Composition of nodes + resources, editor-visible | enemy.tscn, projectile.tscn |
+| Node / Scene (.tscn) | Visible structure, composition, editor-editable | enemy.tscn, projectile.tscn, main_level.tscn |
+| Script (.gd) | Behavior and logic attached to nodes | enemy_controller.gd, health_component.gd |
+| Resource (.tres) | Pure data, serializable, shareable, inspector-editable | gear_data.tres, spawn_config.tres |
 
-### Component Pattern Over Inheritance
+### Component Pattern Over Deep Inheritance
 
 Reusable behaviors are Node-based components added as children, not deep inheritance trees.
 
@@ -87,67 +86,83 @@ enemy.tscn
 │   ├── HitFlashComponent
 │   ├── DamageNumberSpawner
 │   ├── DropComponent
-│   └── MeshInstance3D (visual — authored in editor)
+│   ├── CollisionShape3D
+│   └── MeshInstance3D
 ```
 
-Components auto-connect to siblings via signals. To deal damage to anything: find its `HealthComponent` and call `take_damage()`.
+Components connect to siblings via signals. To deal damage to anything: find its `HealthComponent` and call `take_damage()`. See `references/conventions.md` for the full component pattern.
 
 ### Signals for Decoupling
 
-Nodes communicate through signals, not direct references. A component emits signals about what happened; the parent or siblings decide what to do about it.
+Nodes communicate through signals, not direct references. A component emits signals about what happened; the parent or siblings decide what to do.
 
 ### Groups for Cross-Cutting Queries
 
 Use groups (`"player"`, `"enemies"`, `"zone_root"`) for runtime lookups across the tree. Access via `get_tree().get_first_node_in_group()` or `get_tree().get_nodes_in_group()`.
 
-## The Recipe-Generator Pattern (Overview)
+## GDScript Conventions
 
-When you need procedural variation — enemy waves, loot drops, terrain features, prop placement, anything — build a Recipe-Generator system.
+### Recommended for All Scripts
 
-### Recipe (Resource)
+- **Static typing** — type your variables, parameters, and return values. GDScript's type system catches bugs at parse time and improves editor autocompletion. The official docs recommend it; use it as your default.
+- **`@export` for tunable values** — gameplay numbers belong in the inspector, not hardcoded in scripts. This lets designers (and you) adjust values without editing code.
+
+### Use Selectively, Not Everywhere
+
+- **`@tool`** — makes a script run in the editor. Use it for editor plugins, custom Resource previews, and scripts that need to show something in the viewport at edit time. Do NOT put it on gameplay scripts (enemy AI, player controllers, game managers) — it can cause editor instability, unintended side effects, and performance drag. Guard editor-only code with `Engine.is_editor_hint()`.
+- **`class_name`** — registers a global class. Use it on types you reference elsewhere (custom Resources, components used via `is` checks, classes used as type hints). Skip it on scripts that are only attached to one specific scene node — it pollutes the global namespace and clutters the "Add Node" dialog.
+
+See `references/conventions.md` for the complete convention set with examples.
+
+## Data-Driven Design with Resources
+
+When game content needs configuration or variation — enemy stats, loot tables, spawn rules, zone definitions — use custom Resource subclasses. This is standard Godot practice, equivalent to Unity's ScriptableObjects.
+
+### The Pattern
+
+1. **Config Resource** — a Resource subclass with `@export` fields defining rules and parameters. Pure data, no side effects. Designers edit it in the inspector. Saved as `.tres` files.
+2. **Logic** — a script (or static function) that reads the config and produces results. Takes a seeded `RandomNumberGenerator` when randomness is involved.
+3. **Building blocks** — visual assets referenced by the config as `PackedScene` or `Resource` arrays. Editor-authored `.tscn` and `.tres` files.
+
+### Example: Spawn Config
 
 ```gdscript
-@tool
-class_name SpawnRecipe
+class_name SpawnConfig
 extends Resource
 
+## Enemy scenes to choose from (editor-authored .tscn files)
 @export var enemy_scenes: Array[PackedScene] = []
 @export var enemy_weights: Array[float] = []
 @export var min_count: int = 3
 @export var max_count: int = 8
 @export var spawn_radius: float = 10.0
-@export var difficulty_curve: Curve
 ```
 
-Recipes are **pure data**. No methods that produce side effects. Designers edit them in the inspector. They live as `.tres` files in `resources/`.
+A spawner node holds a `SpawnConfig` export, reads the config at runtime, and instantiates the referenced scenes. The key: enemy visuals are existing `.tscn` scenes built in the editor, not meshes generated in code.
 
-### Generator (Node or Static Class)
+See `references/data-driven-resources.md` for detailed examples covering spawning, loot, and prop placement.
 
-```gdscript
-@tool
-class_name SpawnGenerator
-extends RefCounted
+## Procedural Geometry
 
-static func generate(recipe: SpawnRecipe, rng: RandomNumberGenerator) -> Array[SpawnEntry]:
-    var count := rng.randi_range(recipe.min_count, recipe.max_count)
-    var entries: Array[SpawnEntry] = []
-    for i in count:
-        var scene := _weighted_pick(recipe.enemy_scenes, recipe.enemy_weights, rng)
-        var angle := rng.randf() * TAU
-        var dist := rng.randf() * recipe.spawn_radius
-        var pos := Vector3(cos(angle) * dist, 0, sin(angle) * dist)
-        entries.append(SpawnEntry.new(scene, pos))
-    return entries
-```
+Godot provides `SurfaceTool`, `ArrayMesh`, `ImmediateMesh`, and `MeshDataTool` for generating meshes in code. These are legitimate tools for:
 
-Generators take a Recipe + RNG seed and produce deterministic results. Same inputs = same outputs.
+- Voxel terrain (Minecraft-style worlds)
+- Heightmap-based terrain generation
+- Rope, chain, and cable physics visualization
+- Trail and ribbon effects
+- Dynamic water surfaces
+- Navigation meshes for procedural levels
+- Debug visualization
 
-See `references/recipe-pattern.md` for detailed examples covering terrain, loot, props, VFX, and more.
+**When procedural geometry is appropriate:** the mesh itself needs to be algorithmic — its shape is computed, not authored.
+
+**When it is NOT appropriate:** using `BoxMesh.new()` or `SphereMesh.new()` as lazy placeholders because creating a proper `.tscn` scene feels like more work. If an artist could author it, it should be a scene. If it must be computed, use the procedural geometry tools.
 
 ## MCP Workflow
 
 When using Godot MCP tools for editor integration:
 
+- Use MCP to **create nodes and build scene trees** — this is the primary workflow, not writing scripts that construct everything
 - Always `godot-mcp:open_scene` before `godot-mcp:play_scene` — play runs the last-opened scene
 - Set `global_position` after `add_child`, not before — node must be in tree
 - Use `call_deferred()` for `add_child` during `_ready` to avoid "parent busy" errors
@@ -157,72 +172,91 @@ When using Godot MCP tools for editor integration:
 
 ## Decision Framework
 
-### "I need a visual element"
+### "I need to build a game object"
 
-1. Does it already exist as a `.tscn` or `.tres`? **Use it.**
-2. Can it be created in the Godot editor? **Create it there.**
-3. Does it need variation? **Build a Recipe Resource that defines the rules, a Generator that reads the recipe, and `.tscn`/`.tres` templates for the visual building blocks.**
-4. Is it a debug/dev-only visual? **Only then may code create it, clearly marked as debug.**
+1. **Create a scene** (`.tscn`) with the appropriate node types — use MCP or guide the user to create it in the editor
+2. **Add child nodes** for collision, visuals, components
+3. **Attach scripts** only for behavior that nodes need
+4. **Export tunable values** so they are inspector-editable
 
-### "I need procedural content"
+### "I need content with variation"
 
-1. Define the **Recipe** — what are the rules, parameters, constraints?
-2. Build the **Generator** — deterministic function from Recipe + seed to output
-3. Create the **visual building blocks** as editor assets (`.tscn` scenes, `.tres` resources)
-4. The Generator references and composes the building blocks — it never creates them
+1. Define a **Config Resource** — what are the parameters and rules?
+2. Write **logic** that reads the config + a seeded RNG to produce deterministic results
+3. **Visual building blocks** are editor-authored scenes and resources referenced by the config
+4. Same config + same seed = same result
 
 ### "I need to add a system"
 
-1. Is it data? **Resource subclass.**
-2. Is it behavior? **Node-based component.**
-3. Is it global state? **Autoload singleton.**
-4. Does it need editor visibility? **`@tool` (which is all scripts).**
-5. Does it need variation? **Recipe-Generator pattern.**
+1. Is it data? **Resource subclass**, saved as `.tres`
+2. Is it behavior? **Node-based component**, added as a child
+3. Is it global state? **Autoload singleton** (use sparingly)
+4. Does it need editor preview? **Add `@tool`** to that specific script
+5. Does it need variation? **Data-driven Resource pattern**
+
+### "I need procedural geometry"
+
+1. Does the shape need to be computed algorithmically? **Use SurfaceTool/ArrayMesh**
+2. Could an artist author this mesh instead? **Make it a `.tscn` scene**
+3. Am I using `BoxMesh.new()` as a placeholder? **Stop. Create a scene instead.**
 
 ## Examples
 
 ### Example 1: User says "Add enemy spawning"
 
-**Wrong approach:** A script that calls `BoxMesh.new()` to make placeholder enemies with random colors.
+**Wrong:** Write a script that creates MeshInstance3D nodes with BoxMesh.new() at runtime.
 
-**Right approach:**
-1. Create `SpawnRecipe` Resource with `@export` arrays for enemy scenes, weights, counts, radius
-2. Create `SpawnGenerator` static class that reads the recipe + RNG seed
-3. Enemy visuals are existing `.tscn` scenes authored in the editor
-4. Spawner node holds a `SpawnRecipe` export, calls Generator at runtime
+**Right:**
+1. Create enemy `.tscn` scenes in the editor with proper meshes, collision, and components
+2. Create a `SpawnConfig` Resource with exported arrays for enemy scenes, weights, counts
+3. Create a spawner node that reads the config and instantiates the enemy scenes
+4. The scene tree shows the spawner; the enemies appear as instanced scenes at runtime
 
-### Example 2: User says "I need terrain generation"
+### Example 2: User says "Build a level"
 
-**Wrong approach:** A script that creates `PlaneMesh.new()` and `StandardMaterial3D.new()` with random green/brown colors.
+**Wrong:** Write a script that programmatically creates StaticBody3D, MeshInstance3D, lights, etc.
 
-**Right approach:**
-1. Create `TerrainRecipe` Resource: biome rules, height curve, texture assignments
-2. Create `TerrainGenerator` that reads the recipe + seed, outputs placement data
-3. Visual terrain tiles/chunks are `.tscn` scenes with proper meshes and materials made in the editor
-4. Generator selects and places the right tiles based on recipe rules
+**Right:**
+1. Use MCP to create a level scene with nodes: ground, walls, lights, spawn points
+2. Each element is a visible, selectable node in the scene tree
+3. Scripts handle logic (door opening, trigger zones) — not scene construction
+4. The user can open the scene and see the entire level layout
 
-### Example 3: User says "Build a loot system"
+### Example 3: User says "I need a loot system"
 
-**Wrong approach:** A script with hardcoded drop rates and item stats scattered through the code.
+**Wrong:** Hardcode drop rates and item stats in a script.
 
-**Right approach:**
-1. Create `LootRecipe` Resource: rarity weights, item pool references, quantity ranges
-2. Create `LootGenerator` that rolls against the recipe + RNG seed
-3. Item definitions are `GearData` Resources (`.tres` files) with exported stats
-4. Generator picks from the pool — it defines no items itself
+**Right:**
+1. Create `GearData` Resource subclass with exported stats (damage, rarity, etc.)
+2. Save individual items as `.tres` files — editable in the inspector
+3. Create a `LootConfig` Resource with item pool references and drop weights
+4. Loot logic reads the config + RNG seed — it defines no items itself
+
+## Testing
+
+Automate what you can. Hand off what you can't with clear playtest instructions.
+
+- **Unit test** pure logic: damage calculations, state machines, inventory, Resource configs. Use GUT or GdUnit4.
+- **Integration test** scenes: instantiate a scene, advance frames, assert on node state and signals.
+- **Prompt the user for manual playtesting** when the thing being tested is feel, visuals, balance, AI behavior, or anything requiring human judgment. Give them specific things to check.
+- **Simulated input is for verifying wiring, not gameplay.** Simulate a keypress to confirm "jump" makes the character leave the ground — that's an integration test. Do NOT simulate input to evaluate feel, balance, or combat. You cannot see the screen. Ask the user to playtest and give you feedback.
+
+See `references/testing.md` for framework setup, test structure, CI patterns, and when to hand off to the user.
 
 ## Troubleshooting
 
-**"But I need a quick placeholder mesh"**
-No. Create a simple `.tscn` with a basic mesh in the editor. It takes 30 seconds and it scales. A code-generated mesh is technical debt from the moment it's written.
+**Scene tree is empty / everything is runtime-generated**
+This is the core problem. Identify what was created in scripts and move it to scenes/nodes. Use MCP to build the scene tree. Scripts should reference nodes, not create them.
 
-**"The Recipe pattern seems like overkill for this"**
-If the content needs any variation at all, it's not overkill — it's the minimum viable approach. If it truly needs zero variation, it should be a static `.tscn` scene. Either way, code doesn't create assets.
+**"But I need things to spawn at runtime"**
+Runtime instantiation is fine — `PackedScene.instantiate()` to spawn pre-authored scenes. The scene itself (the enemy, the projectile, the pickup) should be a `.tscn` file, not geometry assembled in code.
 
-**"I need to generate geometry at runtime"**
-Then you need a Generator that composes pre-authored mesh building blocks (`.tres` MeshLibrary entries, `.tscn` chunk scenes). The Generator arranges them — it doesn't model them.
+**"The user just wants a quick prototype"**
+Even prototypes benefit from a visible scene tree. Create simple scenes with basic meshes in the editor. It takes seconds and the user can actually see and modify what they have.
 
 **MCP tool errors**
 - "Tool not found": Use fully qualified names (`godot-mcp:tool_name`)
 - "Parent busy": Use `call_deferred()` for `add_child` in `_ready`
 - Properties not updating: Reload script + scan filesystem after modifications
+
+Read `references/anti-patterns.md` for a catalog of common mistakes and how to avoid them.

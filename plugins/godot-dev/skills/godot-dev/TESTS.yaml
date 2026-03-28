@@ -19,7 +19,7 @@ triggers:
     - "I need a loot table system"
     - "build enemy wave spawning"
     - "procedural prop placement"
-    - "create a recipe for spawning"
+    - "create a spawn config resource"
 
     # Architecture
     - "how should I structure my inventory system in Godot"
@@ -43,43 +43,48 @@ triggers:
   edge_cases:
     - query: "procedurally generate some rocks"
       expect: trigger
-      note: "Should trigger and guide toward Recipe-Generator pattern, not code-generated meshes"
+      note: "Should trigger and guide toward editor-authored rock scenes with a scatter config"
     - query: "create a mesh in code"
       expect: trigger
-      note: "Should trigger and redirect away from code-generated assets"
+      note: "Should trigger and evaluate whether procedural geometry is appropriate or if a scene would be better"
     - query: "I need random enemy spawns"
       expect: trigger
-      note: "Should trigger and guide toward seeded RNG with Recipe pattern"
+      note: "Should trigger and guide toward data-driven config with seeded RNG"
     - query: "make a simple game"
       expect: no_trigger
-      note: "Too vague — could be any engine or framework"
+      note: "Too vague -- could be any engine or framework"
 
 behavioral:
-  - name: "rejects code-generated meshes"
-    input: "Create a BoxMesh in code for my Godot enemy placeholder"
-    max_turns: 3
+  - name: "builds scene tree instead of script-only construction"
+    input: "Create a basic enemy for my Godot 3D game with health and movement"
+    max_turns: 5
     assertions:
-      - type: output_does_not_match
-        pattern: "BoxMesh\\.new\\(\\)"
       - type: output_matches
-        pattern: "(?i)(scene|tscn|editor|recipe)"
+        pattern: "(?i)(scene|tscn|node|CharacterBody|add_node)"
+      - type: output_matches
+        pattern: "(?i)(component|HealthComponent|health)"
 
-  - name: "recommends recipe pattern for procedural content"
+  - name: "uses data-driven resources for configurable content"
     input: "I need to procedurally scatter rocks around my Godot zone"
     max_turns: 3
     assertions:
       - type: output_matches
-        pattern: "(?i)(recipe|resource|export|generator)"
-      - type: output_does_not_match
-        pattern: "SphereMesh\\.new|BoxMesh\\.new|PlaneMesh\\.new"
+        pattern: "(?i)(resource|config|export|tres|PackedScene)"
 
-  - name: "enforces script conventions"
-    input: "Write a basic GDScript for an enemy that chases the player"
+  - name: "recommends MCP tools for scene construction"
+    input: "Set up a basic 3D level in my Godot project with ground, lighting, and a player spawn point"
     max_turns: 5
     assertions:
       - type: output_matches
-        pattern: "@tool"
+        pattern: "(?i)(godot-mcp|create_scene|add_node|scene)"
+      - type: output_does_not_match
+        pattern: "PlaneMesh\\.new|BoxMesh\\.new|DirectionalLight3D\\.new\\(\\)"
+
+  - name: "does not put @tool on gameplay scripts"
+    input: "Write a GDScript for an enemy that chases the player in Godot"
+    max_turns: 5
+    assertions:
+      - type: output_does_not_match
+        pattern: "^@tool"
       - type: output_matches
-        pattern: "class_name"
-      - type: output_matches
-        pattern: "@export"
+        pattern: "(?i)(extends|CharacterBody|Node)"

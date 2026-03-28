@@ -1,12 +1,33 @@
-# Anti-Patterns: What NOT To Do
+# Common Mistakes: What Claude Gets Wrong in Godot
 
-Every pattern below is something that has been done wrong, repeatedly, by AI assistants and developers taking shortcuts. Each one produces code that is ugly, fragile, unscalable, and a pain to maintain. Do not do any of these. Ever.
+These are patterns Claude defaults to when working in Godot projects. Every one of them hides game structure inside scripts instead of using Godot's node and scene system. Recognize them and redirect to the correct approach.
 
-## 1. Code-Generated Meshes
+## 1. The Empty Scene Tree
 
-**The violation:**
+**What Claude does:**
+Creates a single node with a massive script that builds the entire game at runtime.
+
+```
+main.tscn
+└── Game (Node)  ← one node, everything else is add_child() in code
+```
+
+The script calls `add_child()` dozens of times to create the player, enemies, environment, UI — all invisible in the editor.
+
+**Why it's a problem:**
+- The user opens the project and sees nothing
+- Cannot select, move, or inspect anything in the editor
+- Cannot use the inspector to tweak properties
+- The entire game structure is locked inside code
+
+**What to do instead:**
+Build the scene tree with actual nodes — either in the editor or via Godot MCP tools. Every significant game element should be a node in the tree. Scripts add behavior to those nodes.
+
+## 2. Script-Constructed Visuals
+
+**What Claude does:**
 ```gdscript
-# NEVER DO THIS
+# Creates geometry in code instead of using the editor
 var mesh := BoxMesh.new()
 mesh.size = Vector3(2, 1, 2)
 var mesh_instance := MeshInstance3D.new()
@@ -14,20 +35,21 @@ mesh_instance.mesh = mesh
 add_child(mesh_instance)
 ```
 
-**Why it's terrible:**
-- Invisible in the editor — you can't see it, select it, or tweak it without running the game
-- No artist can touch it — it's buried in code
-- Doesn't scale — want 10 variations? Now you have 10 code blocks generating slightly different boxes
-- Looks bad — procedurally assembled geometry with no artistic intent is obvious placeholder forever
+**Why it's a problem:**
+- Invisible in the editor — you cannot see, select, or tweak it without running the game
+- No artist or designer can touch it — it is buried in code
+- Uses programmatic placeholders when a 30-second editor scene would be better
+- Ten variations means ten code blocks generating slightly different boxes
 
 **What to do instead:**
 Create a `.tscn` scene in the editor with the mesh. Reference it as a `PackedScene` export. Instantiate it at runtime if needed.
 
-## 2. Code-Generated Materials
+**When code-generated geometry IS correct:** the mesh must be computed algorithmically (voxel terrain, heightmaps, ropes, trails, dynamic water). These are legitimate uses of `SurfaceTool`, `ArrayMesh`, and `ImmediateMesh`. The test: could an artist author this mesh? If yes, it should be a scene. If the shape is algorithmic, generate it in code.
 
-**The violation:**
+## 3. Script-Constructed Materials
+
+**What Claude does:**
 ```gdscript
-# NEVER DO THIS
 var mat := StandardMaterial3D.new()
 mat.albedo_color = Color(0.2, 0.6, 0.3)
 mat.metallic = 0.5
@@ -35,79 +57,72 @@ mat.roughness = 0.8
 mesh_instance.material_override = mat
 ```
 
-**Why it's terrible:**
-- Materials are visual art — they need to be authored visually, not numerically in code
-- Can't preview in editor, can't iterate on the look without changing code and re-running
-- Color values like `Color(0.2, 0.6, 0.3)` are meaningless — is that grass? Jade? Mold? Who knows.
-- Every material becomes a unique snowflake, no reuse, no consistency
+**Why it's a problem:**
+- Materials are visual — they need to be authored visually, not numerically
+- Cannot preview in editor, cannot iterate without code changes
+- `Color(0.2, 0.6, 0.3)` is meaningless — is that grass? Jade? No one knows.
 
 **What to do instead:**
-Create `.tres` material resources in the editor. Assign them to meshes in `.tscn` scenes. If you need variation, use a Recipe with material references.
+Create `.tres` material resources in the editor. Assign them to meshes in scenes. If you need variation, use a config Resource with material references.
 
-## 3. Hardcoded Gameplay Values
+## 4. Hardcoded Gameplay Values
 
-**The violation:**
+**What Claude does:**
 ```gdscript
-# NEVER DO THIS
 var speed := 5.0
 var health := 100
 var damage := 25
-var spawn_rate := 2.5
 ```
 
-**Why it's terrible:**
-- Can't tune without code changes
-- Different values scattered across different scripts with no central reference
-- Can't expose to designers or even to yourself in the inspector
-- Makes balancing a nightmare
+**Why it's a problem:**
+- Cannot tune without code changes
+- Scattered across scripts with no central reference
+- Invisible to the inspector
 
 **What to do instead:**
 ```gdscript
-# ALWAYS DO THIS
 @export var speed: float = 5.0
 @export var max_health: int = 100
 @export var damage: int = 25
-@export var spawn_interval: float = 2.5
 ```
 
-Every tunable value is `@export`. No exceptions.
+Every tunable value should be `@export`. Editable in the inspector.
 
-## 4. Static Procedural Generation
+## 5. Runtime Scene Construction Instead of MCP
 
-**The violation:**
+**What Claude does:**
+Writes a script that builds the entire scene tree programmatically:
+
 ```gdscript
-# NEVER DO THIS — "procedural" that's really just random static junk
 func _ready() -> void:
-    for i in 20:
-        var rock := MeshInstance3D.new()
-        var mesh := SphereMesh.new()
-        mesh.radius = randf_range(0.3, 1.5)
-        rock.mesh = mesh
-        var mat := StandardMaterial3D.new()
-        mat.albedo_color = Color(randf_range(0.3, 0.5), randf_range(0.3, 0.5), randf_range(0.3, 0.5))
-        rock.material_override = mat
-        rock.position = Vector3(randf_range(-10, 10), 0, randf_range(-10, 10))
-        add_child(rock)
+    var ground := StaticBody3D.new()
+    var ground_mesh := MeshInstance3D.new()
+    ground_mesh.mesh = PlaneMesh.new()
+    ground.add_child(ground_mesh)
+    var ground_col := CollisionShape3D.new()
+    ground_col.shape = WorldBoundaryShape3D.new()
+    ground.add_child(ground_col)
+    add_child(ground)
+
+    var light := DirectionalLight3D.new()
+    light.rotation_degrees = Vector3(-45, 30, 0)
+    add_child(light)
+    # ... 50 more lines of this
 ```
 
-**Why it's terrible:**
-- This is the worst of all worlds: code-generated meshes AND materials AND randomness with no system
-- Not reproducible — different every run, can't debug specific layouts
-- Not tunable — want fewer rocks? Bigger rocks? Different distribution? Change code.
-- Looks terrible — random spheres with random gray-brown colors is not "rocks"
-- Doesn't scale — want rocks AND trees AND debris? Copy-paste this mess three times?
+**Why it's a problem:**
+- This is literally what the Godot editor and MCP tools are for
+- The scene tree shows nothing — all structure is hidden in `_ready()`
+- Cannot rearrange, inspect, or tweak any of it without editing code
+- Godot MCP can create these nodes directly in the editor
 
 **What to do instead:**
-1. Author rock `.tscn` scenes in the editor (with actual rock meshes and materials)
-2. Create a `PropScatterRecipe` Resource with density, spacing, and scene references
-3. Build a `PropScatterGenerator` that reads the Recipe + seed
-4. Instantiate the editor-authored rock scenes at the generated positions
+Use `godot-mcp:create_scene`, `godot-mcp:add_node`, etc. to build the scene tree. Or guide the user to create it in the editor. The result is a `.tscn` file with real nodes.
 
-## 5. Inline Shader Code
+## 6. Inline Shader Code
 
-**The violation:**
+**What Claude does:**
 ```gdscript
-# NEVER DO THIS
 var shader := Shader.new()
 shader.code = """
 shader_type spatial;
@@ -115,152 +130,77 @@ void fragment() {
     ALBEDO = vec3(0.5, 0.8, 0.3);
 }
 """
-var shader_mat := ShaderMaterial.new()
-shader_mat.shader = shader
 ```
 
-**Why it's terrible:**
-- Shader code in a GDScript string — no syntax highlighting, no editor preview, no error checking until runtime
-- Can't iterate on the visual in the editor
-- Shader parameters aren't exposed to the inspector
+**Why it's a problem:**
+- No syntax highlighting, no editor preview, no error checking until runtime
+- Shader parameters are not exposed to the inspector
 
 **What to do instead:**
-Write shaders as `.gdshader` files. Create `ShaderMaterial` resources (`.tres`) in the editor that reference the shader. Assign materials to meshes in scenes.
+Write shaders as `.gdshader` files. Create `ShaderMaterial` resources (`.tres`) in the editor.
 
-## 6. God Scripts
+## 7. God Scripts
 
-**The violation:**
-A single script that handles movement, health, damage, spawning, UI updates, and sound effects.
+**What Claude does:**
+A single script handling movement, health, damage, spawning, UI, and sound.
 
-**Why it's terrible:**
-- Can't reuse any single behavior
-- Can't test anything in isolation
+**Why it's a problem:**
+- Cannot reuse any single behavior
+- Cannot test in isolation
 - Every change risks breaking unrelated functionality
-- Multiple systems coupled through shared state
 
 **What to do instead:**
-Component pattern. Each behavior is its own Node script. Components communicate through signals. A 500-line god script becomes five 80-line components that are individually testable and reusable.
+Component pattern. Each behavior is its own Node script added as a child. A 500-line god script becomes five 80-line components that are individually reusable.
 
-## 7. Deep Inheritance Trees
+## 8. Deep Inheritance Trees
 
-**The violation:**
+**What Claude does:**
 ```
-Entity
-  └── LivingEntity
-        └── Combatant
-              └── Enemy
-                    └── RangedEnemy
-                          └── BossRangedEnemy
+Entity -> LivingEntity -> Combatant -> Enemy -> RangedEnemy -> BossRangedEnemy
 ```
 
-**Why it's terrible:**
-- Fragile base class problem — changing `Combatant` breaks everything below it
-- Can't mix behaviors — what if you want a non-combat LivingEntity?
-- Godot's node system is designed for composition, not deep inheritance
+**Why it's a problem:**
+- Fragile base class problem — changing `Combatant` breaks everything below
+- Cannot mix behaviors
+- Godot's node system is designed for composition
 
 **What to do instead:**
 Flat hierarchy with components:
 ```
 CharacterBody3D (with EnemyController script)
-  ├── HealthComponent
-  ├── DamageComponent
-  ├── AIComponent
-  └── MeshInstance3D
+├── HealthComponent
+├── DamageComponent
+├── AIComponent
+└── MeshInstance3D
 ```
 
-## 8. Global Randomness
+## 9. Global Randomness
 
-**The violation:**
+**What Claude does:**
 ```gdscript
-# NEVER DO THIS
 var count := randi_range(3, 8)
 var pos := Vector3(randf() * 10, 0, randf() * 10)
 ```
 
-**Why it's terrible:**
-- Not reproducible — can't recreate the same generation with a seed
-- Can't test — output is different every run
-- Global random state is shared — other systems calling `randf()` affect your results
+**Why it's a problem:**
+- Not reproducible — cannot recreate the same generation with a seed
+- Global random state is shared — other systems affect your results
 
 **What to do instead:**
 ```gdscript
-# ALWAYS DO THIS
 var rng := RandomNumberGenerator.new()
 rng.seed = hash(seed_value)
 var count := rng.randi_range(3, 8)
-var pos := Vector3(rng.randf() * 10, 0, rng.randf() * 10)
 ```
 
-Always inject a seeded `RandomNumberGenerator`. Same seed = same results.
+Inject a seeded `RandomNumberGenerator` for any procedural content. Same seed = same results.
 
-## 9. Missing @tool
+## The Common Thread
 
-**The violation:**
-```gdscript
-class_name MyComponent
-extends Node3D
-# No @tool — invisible in editor
-```
+Every mistake above shares the same root cause: **Claude defaults to doing everything in scripts instead of using Godot's editor and node system.** The fix is always the same direction:
 
-**Why it's terrible:**
-- Script doesn't run in the editor — `@export` values don't trigger visual updates
-- Can't preview behavior or see component state in the editor
-- Editor tools and MCP integration can't interact with the script
-
-**What to do instead:**
-Every script starts with `@tool`. Always.
-
-## 10. Missing class_name
-
-**The violation:**
-```gdscript
-@tool
-extends Node3D
-# No class_name — anonymous script
-```
-
-**Why it's terrible:**
-- Can't reference the type in other scripts
-- No type safety — `var enemy: Node3D` instead of `var enemy: EnemyController`
-- Doesn't appear in the editor's "Add Node" dialog
-- Can't use `is` type checking
-
-**What to do instead:**
-Every script has `class_name`. Always. The name should match the script's filename in PascalCase.
-
-## 11. Untyped Code
-
-**The violation:**
-```gdscript
-var speed = 5.0
-var enemies = []
-
-func take_damage(amount):
-    health -= amount
-```
-
-**Why it's terrible:**
-- No editor autocompletion
-- Runtime type errors instead of editor-time errors
-- Ambiguous intent — is `enemies` an `Array[Node3D]`? `Array[Enemy]`? Who knows.
-
-**What to do instead:**
-```gdscript
-var speed: float = 5.0
-var enemies: Array[EnemyController] = []
-
-func take_damage(amount: int) -> void:
-    health -= amount
-```
-
-Type everything. Variables, parameters, return types. No exceptions.
-
-## The Pattern
-
-Notice that every anti-pattern shares the same root causes:
-1. **Shortcuts** — doing the quick thing instead of the right thing
-2. **Code doing art's job** — scripts creating visual assets instead of referencing authored ones
-3. **Missing structure** — no systems, no patterns, just ad-hoc code
-4. **No editor integration** — invisible to the inspector, untweakable without code changes
-
-The Recipe-Generator pattern and Godot conventions exist specifically to prevent all of these. Follow them.
+- Structure belongs in scenes and nodes, not in scripts
+- Visual assets belong in the editor, not in code
+- Data belongs in Resources, not hardcoded in scripts
+- Use MCP tools to build scene trees, not `add_child()` chains
+- Scripts add behavior — they do not replace the editor
