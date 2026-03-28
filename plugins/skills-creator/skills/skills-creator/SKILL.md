@@ -12,9 +12,20 @@ An interactive, step-by-step workflow for building well-structured Claude skills
 
 Read `references/01-fundamentals.md` for core concepts (what a skill is, progressive disclosure, file structure rules). Internalize the constraints — they apply to every step below.
 
+## Critical: Save Location
+
+**BEFORE writing any files, you MUST ask the user where to save the skill.** Do NOT assume a location. Do NOT create directories without explicit confirmation. Present these options and wait for an answer:
+
+- `~/.claude/skills/{skill-name}/` — Personal, available across all projects
+- `.claude/skills/{skill-name}/` — Project-local, scoped to the current repo
+- A plugin directory — if the user has a plugin setup (ask them for the path)
+- Somewhere else — let them specify
+
+This question should be asked during Phase 1 (Discovery) alongside the other scoping questions. Do NOT defer it to Phase 4. The save location must be confirmed before any files are created.
+
 ## Phase 1: Discovery
 
-Goal: Understand what the user wants to build and classify the skill.
+Goal: Understand what the user wants to build, classify the skill, and confirm where to save it.
 
 1. Ask the user to describe the skill in 1–3 sentences. If they are vague, ask:
    - "What specific task should this skill automate or improve?"
@@ -36,7 +47,9 @@ Goal: Understand what the user wants to build and classify the skill.
 
 4. Note: these use cases will feed directly into trigger test cases in Phase 5. Capture the trigger phrases clearly.
 
-5. Present the classification and use cases back to the user for confirmation before continuing.
+5. **Ask where to save the skill** (see "Critical: Save Location" above). This MUST be answered before proceeding to any later phase.
+
+6. Present the classification, use cases, and save location back to the user for confirmation before continuing.
 
 ## Phase 2: Frontmatter
 
@@ -123,11 +136,7 @@ Read `references/04-writing-instructions.md` for structure templates and best pr
 
 Goal: Create the skill's directory and all files.
 
-1. Determine the full path. Ask the user where to place the skill. Common locations:
-   ```
-   skills/{skill-name}/
-   plugins/{plugin-name}/skills/{skill-name}/
-   ```
+1. Use the save location confirmed by the user in Phase 1. If it was not confirmed, STOP and ask now — do NOT assume a path.
 
 2. Create the directory structure:
    ```
@@ -155,15 +164,17 @@ Goal: Create the skill's directory and all files.
    - No `README.md` inside the skill folder
    - No XML angle brackets anywhere in SKILL.md
 
-## Phase 5: Validation
+## Phase 5: Validation & Testing
 
-Goal: Verify the skill meets all requirements.
+Goal: Verify the skill meets all requirements, then run the full test suite. You handle this end-to-end — do NOT hand the user commands to run themselves.
 
 Read `references/06-checklist.md` for the full validation checklist.
 
-Run through each check:
+### Step 1: Manual checklist
 
-### Structure checks
+Run through each check yourself by reading the files and verifying:
+
+**Structure checks:**
 - [ ] Folder named in kebab-case
 - [ ] `SKILL.md` exists with exact casing
 - [ ] YAML frontmatter has `---` delimiters
@@ -172,47 +183,71 @@ Run through each check:
 - [ ] No XML angle brackets in any file
 - [ ] No `README.md` in skill folder
 
-### Content checks
+**Content checks:**
 - [ ] Instructions are clear and actionable
 - [ ] Error handling included for likely failure modes
 - [ ] Examples provided for common scenarios
 - [ ] References clearly linked (if used)
 - [ ] SKILL.md is under 500 lines
 
-### Trigger checks
+**Trigger checks:**
 - [ ] Description includes 3+ trigger phrases users would say
 - [ ] Description is specific enough to avoid false triggers
 - [ ] Description is written in third person
 - [ ] Description mentions relevant file types (if applicable)
 
-### Automated tests
-If the skill has a TESTS.yaml, run the test suite (see `references/08-testing-framework.md`):
-- Layer 1 (structural): `python scripts/validate-structure.py /path/to/skill`
-- Layer 2 (triggers): `python scripts/run-tests.py /path/to/skill --layer 2`
-- Full suite: `python scripts/run-tests.py /path/to/skill`
+Fix any failures before proceeding.
 
-Present the validation results. If any checks fail, fix them and re-validate.
+### Step 2: Run the automated test suite
+
+**You MUST run these tests yourself.** Do not suggest the user run them. Do not print commands for them to copy. Execute them directly using the Bash tool.
+
+The test scripts live in `${CLAUDE_SKILL_DIR}/scripts/`. Run them against the newly created skill:
+
+1. **Layer 1 — Structural validation** (free, instant):
+   ```
+   python ${CLAUDE_SKILL_DIR}/scripts/validate-structure.py /path/to/created/skill
+   ```
+
+2. **Layer 2 — Trigger tests** (requires `claude` CLI):
+   ```
+   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill --layer 2
+   ```
+
+3. **Layer 3 — Behavioral tests** (if TESTS.yaml has behavioral entries):
+   ```
+   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill --layer 3
+   ```
+
+4. **Full suite** (all layers):
+   ```
+   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill
+   ```
+
+Run at minimum Layer 1. Ask the user if they want to run Layer 2 and 3 as well (these cost money — ~$0.01/trigger test, ~$0.10/behavioral test). If they say yes, run them. If they say run everything, run the full suite.
+
+### Step 3: Handle failures
+
+If any tests fail:
+1. Read the failure output carefully
+2. Diagnose the root cause
+3. Fix the skill files directly
+4. Re-run the failing tests to confirm the fix
+5. Repeat until all tests pass
+
+Present a summary of results to the user when done.
 
 ## Phase 6: Next Steps
 
-After the skill is created and validated:
+After the skill is created, validated, and tests pass:
 
-1. **Test it** — Run the automated test suite if TESTS.yaml exists:
-   ```bash
-   python scripts/run-tests.py /path/to/skill
-   ```
-   Read `references/07-testing.md` and `references/08-testing-framework.md` for testing approaches. The TESTS.yaml should already have trigger tests from Phase 4. Add behavioral tests as needed.
+1. **Iterate** — Tell the user:
+   - "Try using the skill in a real conversation. If it doesn't trigger when expected, or instructions aren't followed well, bring it back and we'll refine it."
 
-2. **Iterate** — Tell the user:
-   - "Try using the skill in a real conversation. If it doesn't trigger when expected, we can refine the description. If instructions aren't followed well, we can restructure them."
-   - "Bring back edge cases or failures and we can improve the skill together."
-
-3. **Distribute** (if relevant) — Mention options:
-   - Place in global Claude Code skills directory (~/.claude/skills)
-   - Place in project (.claude/skills)
-   - Place in a plugin (user specifies location)
-
-   Don't make assumptions. Ask the user where to save the skill to when not sure.
+2. **Distribute** (if relevant) — The skill was already saved to the location confirmed in Phase 1. If the user wants copies in additional locations, offer:
+   - Global: `~/.claude/skills/`
+   - Project-local: `.claude/skills/`
+   - Plugin: user specifies path
 
 ## Examples
 
