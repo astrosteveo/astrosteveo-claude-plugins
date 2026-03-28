@@ -991,7 +991,7 @@ def print_report(report):
     print(f"{'=' * 70}")
     print(f"  {s['passed']}/{s['total']} tests passed  |  "
           f"{s['errors']} errors  |  {s['warnings']} warnings")
-    print(f"  Cost: ${s['total_cost_usd']:.4f}  |  "
+    print(f"  Token budget used: ${s['total_cost_usd']:.4f}  |  "
           f"Duration: {s['total_duration_ms']}ms\n")
 
     # Per-layer summary
@@ -1253,11 +1253,11 @@ def main():
               f"{len(triggers.get('edge_cases', []))} edge cases")
         print(f"Layer 3: {len(behavioral)} behavioral tests")
         est_cost = total_trigger * 0.02 + len(behavioral) * 0.10
-        print(f"Estimated cost: ~${est_cost:.2f}")
+        print(f"Estimated token usage: ~${est_cost:.2f} budget equivalent")
         if args.parallel > 1:
             print(f"Parallel workers: {args.parallel}")
         if args.runs > 1:
-            print(f"Runs: {args.runs} (est. total: ~${est_cost * args.runs:.2f})")
+            print(f"Runs: {args.runs} (est. total: ~${est_cost * args.runs:.2f} budget equivalent)")
         return
 
     # Detect plugin directory for --plugin-dir flag

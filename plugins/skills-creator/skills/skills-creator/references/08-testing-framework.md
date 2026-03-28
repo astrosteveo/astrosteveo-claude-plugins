@@ -4,11 +4,11 @@ A three-layer testing system for validating Claude skills. Tests run against rea
 
 ## Overview
 
-| Layer | What It Tests | How It Works | Cost |
+| Layer | What It Tests | How It Works | Token Usage |
 |---|---|---|---|
-| 1: Structural | Schema validation, file structure, frontmatter, naming | In-process Python checks (no Claude) | Free |
-| 2: Trigger | Does the skill load for the right queries? | Spawns `claude -p`, observes `Skill` tool calls in stream-json | ~$0.01/test |
-| 3: Behavioral | Does the skill produce correct output? | Spawns `claude -p` with more turns, evaluates assertions | ~$0.10/test |
+| 1: Structural | Schema validation, file structure, frontmatter, naming | In-process Python checks (no Claude) | None |
+| 2: Trigger | Does the skill load for the right queries? | Spawns `claude -p`, observes `Skill` tool calls in stream-json | Lightweight (1 turn each) |
+| 3: Behavioral | Does the skill produce correct output? | Spawns `claude -p` with more turns, evaluates assertions | Heavier (varies by `max_turns`) |
 
 ## Quick Start
 
@@ -260,16 +260,18 @@ Some older TESTS.yaml files use deprecated key names. The validator will warn yo
 | edge case `should_trigger: bool` | `expect: trigger` or `expect: no_trigger` |
 | edge case `reason` | `note` |
 
-## Cost Management
+## Token Usage Management
 
-- **Layer 1** is free — no Claude invocations
-- **Layer 2** costs ~$0.01-0.02 per trigger test (1 turn each)
-- **Layer 3** costs vary by `max_turns` and response length
-- Use `--model haiku` for cheaper test runs during development
-- Set `max_budget_per_test` and `max_budget_total` to cap spending
-- Use `--dry-run` to see estimated costs before running
-- Use `--parallel N` to run tests faster (same cost, less wall time)
-- When using `--runs N`, the budget applies across ALL runs combined
+Layers 2 and 3 spawn headless `claude -p` processes, consuming tokens from your existing Claude plan. They do not incur separate charges — they use the same token pool as normal Claude Code usage.
+
+- **Layer 1** uses no tokens — pure Python checks
+- **Layer 2** is lightweight — one turn per trigger test
+- **Layer 3** is heavier — multiple turns per behavioral test, varies by `max_turns` and response length
+- Use `--model haiku` for lighter token usage during development
+- Set `max_budget_per_test` and `max_budget_total` as safety caps to prevent runaway consumption
+- Use `--dry-run` to preview the test plan before running
+- Use `--parallel N` to run tests faster (same token usage, less wall time)
+- When using `--runs N`, the budget cap applies across ALL runs combined
 
 ## Parallel Execution
 

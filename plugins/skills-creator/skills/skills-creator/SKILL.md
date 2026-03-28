@@ -1,18 +1,48 @@
 ---
 name: skills-creator
-description: Interactive guide for creating new Claude skills. Walks the user through use-case definition, frontmatter generation, instruction writing, file structure setup, and validation. Use when the user says "create a skill", "build a skill", "new skill", "make a skill", "skill creator", "help me write a skill", or "generate a SKILL.md". Also use when the user runs /skills-creator.
+description: |
+  Interactive toolkit for creating, editing, reviewing, and testing Claude skills.
+  Use when the user says "create a skill", "build a skill", "new skill", "edit a skill",
+  "review this skill", "fix this skill", "test a skill", "run skill tests",
+  "validate a skill", "skill creator", "help me write a skill", or "generate a SKILL.md".
+  Also use when the user runs /skills-creator. Supports three modes: create (guided
+  multi-phase workflow), edit (review and fix an existing skill), and test (run the
+  eval framework against a skill). Do NOT use for general coding tasks unrelated to
+  Claude skill authoring.
 compatibility: Requires Claude Code with file system access for creating skill directories and files.
+argument-hint: "[create | edit path/to/skill | test path/to/skill]"
 ---
 
 # Skills Creator
 
+Interactive toolkit for creating, editing, and testing Claude skills.
+
+## Routing
+
+When invoked, check for arguments. If no arguments are provided, present the user with these options and wait for their choice:
+
+1. **Create** — Build a new skill from scratch (guided multi-phase workflow)
+2. **Edit** — Review and improve an existing skill (provide the path to the skill folder)
+3. **Test** — Run the eval framework against a skill (provide the path to the skill folder)
+
+If the user provides arguments:
+- `/skills-creator create` or `/skills-creator` with a description of what they want to build -- **Create flow**
+- `/skills-creator edit path/to/skill` or the user mentions editing/reviewing/fixing a skill -- **Edit flow**
+- `/skills-creator test path/to/skill` or the user mentions testing/validating/running evals -- **Test flow**
+
+If the intent is ambiguous, ask.
+
+---
+
+## Create Flow
+
 An interactive, step-by-step workflow for building well-structured Claude skills. Each phase produces a concrete artifact; the user reviews before moving on.
 
-## Before You Begin
+### Before You Begin
 
 Read `references/01-fundamentals.md` for core concepts (what a skill is, progressive disclosure, file structure rules). Internalize the constraints — they apply to every step below.
 
-## Critical: Save Location
+### Critical: Save Location
 
 **BEFORE writing any files, you MUST ask the user where to save the skill.** Do NOT assume a location. Do NOT create directories without explicit confirmation. Present these options and wait for an answer:
 
@@ -23,7 +53,7 @@ Read `references/01-fundamentals.md` for core concepts (what a skill is, progres
 
 This question should be asked during Phase 1 (Discovery) alongside the other scoping questions. Do NOT defer it to Phase 4. The save location must be confirmed before any files are created.
 
-## Phase 1: Discovery
+### Phase 1: Discovery
 
 Goal: Understand what the user wants to build, classify the skill, and confirm where to save it.
 
@@ -51,7 +81,7 @@ Goal: Understand what the user wants to build, classify the skill, and confirm w
 
 6. Present the classification, use cases, and save location back to the user for confirmation before continuing.
 
-## Phase 2: Frontmatter
+### Phase 2: Frontmatter
 
 Goal: Produce valid YAML frontmatter for SKILL.md.
 
@@ -81,7 +111,7 @@ Read `references/02-frontmatter.md` for field specs, constraints, and security r
 
 4. Present the complete frontmatter block to the user for review. Iterate until approved.
 
-## Phase 3: Instructions
+### Phase 3: Instructions
 
 Goal: Write the SKILL.md body — the core instructions Claude will follow.
 
@@ -132,7 +162,7 @@ Read `references/04-writing-instructions.md` for structure templates and best pr
 
 4. Present the full SKILL.md to the user for review. Iterate until approved.
 
-## Phase 4: File Structure
+### Phase 4: File Structure
 
 Goal: Create the skill's directory and all files.
 
@@ -164,13 +194,13 @@ Goal: Create the skill's directory and all files.
    - No `README.md` inside the skill folder
    - No XML angle brackets anywhere in SKILL.md
 
-## Phase 5: Validation & Testing
+### Phase 5: Validation & Testing
 
 Goal: Verify the skill meets all requirements, then run the full test suite. You handle this end-to-end — do NOT hand the user commands to run themselves.
 
 Read `references/06-checklist.md` for the full validation checklist.
 
-### Step 1: Manual checklist
+#### Step 1: Manual checklist
 
 Run through each check yourself by reading the files and verifying:
 
@@ -198,7 +228,7 @@ Run through each check yourself by reading the files and verifying:
 
 Fix any failures before proceeding.
 
-### Step 2: Run the automated test suite
+#### Step 2: Run the automated test suite
 
 **You MUST run these tests yourself.** Do not suggest the user run them. Do not print commands for them to copy. Execute them directly using the Bash tool.
 
@@ -224,9 +254,9 @@ The test scripts live in `${CLAUDE_SKILL_DIR}/scripts/`. Run them against the ne
    python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill
    ```
 
-Run at minimum Layer 1. Ask the user if they want to run Layer 2 and 3 as well (these cost money — ~$0.01/trigger test, ~$0.10/behavioral test). If they say yes, run them. If they say run everything, run the full suite.
+Run at minimum Layer 1. Ask the user if they want to run Layer 2 and 3 as well (these spawn headless `claude -p` processes, so they consume additional tokens — Layer 2 is lightweight, Layer 3 can be more token-heavy depending on `max_turns`). If they say yes, run them. If they say run everything, run the full suite.
 
-### Step 3: Handle failures
+#### Step 3: Handle failures
 
 If any tests fail:
 1. Read the failure output carefully
@@ -237,7 +267,7 @@ If any tests fail:
 
 Present a summary of results to the user when done.
 
-## Phase 6: Next Steps
+### Phase 6: Next Steps
 
 After the skill is created, validated, and tests pass:
 
@@ -249,9 +279,9 @@ After the skill is created, validated, and tests pass:
    - Project-local: `.claude/skills/`
    - Plugin: user specifies path
 
-## Examples
+### Examples
 
-### Example: Building a code review skill
+#### Example: Building a code review skill
 
 User says: "Help me create a skill for code reviews"
 
@@ -261,7 +291,7 @@ User says: "Help me create a skill for code reviews"
 4. **File Structure:** `code-review/SKILL.md` + `references/review-checklist.md`.
 5. **Validation:** Run checklist, verify triggers, test with sample PRs.
 
-### Example: Building an MCP-enhanced skill
+#### Example: Building an MCP-enhanced skill
 
 User says: "I have Linear MCP connected, make a skill for sprint planning"
 
@@ -271,7 +301,7 @@ User says: "I have Linear MCP connected, make a skill for sprint planning"
 4. **File Structure:** `sprint-planner/SKILL.md` + `references/linear-api-patterns.md`.
 5. **Validation:** Test triggers, verify MCP calls work, check for over-triggering on general project queries.
 
-## Troubleshooting
+### Troubleshooting
 
 **Frontmatter parse errors**
 Cause: Missing `---` delimiters, unclosed quotes, or tabs instead of spaces.
@@ -288,3 +318,94 @@ Solution: Add negative triggers ("Do NOT use for..."), narrow scope, or set `dis
 **Instructions not followed consistently**
 Cause: Instructions are ambiguous, too verbose, or critical steps are buried.
 Solution: Put critical instructions first, use numbered steps, keep SKILL.md under 500 lines, use `scripts/` for deterministic validations.
+
+---
+
+## Edit Flow
+
+Review and improve an existing skill. The user provides a path to a skill folder.
+
+### Step 1: Read and Assess
+
+1. Read the skill's `SKILL.md`, all `references/` files, `TESTS.yaml`, and any `scripts/`.
+2. Read `references/01-fundamentals.md` to internalize the constraints.
+3. Run the structural validator to get an immediate health check:
+   ```
+   python ${CLAUDE_SKILL_DIR}/scripts/validate-structure.py /path/to/skill
+   ```
+4. Review against the checklist in `references/06-checklist.md`.
+
+### Step 2: Present Findings
+
+Present a summary to the user covering:
+
+- **Structural issues** — anything the validator caught (XML brackets, naming, missing fields)
+- **Content quality** — are instructions clear and actionable? Are examples concrete? Is the skill under 500 lines?
+- **Trigger quality** — does the description include enough trigger phrases? Is it too broad or too narrow?
+- **Domain accuracy** — does the skill give correct, factual guidance for its domain? Flag anything that looks invented, overstated, or inaccurate.
+- **What's good** — call out what works well so the user knows what to keep
+
+Ask the user what they want to fix, or offer to fix everything you found.
+
+### Step 3: Make Changes
+
+1. Fix issues directly — do not just describe what needs changing
+2. After making changes, re-run the structural validator to confirm fixes
+3. Present a summary of what changed
+
+### Step 4: Optional — Run Full Test Suite
+
+Ask the user if they want to run the eval framework against the edited skill. If yes, follow the Test flow below.
+
+---
+
+## Test Flow
+
+Run the eval framework against an existing skill. The user provides a path to a skill folder.
+
+### Step 1: Confirm the Skill
+
+1. Verify the path exists and contains a `SKILL.md` and `TESTS.yaml`
+2. Read `TESTS.yaml` to understand what will be tested
+3. Show the user a summary:
+   - Number of `should_trigger` entries
+   - Number of `should_not_trigger` entries
+   - Number of edge cases
+   - Number of behavioral tests
+   - Model configured for tests
+
+### Step 2: Run Tests
+
+Run the test suite yourself using the Bash tool. Do NOT hand the user commands to run.
+
+The test scripts live in `${CLAUDE_SKILL_DIR}/scripts/`.
+
+1. **Always run Layer 1 first** (structural validation — no tokens consumed):
+   ```
+   python ${CLAUDE_SKILL_DIR}/scripts/validate-structure.py /path/to/skill
+   ```
+
+2. **Ask about Layers 2 and 3** — these spawn headless `claude -p` processes and consume additional tokens:
+   - Layer 2 (trigger tests) is lightweight — one turn per test
+   - Layer 3 (behavioral tests) is heavier — multiple turns per test, varies by `max_turns`
+   - If the user says "run everything" or "full suite", run all layers:
+   ```
+   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/skill
+   ```
+
+### Step 3: Report Results
+
+Present results clearly:
+- Pass/fail counts per layer
+- Any failures with the specific assertion that failed and why
+- Token budget consumed
+
+### Step 4: Fix Failures
+
+If tests fail:
+1. Diagnose the root cause from the failure output
+2. Fix the skill files directly
+3. Re-run the failing layer to confirm
+4. Repeat until all tests pass
+
+Ask the user before making changes if the fix involves altering the skill's behavior (not just structural fixes).
