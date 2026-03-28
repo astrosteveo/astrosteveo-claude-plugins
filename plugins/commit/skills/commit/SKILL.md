@@ -1,6 +1,6 @@
 ---
 name: commit
-description: "Creates Conventional Commits for each logical unit of work in the current git diff. Use when the user says 'commit', 'commit my changes', 'create commits', 'commit this work', or runs /commit. Do NOT trigger for questions about commits — e.g. explaining commit history, writing commit messages, reverting commits, or understanding conventions. Analyzes staged and unstaged changes, groups them into logical units, presents a commit plan for approval, then creates one well-formatted commit per unit. Follows the Conventional Commits specification (type(scope): description)."
+description: "Creates Conventional Commits for each logical unit of work in the current git diff. Use when the user says 'commit', 'commit my changes', 'create commits', 'commit this work', or runs /commit. Do NOT trigger when the user is asking for help, advice, or explanations about commits — e.g. 'help me write a commit message', 'how do I write a commit message', explaining commit history, reverting commits, or understanding conventions. Only trigger when the user wants commits created from their current changes. Analyzes staged and unstaged changes, groups them into logical units, presents a commit plan for approval, then creates one well-formatted commit per unit. Follows the Conventional Commits specification (type(scope): description)."
 ---
 
 # Commit
@@ -26,7 +26,7 @@ Create Conventional Commits for each logical unit of work identified in the curr
 !`git ls-files --others --exclude-standard | while read -r f; do echo "=== $f ==="; head -20 "$f"; echo; done`
 
 ### Recent Commits
-!`git log --oneline -10 2>/dev/null || echo "(no commits yet — this is a fresh repository)"`
+!`git log --oneline -10 || echo "(no commits yet — this is a fresh repository)"`
 
 ## Instructions
 
@@ -108,13 +108,54 @@ Rules:
 
 After all commits are created, show the new commits via `git log --oneline`.
 
-## Commit Message Guidelines
+## Commit Message Format
 
-- First line: `type(scope): description` — keep under 72 characters
-- Focus on the "why" not the "what"
-- Use imperative mood: "add feature" not "added feature"
-- Body (optional): explain motivation and contrast with previous behavior
-- Footer (optional): reference issues, note breaking changes
+Follow the Conventional Commits 1.0.0 specification exactly.
+
+### Structure
+
+```
+type(scope): description
+
+body
+
+footer(s)
+```
+
+### Header (required)
+
+```
+type[optional scope][optional !]: description
+```
+
+- **type** — A noun classifying the change. `feat` and `fix` are spec-mandated; others are conventional (see type table in Step 2).
+- **scope** — Optional noun in parentheses naming the affected area: `fix(parser):`, `feat(auth):`.
+- **`!`** — Optional, placed immediately before the colon to flag a breaking change: `feat!:`, `feat(api)!:`. When present, the `BREAKING CHANGE:` footer MAY be omitted and the description serves as the breaking change explanation.
+- **description** — MUST immediately follow the colon and space. A short summary of the code changes in imperative mood ("add feature" not "added feature"). Keep the full header line under 72 characters (git best practice, not part of the CC spec, but strongly recommended).
+
+### Body (optional)
+
+- MUST begin one blank line after the description
+- Free-form, may contain multiple newline-separated paragraphs
+- Use the body to explain *why* the change was made and contrast with previous behavior
+
+### Footers (optional)
+
+- MUST begin one blank line after the body (or after the description if no body)
+- Each footer: a word token, then either `: ` or ` #` as separator, then a string value
+- Footer tokens MUST use `-` in place of spaces (e.g., `Acked-by`, `Reviewed-by`), except `BREAKING CHANGE` which is the sole exception
+- `BREAKING CHANGE: description` — MUST be uppercase. Synonymous with `BREAKING-CHANGE:`. Indicates a breaking API change.
+- `Refs: #123` or `Closes #456` — reference issues using ` #` separator
+
+### Breaking changes
+
+Breaking changes MUST be indicated in one of two ways (or both):
+1. `!` before the colon in the header: `feat(api)!: remove endpoint`
+2. `BREAKING CHANGE:` footer: `BREAKING CHANGE: /v1/users endpoint removed`
+
+### Case sensitivity
+
+All parts of the commit message are case-insensitive EXCEPT `BREAKING CHANGE` which MUST be uppercase.
 
 ## Examples
 

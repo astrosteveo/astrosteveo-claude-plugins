@@ -28,7 +28,10 @@ triggers:
   edge_cases:
     - query: "help me write a commit message"
       expect: no_trigger
-      note: "Asking about message format, not requesting a commit"
+      note: "Asking for help/advice about writing, not requesting a commit"
+    - query: "write a commit message"
+      expect: trigger
+      note: "Directing Claude to write one, not asking for help about how"
     - query: "commit"
       expect: trigger
       note: "Single-word trigger should activate the skill"
