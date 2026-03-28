@@ -1,0 +1,237 @@
+version: 1
+type: hooks
+
+hooks:
+  # ── SessionStart ──────────────────────────────────────────────────
+  session-start:
+    script: session-start.sh
+    event: SessionStart
+    scenarios:
+      - name: outputs-memory-prompt
+        description: Outputs auto-memory awareness prompt
+        setup:
+          git_init: true
+          files:
+            "app.js": "console.log('hello')"
+          commit: true
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - "=== Auto-Memory ==="
+            - "auto-memory"
+            - "Save learnings as they happen"
+            - "=== End Auto-Memory ==="
+
+      - name: no-git-repo
+        description: No git repo — still outputs memory prompt
+        setup:
+          git_init: false
+          files:
+            "app.js": "console.log('hello')"
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - "=== Auto-Memory ==="
+            - "auto-memory"
+            - "=== End Auto-Memory ==="
+
+  # ── PreToolUse Guard ──────────────────────────────────────────────
+  pre-tool-guard:
+    script: pre-tool-guard.sh
+    event: PreToolUse
+    scenarios:
+      - name: blocks-git-add-all
+        description: Blocks git add -A
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git add -A"}'
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - '"decision":"block"'
+            - "Broad staging commands"
+
+      - name: blocks-git-add-dot
+        description: Blocks git add .
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git add ."}'
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - '"decision":"block"'
+
+      - name: blocks-force-push
+        description: Blocks git push --force
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git push --force origin main"}'
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - '"decision":"block"'
+            - "Force push"
+
+      - name: blocks-force-push-short
+        description: Blocks git push -f
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git push -f"}'
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - '"decision":"block"'
+
+      - name: blocks-hard-reset
+        description: Blocks git reset --hard
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git reset --hard HEAD~1"}'
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - '"decision":"block"'
+            - "Hard reset"
+
+      - name: blocks-git-clean
+        description: Blocks git clean -f
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git clean -fd"}'
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - '"decision":"block"'
+            - "git clean"
+
+      - name: blocks-checkout-dot
+        description: Blocks git checkout -- .
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git checkout -- ."}'
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - '"decision":"block"'
+
+      - name: allows-targeted-git-add
+        description: Allows git add with specific files
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git add src/app.js src/lib.js"}'
+        expect:
+          exit_code: 0
+          stdout_not_contains:
+            - '"decision":"block"'
+
+      - name: allows-normal-push
+        description: Allows normal git push
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"git push origin feature-branch"}'
+        expect:
+          exit_code: 0
+          stdout_not_contains:
+            - '"decision":"block"'
+
+      - name: allows-non-git-commands
+        description: Allows non-git bash commands
+        setup:
+          git_init: false
+          files: {}
+        stdin: '{"tool_name":"Bash","command":"npm test"}'
+        expect:
+          exit_code: 0
+          stdout_not_contains:
+            - '"decision":"block"'
+
+  # ── PostCompact ───────────────────────────────────────────────────
+  post-compact:
+    script: post-compact.sh
+    event: PostCompact
+    scenarios:
+      - name: git-repo-shows-recent-commits
+        description: In a git repo — shows recent commits and memory prompt
+        setup:
+          git_init: true
+          files:
+            "app.js": "console.log('hello')"
+          commit: true
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - "=== Post-Compaction Context ==="
+            - "Recent commits:"
+            - "MEMORY:"
+            - "auto-memory"
+            - "=== End Post-Compaction Context ==="
+
+      - name: not-a-git-repo
+        description: Not in a git repo — still shows memory prompt
+        setup:
+          git_init: false
+          files:
+            "app.js": "console.log('hello')"
+        expect:
+          exit_code: 0
+          stdout_contains:
+            - "=== Post-Compaction Context ==="
+            - "MEMORY:"
+            - "auto-memory"
+            - "=== End Post-Compaction Context ==="
+          stdout_not_contains:
+            - "Recent commits:"
+
+  # ── Stop Gate ─────────────────────────────────────────────────────
+  stop-gate:
+    script: stop-gate.sh
+    event: Stop
+    scenarios:
+      - name: outputs-memory-prompt
+        description: Outputs auto-memory evaluation prompt and allows stop
+        setup:
+          git_init: true
+          files:
+            "app.js": "console.log('hello')"
+          commit: true
+        expect:
+          exit_code: 0
+          stderr_contains:
+            - "=== Auto-Memory ==="
+            - "auto-memory"
+            - "=== End Auto-Memory ==="
+
+      - name: allows-stop-with-dirty-state
+        description: Does not block stop even with uncommitted changes
+        setup:
+          git_init: true
+          files:
+            "app.js": "console.log('hello')"
+          commit: true
+          modifications:
+            "app.js": "console.log('changed')"
+        expect:
+          exit_code: 0
+          stderr_contains:
+            - "=== Auto-Memory ==="
+            - "auto-memory"
+
+      - name: no-git-repo
+        description: Not in a git repo — still outputs memory prompt
+        setup:
+          git_init: false
+          files:
+            "app.js": "console.log('hello')"
+        expect:
+          exit_code: 0
+          stderr_contains:
+            - "=== Auto-Memory ==="

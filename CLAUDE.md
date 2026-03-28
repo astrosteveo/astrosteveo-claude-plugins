@@ -4,39 +4,46 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Claude Code plugin repository. Each plugin packages one or more skills (and optionally hooks) for distribution via the marketplace. The codebase is pure Markdown (skills), Bash (scripts), and Python (test tooling). There is no build step; plugins are loaded directly by Claude Code.
+Claude Code plugin repository with two plugins — **project-state** (auto-memory hooks) and **skills-creator** (interactive skill builder). The codebase is pure Markdown (skills), Bash (hook scripts), and Python (test tooling). There is no build step; plugins are loaded directly by Claude Code.
 
 ## Architecture
 
 ### Plugin Layout
 
-The top-level `.claude-plugin/marketplace.json` is the registry index. Each plugin lives under `plugins/{name}/` with its own `.claude-plugin/plugin.json` manifest.
+Each plugin lives under `plugins/{name}/` with its own `.claude-plugin/plugin.json` manifest. The top-level `.claude-plugin/marketplace.json` is the registry index.
 
-Current plugins:
-- **`commit`** — Conventional Commits skill
-- **`skills-creator`** — interactive 6-phase workflow for building new Claude skills; also owns the shared test framework (`scripts/validate-structure.py`, `scripts/run-tests.py`)
-- **`godot-dev`** — Godot 4.x development conventions and patterns
+Two plugins:
+- **`project-state`** (`plugins/project-state/`) — auto-memory awareness hooks; no skills
+- **`skills-creator`** (`plugins/skills-creator/`) — interactive 6-phase workflow for building new Claude skills
 
-### Skill Structure
+### Skills
 
 Each skill is a kebab-case folder under `plugins/{plugin}/skills/{skill-name}/` containing:
-- `SKILL.md` — YAML frontmatter (name, description, triggers) + instructions body
-- `references/` — numbered progressive-disclosure docs loaded on demand
-- `scripts/` — automation scripts (optional)
+- `SKILL.md` — frontmatter (name, description, triggers) + instructions body
+- `references/` — numbered progressive-disclosure docs loaded on demand (e.g., `01-fundamentals.md`)
+- `scripts/` — automation scripts
 - `TESTS.yaml` — trigger and behavioral test spec
 
-### Two-level Registry
+### Hooks
 
-Adding a new plugin requires entries in both:
-1. `plugins/{name}/.claude-plugin/plugin.json` — plugin manifest
-2. `.claude-plugin/marketplace.json` — top-level registry (array entry under `plugins`)
+Defined in `plugins/project-state/hooks/hooks.json`, backed by Bash scripts in `plugins/project-state/scripts/`:
 
-## Testing
+| Hook | Script | Behavior |
+|------|--------|----------|
+| SessionStart | `session-start.sh` | Primes auto-memory awareness for the session |
+| PostCompact | `post-compact.sh` | Shows recent commits for orientation; reminds agent to persist learnings to auto-memory before they are lost |
+| Stop | `stop-gate.sh` | Prompts auto-memory evaluation before stopping; does not block |
 
-Skill tests use a YAML-based spec (`TESTS.yaml`) with three layers. Test scripts live in the skills-creator plugin.
+Key design principles:
+- Hooks never block, auto-commit, or auto-push. They prompt the agent and let it decide what to do.
+- Hooks actively prompt auto-memory maintenance at three points: session start (prime awareness), post-compaction (persist before context loss), and stop (final evaluation). Memory prompts instruct but do not auto-write memories — the agent evaluates what is worth saving.
+
+## Testing Skills
+
+Skill tests use a YAML-based spec (`TESTS.yaml`) with three layers:
 
 ```bash
-# Layer 1 — structural validation (free, no LLM calls)
+# Layer 1 — structural validation
 python plugins/skills-creator/skills/skills-creator/scripts/validate-structure.py /path/to/skill
 
 # Layer 2 — trigger tests only
@@ -46,7 +53,31 @@ python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/t
 python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/to/skill
 ```
 
-`TESTS.yaml` files configure model, max turns, and per-test/total cost budgets.
+Test scripts live in the skills-creator skill since it owns the testing framework. Skill `TESTS.yaml` files configure model, max turns, and per-test/total cost budgets.
+
+## Testing Hooks
+
+Hook tests use a YAML-based spec (`hooks/TESTS.yaml`) with two layers:
+
+- **Structural** — validates `hooks.json` schema and script syntax (free, no execution)
+- **Scenarios** — runs each hook script in an isolated git repo, asserting on exit codes, stdout/stderr, file state, and git history. PreToolUse scenarios use `stdin` to pass JSON tool input.
+
+```bash
+# Run all hook tests
+python plugins/project-state/scripts/test-hooks.py
+
+# Run tests for a specific hook
+python plugins/project-state/scripts/test-hooks.py --hook stop-gate
+
+# Run a single scenario
+python plugins/project-state/scripts/test-hooks.py --scenario unstaged-modifications
+
+# JSON output
+python plugins/project-state/scripts/test-hooks.py --json
+
+# Show plan without running
+python plugins/project-state/scripts/test-hooks.py --dry-run
+```
 
 ## Conventions
 
@@ -54,3 +85,4 @@ python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/t
 - SKILL.md files must stay under 500 lines; decompose into `references/` for large docs
 - Folder names are kebab-case and must match the `name` field in SKILL.md frontmatter
 - No XML angle brackets in SKILL.md files
+- Hook scripts must handle both macOS and Linux (e.g., `sed -i ''` vs `sed -i` for in-place edits)
