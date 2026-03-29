@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Claude Code plugin repository with two plugins — **project-state** (auto-memory hooks) and **skills-creator** (interactive skill builder). The codebase is pure Markdown (skills), Bash (hook scripts), and Python (test tooling). There is no build step; plugins are loaded directly by Claude Code.
+Claude Code plugin repository with three plugins — **commit** (Conventional Commits), **skills-creator** (interactive skill builder), and **godot-dev** (Godot 4.x guidance). The codebase is pure Markdown (skills), Bash (scripts), and Python (test tooling). There is no build step; plugins are loaded directly by Claude Code.
 
 ## Architecture
 
@@ -12,9 +12,10 @@ Claude Code plugin repository with two plugins — **project-state** (auto-memor
 
 Each plugin lives under `plugins/{name}/` with its own `.claude-plugin/plugin.json` manifest. The top-level `.claude-plugin/marketplace.json` is the registry index.
 
-Two plugins:
-- **`project-state`** (`plugins/project-state/`) — auto-memory awareness hooks; no skills
+Three plugins:
+- **`commit`** (`plugins/commit/`) — Conventional Commits skill; analyzes diffs, groups changes into logical units, creates one commit per unit
 - **`skills-creator`** (`plugins/skills-creator/`) — interactive 6-phase workflow for building new Claude skills
+- **`godot-dev`** (`plugins/godot-dev/`) — Godot 4.x development guidance with architecture patterns, conventions, and MCP workflow; extensive reference docs
 
 ### Skills
 
@@ -23,20 +24,6 @@ Each skill is a kebab-case folder under `plugins/{plugin}/skills/{skill-name}/` 
 - `references/` — numbered progressive-disclosure docs loaded on demand (e.g., `01-fundamentals.md`)
 - `scripts/` — automation scripts
 - `TESTS.yaml` — trigger and behavioral test spec
-
-### Hooks
-
-Defined in `plugins/project-state/hooks/hooks.json`, backed by Bash scripts in `plugins/project-state/scripts/`:
-
-| Hook | Script | Behavior |
-|------|--------|----------|
-| SessionStart | `session-start.sh` | Primes auto-memory awareness for the session |
-| PostCompact | `post-compact.sh` | Shows recent commits for orientation; reminds agent to persist learnings to auto-memory before they are lost |
-| Stop | `stop-gate.sh` | Prompts auto-memory evaluation before stopping; does not block |
-
-Key design principles:
-- Hooks never block, auto-commit, or auto-push. They prompt the agent and let it decide what to do.
-- Hooks actively prompt auto-memory maintenance at three points: session start (prime awareness), post-compaction (persist before context loss), and stop (final evaluation). Memory prompts instruct but do not auto-write memories — the agent evaluates what is worth saving.
 
 ## Testing Skills
 
@@ -55,28 +42,19 @@ python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/t
 
 Test scripts live in the skills-creator skill since it owns the testing framework. Skill `TESTS.yaml` files configure model, max turns, and per-test/total cost budgets.
 
-## Testing Hooks
-
-Hook tests use a YAML-based spec (`hooks/TESTS.yaml`) with two layers:
-
-- **Structural** — validates `hooks.json` schema and script syntax (free, no execution)
-- **Scenarios** — runs each hook script in an isolated git repo, asserting on exit codes, stdout/stderr, file state, and git history. PreToolUse scenarios use `stdin` to pass JSON tool input.
-
+Additional `run-tests.py` options:
 ```bash
-# Run all hook tests
-python plugins/project-state/scripts/test-hooks.py
+# Layer 1 only (structural, free, instant)
+python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/to/skill --layer 1
 
-# Run tests for a specific hook
-python plugins/project-state/scripts/test-hooks.py --hook stop-gate
+# Parallel execution (4 workers)
+python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/to/skill --parallel 4
 
-# Run a single scenario
-python plugins/project-state/scripts/test-hooks.py --scenario unstaged-modifications
+# Flakiness detection (run 3 times)
+python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/to/skill --runs 3
 
-# JSON output
-python plugins/project-state/scripts/test-hooks.py --json
-
-# Show plan without running
-python plugins/project-state/scripts/test-hooks.py --dry-run
+# Compare against baseline
+python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/to/skill --compare latest
 ```
 
 ## Conventions
@@ -85,4 +63,3 @@ python plugins/project-state/scripts/test-hooks.py --dry-run
 - SKILL.md files must stay under 500 lines; decompose into `references/` for large docs
 - Folder names are kebab-case and must match the `name` field in SKILL.md frontmatter
 - No XML angle brackets in SKILL.md files
-- Hook scripts must handle both macOS and Linux (e.g., `sed -i ''` vs `sed -i` for in-place edits)

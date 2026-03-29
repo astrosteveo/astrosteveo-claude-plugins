@@ -7,15 +7,6 @@
     },
     "plugins": [
         {
-            "name": "project-state",
-            "description": "Auto-memory awareness hooks for Claude Code",
-            "author": {
-                "name": "AstroSteveo",
-                "email": "astrosteveo@noreply.users.github.com"
-            },
-            "source": "./plugins/project-state"
-        },
-        {
             "name": "commit",
             "description": "Conventional Commits skill for Claude Code",
             "author": {
