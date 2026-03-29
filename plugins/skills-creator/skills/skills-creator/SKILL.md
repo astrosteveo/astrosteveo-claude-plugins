@@ -183,9 +183,9 @@ Goal: Create the skill's directory and all files.
 4. Create any supporting files (scripts, references, assets) identified during Phase 3.
 
 6. **Generate TESTS.yaml** from the use cases defined in Phase 1:
-   - Convert trigger phrases into `should_trigger` entries
-   - Add 3–4 `should_not_trigger` queries (unrelated topics)
-   - Add edge cases for ambiguous queries near the trigger boundary
+   - Default to exactly 3 eval scenarios: 1 `should_trigger`, 1 `should_not_trigger`, 1 `edge_case`
+   - Pick the most representative query for each — one clear positive, one clear negative, one ambiguous
+   - Only add more scenarios if the user explicitly asks for broader coverage
    - See `references/08-testing-framework.md` for the full TESTS.yaml format
 
 5. **Critical rules** — verify before writing:
@@ -254,7 +254,7 @@ The test scripts live in `${CLAUDE_SKILL_DIR}/scripts/`. Run them against the ne
    python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill
    ```
 
-Run at minimum Layer 1. Ask the user if they want to run Layer 2 and 3 as well (these spawn headless `claude -p` processes, so they consume additional tokens — Layer 2 is lightweight, Layer 3 can be more token-heavy depending on `max_turns`). If they say yes, run them. If they say run everything, run the full suite.
+Run at minimum Layer 1. Ask the user if they want to run Layer 2 and 3 as well (these spawn headless `claude -p` processes and consume tokens — Layer 2 is lightweight, Layer 3 can use more tokens depending on `max_turns`). If they say yes, run them. If they say run everything, run the full suite.
 
 #### Step 3: Handle failures
 
@@ -387,7 +387,7 @@ The test scripts live in `${CLAUDE_SKILL_DIR}/scripts/`.
 
 2. **Ask about Layers 2 and 3** — these spawn headless `claude -p` processes and consume additional tokens:
    - Layer 2 (trigger tests) is lightweight — one turn per test
-   - Layer 3 (behavioral tests) is heavier — multiple turns per test, varies by `max_turns`
+   - Layer 3 (behavioral tests) uses more tokens — multiple turns per test, varies by `max_turns`
    - If the user says "run everything" or "full suite", run all layers:
    ```
    python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/skill
@@ -398,7 +398,7 @@ The test scripts live in `${CLAUDE_SKILL_DIR}/scripts/`.
 Present results clearly:
 - Pass/fail counts per layer
 - Any failures with the specific assertion that failed and why
-- Token budget consumed
+- Token usage
 
 ### Step 4: Fix Failures
 

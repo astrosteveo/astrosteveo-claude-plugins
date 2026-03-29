@@ -4,8 +4,6 @@ skill: skills-creator
 config:
   default_model: sonnet
   default_max_turns: 5
-  max_budget_per_test: 0.25
-  max_budget_total: 3.00
   permission_mode: bypassPermissions
 
 structural:
@@ -22,20 +20,11 @@ structural:
 triggers:
   should_trigger:
     - "create a new skill"
-    - "help me build a skill for code reviews"
-    - "I want to make a skill"
-    - "generate a SKILL.md for my project"
 
   should_not_trigger:
-    - "review this pull request for bugs"
     - "help me write a Python script"
-    - "what's the weather today"
-    - "create a new React component"
 
   edge_cases:
-    - query: "help me write instructions for Claude"
-      expect: no_trigger
-      note: "Writing instructions could be confused with skill creation"
     - query: "I need a new slash command"
       expect: trigger
       note: "Slash commands are skills — should trigger"

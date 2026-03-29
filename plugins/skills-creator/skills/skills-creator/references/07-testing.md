@@ -18,17 +18,17 @@ Iterate on a single challenging task until Claude succeeds, then extract the win
 
 **Goal:** Skill loads at the right times.
 
-Design test cases:
+Default to 3 eval scenarios total (1 positive, 1 negative, 1 edge case). Only add more if the user explicitly requests broader coverage.
+
 ```
 Should trigger:
 - "[obvious request matching skill purpose]"
-- "[paraphrased version of the request]"
-- "[another variation]"
 
 Should NOT trigger:
-- "[unrelated topic]"
-- "[similar but out-of-scope request]"
-- "[request for a different skill]"
+- "[unrelated topic with closest false-positive risk]"
+
+Edge case:
+- "[ambiguous query near the trigger boundary]"
 ```
 
 ### 2. Functional Tests

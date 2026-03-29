@@ -11,10 +11,6 @@ config:
   default_model: sonnet
   # Default max turns for behavioral tests
   default_max_turns: 5
-  # Max cost per individual test case (USD)
-  max_budget_per_test: 0.50
-  # Max total cost for entire test suite (USD)
-  max_budget_total: 5.00
   # Permission mode for test runs
   permission_mode: bypassPermissions
 

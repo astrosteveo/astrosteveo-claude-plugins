@@ -71,13 +71,12 @@ class TestResult:
     """A single test result."""
 
     def __init__(self, name, layer, passed, message="", severity="error",
-                 cost=0.0, duration_ms=0, details=None):
+                 duration_ms=0, details=None):
         self.name = name
         self.layer = layer
         self.passed = passed
         self.message = message
         self.severity = severity
-        self.cost = cost
         self.duration_ms = duration_ms
         self.details = details or {}
 
@@ -89,8 +88,6 @@ class TestResult:
             "message": self.message,
             "severity": self.severity,
         }
-        if self.cost > 0:
-            d["cost_usd"] = round(self.cost, 6)
         if self.duration_ms > 0:
             d["duration_ms"] = self.duration_ms
         if self.details:
@@ -105,8 +102,6 @@ CANONICAL_TOP_LEVEL_KEYS = {"version", "skill", "config", "structural", "trigger
 CANONICAL_CONFIG_KEYS = {
     "default_model": str,
     "default_max_turns": int,
-    "max_budget_per_test": (int, float),
-    "max_budget_total": (int, float),
     "permission_mode": str,
 }
 
@@ -118,8 +113,6 @@ DEPRECATED_KEYS = {
 DEPRECATED_CONFIG_KEYS = {
     "model": ("default_model", "Rename 'config.model' to 'config.default_model'"),
     "max_turns": ("default_max_turns", "Rename 'config.max_turns' to 'config.default_max_turns'"),
-    "max_cost_per_test": ("max_budget_per_test", "Rename 'config.max_cost_per_test' to 'config.max_budget_per_test'"),
-    "max_total_cost": ("max_budget_total", "Rename 'config.max_total_cost' to 'config.max_budget_total'"),
 }
 
 DEPRECATED_EDGE_CASE_KEYS = {
@@ -358,7 +351,7 @@ def detect_plugin_dir(skill_dir):
 # Layer 2: Trigger Tests
 
 def run_claude_p(prompt, output_format="stream-json", max_turns=1,
-                 model=None, max_budget=None, extra_flags=None, cwd=None,
+                 model=None, extra_flags=None, cwd=None,
                  session_id=None, resume=False):
     """Spawn a claude -p process and return parsed output."""
     cmd = ["claude", "-p", prompt, "--output-format", output_format,
@@ -379,8 +372,6 @@ def run_claude_p(prompt, output_format="stream-json", max_turns=1,
         cmd.extend(["--max-turns", str(max_turns)])
     if model:
         cmd.extend(["--model", model])
-    if max_budget is not None:
-        cmd.extend(["--max-budget-usd", str(max_budget)])
     if extra_flags:
         cmd.extend(extra_flags)
 
@@ -390,7 +381,8 @@ def run_claude_p(prompt, output_format="stream-json", max_turns=1,
 
     try:
         proc = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=120, cwd=cwd, env=env
+            cmd, capture_output=True, text=True, timeout=120, cwd=cwd, env=env,
+            encoding="utf-8", errors="replace"
         )
         return proc.stdout, proc.stderr, proc.returncode
     except subprocess.TimeoutExpired:
@@ -400,7 +392,7 @@ def run_claude_p(prompt, output_format="stream-json", max_turns=1,
 
 
 def run_claude_p_multiturn(messages, output_format="stream-json", max_turns=1,
-                           model=None, max_budget=None, extra_flags=None, cwd=None):
+                           model=None, extra_flags=None, cwd=None):
     """Run a multi-turn conversation using --session-id and --resume.
 
     Args:
@@ -417,7 +409,7 @@ def run_claude_p_multiturn(messages, output_format="stream-json", max_turns=1,
         is_first = (i == 0)
         stdout, stderr, rc = run_claude_p(
             msg, output_format=output_format, max_turns=max_turns,
-            model=model, max_budget=max_budget, extra_flags=extra_flags,
+            model=model, extra_flags=extra_flags,
             cwd=cwd, session_id=sid, resume=not is_first,
         )
         all_stdout.append(stdout)
@@ -432,7 +424,7 @@ def run_claude_p_multiturn(messages, output_format="stream-json", max_turns=1,
 def parse_stream_json(output):
     """Parse stream-json output into structured events."""
     events = {"init": None, "assistant_messages": [], "tool_calls": [],
-              "result": None, "skills_loaded": [], "cost": 0.0, "duration_ms": 0}
+              "result": None, "skills_loaded": [], "duration_ms": 0}
 
     for line in output.strip().split("\n"):
         line = line.strip()
@@ -461,8 +453,6 @@ def parse_stream_json(output):
 
         elif msg_type == "result":
             events["result"] = obj
-            # Accumulate cost/duration across multi-turn results
-            events["cost"] += obj.get("total_cost_usd", 0.0)
             events["duration_ms"] += obj.get("duration_ms", 0)
 
     return events
@@ -479,13 +469,13 @@ def detect_skill_trigger(events, skill_name):
     return False
 
 
-def run_trigger_test(query, skill_name, expect_trigger, model=None, max_budget=None,
+def run_trigger_test(query, skill_name, expect_trigger, model=None,
                      extra_flags=None):
     """Run a single trigger test case."""
     start = time.time()
     stdout, stderr, rc = run_claude_p(
         query, output_format="stream-json", max_turns=1,
-        model=model, max_budget=max_budget, extra_flags=extra_flags
+        model=model, extra_flags=extra_flags
     )
     elapsed = int((time.time() - start) * 1000)
 
@@ -499,7 +489,6 @@ def run_trigger_test(query, skill_name, expect_trigger, model=None, max_budget=N
 
     events = parse_stream_json(stdout)
     triggered = detect_skill_trigger(events, skill_name)
-    cost = events.get("cost", 0.0)
 
     if expect_trigger:
         passed = triggered
@@ -513,7 +502,7 @@ def run_trigger_test(query, skill_name, expect_trigger, model=None, max_budget=N
     return TestResult(
         name=f"trigger/{'should' if expect_trigger else 'should_not'}: {query[:60]}",
         layer=2, passed=passed, message=message,
-        cost=cost, duration_ms=elapsed,
+        duration_ms=elapsed,
         details={"query": query, "triggered": triggered, "expected": expect_trigger},
     )
 
@@ -523,7 +512,6 @@ def run_layer2(skill_dir, config, extra_flags=None, parallel=1):
     triggers = config.get("triggers", {})
     skill_name = config.get("skill", os.path.basename(skill_dir))
     model = config.get("config", {}).get("default_model")
-    max_budget = config.get("config", {}).get("max_budget_per_test", 0.50)
 
     # Build work items: (query, expect_trigger, is_edge, edge_data)
     work = []
@@ -537,18 +525,18 @@ def run_layer2(skill_dir, config, extra_flags=None, parallel=1):
         work.append((query, expect, True, edge))
 
     if parallel > 1 and len(work) > 1:
-        return _run_trigger_tests_parallel(work, skill_name, model, max_budget,
+        return _run_trigger_tests_parallel(work, skill_name, model,
                                            extra_flags, parallel)
     else:
-        return _run_trigger_tests_sequential(work, skill_name, model, max_budget,
+        return _run_trigger_tests_sequential(work, skill_name, model,
                                              extra_flags)
 
 
-def _run_trigger_tests_sequential(work, skill_name, model, max_budget, extra_flags):
+def _run_trigger_tests_sequential(work, skill_name, model, extra_flags):
     """Run trigger tests one at a time."""
     results = []
     for query, expect, is_edge, edge_data in work:
-        result = run_trigger_test(query, skill_name, expect, model, max_budget,
+        result = run_trigger_test(query, skill_name, expect, model,
                                   extra_flags=extra_flags)
         if is_edge:
             result.severity = "warning"
@@ -558,14 +546,14 @@ def _run_trigger_tests_sequential(work, skill_name, model, max_budget, extra_fla
     return results
 
 
-def _run_trigger_tests_parallel(work, skill_name, model, max_budget, extra_flags, parallel):
+def _run_trigger_tests_parallel(work, skill_name, model, extra_flags, parallel):
     """Run trigger tests concurrently."""
     results = []
     with ThreadPoolExecutor(max_workers=parallel) as pool:
         future_map = {}
         for query, expect, is_edge, edge_data in work:
             f = pool.submit(run_trigger_test, query, skill_name, expect, model,
-                            max_budget, extra_flags)
+                            extra_flags)
             future_map[f] = (is_edge, edge_data)
 
         for future in as_completed(future_map):
@@ -779,10 +767,8 @@ ASSERTION_TYPE: PASS|FAIL - explanation"""
     try:
         eval_data = json.loads(stdout)
         eval_text = eval_data.get("result", "")
-        eval_cost = eval_data.get("total_cost_usd", 0.0)
     except json.JSONDecodeError:
         eval_text = stdout
-        eval_cost = 0.0
 
     for a in soft:
         atype = a["type"]
@@ -802,7 +788,6 @@ ASSERTION_TYPE: PASS|FAIL - explanation"""
             layer=3, passed=passed,
             message=explanation,
             severity=a.get("severity", "warning"),
-            cost=eval_cost / max(len(soft), 1),
         ))
 
     return results
@@ -845,7 +830,6 @@ def run_behavioral_test(test_case, config, extra_flags=None):
     input_text = test_case.get("input", "")
     max_turns = test_case.get("max_turns", config.get("config", {}).get("default_max_turns", 5))
     model = config.get("config", {}).get("default_model")
-    max_budget = test_case.get("max_budget", config.get("config", {}).get("max_budget_per_test", 0.50))
     assertions = test_case.get("assertions", [])
     setup = test_case.get("setup", {})
 
@@ -862,13 +846,13 @@ def run_behavioral_test(test_case, config, extra_flags=None):
         if isinstance(input_text, list):
             stdout, stderr, rc = run_claude_p_multiturn(
                 input_text, output_format="stream-json", max_turns=max_turns,
-                model=model, max_budget=max_budget, extra_flags=extra_flags,
+                model=model, extra_flags=extra_flags,
                 cwd=workdir,
             )
         else:
             stdout, stderr, rc = run_claude_p(
                 input_text, output_format="stream-json", max_turns=max_turns,
-                model=model, max_budget=max_budget, extra_flags=extra_flags,
+                model=model, extra_flags=extra_flags,
                 cwd=workdir,
             )
         elapsed = int((time.time() - start) * 1000)
@@ -882,7 +866,6 @@ def run_behavioral_test(test_case, config, extra_flags=None):
             )]
 
         events = parse_stream_json(stdout)
-        cost = events.get("cost", 0.0)
         results = []
 
         # Check hard assertions
@@ -893,7 +876,7 @@ def run_behavioral_test(test_case, config, extra_flags=None):
                 results.append(TestResult(
                     name=f"behavioral/{name}/{atype}",
                     layer=3, passed=passed, message=message,
-                    cost=0, duration_ms=0,
+                    duration_ms=0,
                     details={"assertion": assertion},
                 ))
             elif atype not in SOFT_ASSERTION_TYPES:
@@ -910,7 +893,6 @@ def run_behavioral_test(test_case, config, extra_flags=None):
 
         # Add metadata to first result
         if results:
-            results[0].cost = cost
             results[0].duration_ms = elapsed
 
         return results
@@ -947,7 +929,6 @@ def generate_report(results, config, skill_dir):
     errors = [r for r in results if not r.passed and r.severity == "error"]
     warnings = [r for r in results if not r.passed and r.severity == "warning"]
     passed = [r for r in results if r.passed]
-    total_cost = sum(r.cost for r in results)
     total_duration = sum(r.duration_ms for r in results)
 
     layer_summary = {}
@@ -974,7 +955,6 @@ def generate_report(results, config, skill_dir):
             "errors": len(errors),
             "warnings": len(warnings),
             "result": "PASS" if len(errors) == 0 else "FAIL",
-            "total_cost_usd": round(total_cost, 4),
             "total_duration_ms": total_duration,
         },
         "layers": layer_summary,
@@ -991,8 +971,7 @@ def print_report(report):
     print(f"{'=' * 70}")
     print(f"  {s['passed']}/{s['total']} tests passed  |  "
           f"{s['errors']} errors  |  {s['warnings']} warnings")
-    print(f"  Token budget used: ${s['total_cost_usd']:.4f}  |  "
-          f"Duration: {s['total_duration_ms']}ms\n")
+    print(f"  Duration: {s['total_duration_ms']}ms\n")
 
     # Per-layer summary
     for layer_key, layer_data in report.get("layers", {}).items():
@@ -1172,13 +1151,12 @@ def print_comparison(diff):
 # Suite Execution
 
 def execute_suite(skill_dir, config, layer=None, extra_flags=None,
-                  budget_total=5.00, parallel=1, quiet=False, tests_path=None):
+                  parallel=1, tests_path=None):
     """Run all requested layers and return list of TestResult.
 
     This is the core test execution loop, isolated from CLI concerns.
     """
     results = []
-    total_cost = 0.0
 
     if layer is None or layer == 1:
         results.extend(run_layer1(skill_dir, config, tests_path=tests_path))
@@ -1187,11 +1165,8 @@ def execute_suite(skill_dir, config, layer=None, extra_flags=None,
         if config.get("triggers"):
             results.extend(run_layer2(skill_dir, config, extra_flags=extra_flags,
                                       parallel=parallel))
-            total_cost = sum(r.cost for r in results)
-            if total_cost >= budget_total and not quiet:
-                print(f"\n  Budget cap reached (${total_cost:.4f} >= ${budget_total:.2f}). Stopping.\n")
 
-    if (layer is None or layer == 3) and total_cost < budget_total:
+    if layer is None or layer == 3:
         if config.get("behavioral"):
             results.extend(run_layer3(skill_dir, config, extra_flags=extra_flags,
                                       parallel=parallel))
@@ -1252,12 +1227,10 @@ def main():
               f"{len(triggers.get('should_not_trigger', []))} should-not-trigger, "
               f"{len(triggers.get('edge_cases', []))} edge cases")
         print(f"Layer 3: {len(behavioral)} behavioral tests")
-        est_cost = total_trigger * 0.02 + len(behavioral) * 0.10
-        print(f"Estimated token usage: ~${est_cost:.2f} budget equivalent")
         if args.parallel > 1:
             print(f"Parallel workers: {args.parallel}")
         if args.runs > 1:
-            print(f"Runs: {args.runs} (est. total: ~${est_cost * args.runs:.2f} budget equivalent)")
+            print(f"Runs: {args.runs}")
         return
 
     # Detect plugin directory for --plugin-dir flag
@@ -1268,25 +1241,16 @@ def main():
         if not args.json and not args.dry_run:
             print(f"  Plugin directory: {plugin_dir}\n")
 
-    budget_total = config.get("config", {}).get("max_budget_total", 5.00)
-
     # Flakiness detection: multiple runs
     if args.runs > 1:
         all_runs = []
-        cumulative_cost = 0.0
         for i in range(args.runs):
-            if cumulative_cost >= budget_total:
-                if not args.json:
-                    print(f"\n  Budget cap reached after {i} runs. Stopping.\n")
-                break
             if not args.json:
                 print(f"  Run {i + 1}/{args.runs}...")
             run_results = execute_suite(
                 skill_dir, config, layer=args.layer, extra_flags=extra_flags or None,
-                budget_total=budget_total - cumulative_cost, parallel=args.parallel,
-                quiet=args.json, tests_path=tests_path,
+                parallel=args.parallel, tests_path=tests_path,
             )
-            cumulative_cost += sum(r.cost for r in run_results)
             all_runs.append(run_results)
 
         flakiness = run_flakiness_analysis(all_runs)
@@ -1299,8 +1263,7 @@ def main():
         # Single run
         results = execute_suite(
             skill_dir, config, layer=args.layer, extra_flags=extra_flags or None,
-            budget_total=budget_total, parallel=args.parallel,
-            quiet=args.json, tests_path=tests_path,
+            parallel=args.parallel, tests_path=tests_path,
         )
         report = generate_report(results, config, skill_dir)
 

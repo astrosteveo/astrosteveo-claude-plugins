@@ -20,8 +20,7 @@ skill: your-skill-name
 
 config:
   default_model: sonnet
-  max_budget_per_test: 0.25
-  max_budget_total: 3.00
+  default_max_turns: 5
 
 triggers:
   should_trigger:
@@ -90,8 +89,6 @@ skill: your-skill-name        # Must match the skill's name field (required)
 config:
   default_model: sonnet        # Model alias or full ID
   default_max_turns: 5         # Max turns for behavioral tests
-  max_budget_per_test: 0.50    # USD limit per test case
-  max_budget_total: 5.00       # USD limit for entire suite
   permission_mode: bypassPermissions
 ```
 
@@ -254,24 +251,20 @@ Some older TESTS.yaml files use deprecated key names. The validator will warn yo
 | `type` | `skill` (set to the skill name) |
 | `config.model` | `config.default_model` |
 | `config.max_turns` | `config.default_max_turns` |
-| `config.max_cost_per_test` | `config.max_budget_per_test` |
-| `config.max_total_cost` | `config.max_budget_total` |
 | `tests.trigger.*` | `triggers.*` (top-level) |
 | edge case `should_trigger: bool` | `expect: trigger` or `expect: no_trigger` |
 | edge case `reason` | `note` |
 
-## Token Usage Management
+## Token Usage
 
-Layers 2 and 3 spawn headless `claude -p` processes, consuming tokens from your existing Claude plan. They do not incur separate charges — they use the same token pool as normal Claude Code usage.
+Layers 2 and 3 spawn headless `claude -p` processes, consuming tokens from your normal Claude Code session.
 
 - **Layer 1** uses no tokens — pure Python checks
 - **Layer 2** is lightweight — one turn per trigger test
-- **Layer 3** is heavier — multiple turns per behavioral test, varies by `max_turns` and response length
+- **Layer 3** is heavier — multiple turns per behavioral test, varies by `max_turns`
 - Use `--model haiku` for lighter token usage during development
-- Set `max_budget_per_test` and `max_budget_total` as safety caps to prevent runaway consumption
 - Use `--dry-run` to preview the test plan before running
 - Use `--parallel N` to run tests faster (same token usage, less wall time)
-- When using `--runs N`, the budget cap applies across ALL runs combined
 
 ## Parallel Execution
 
@@ -328,7 +321,6 @@ Results are saved to `skill-folder/test-results/` as timestamped JSON files. The
     "errors": 1,
     "warnings": 1,
     "result": "FAIL",
-    "total_cost_usd": 0.15,
     "total_duration_ms": 45000
   },
   "layers": {
