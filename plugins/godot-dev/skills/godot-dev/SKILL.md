@@ -1,6 +1,6 @@
 ---
 name: godot-dev
-description: "Enforces proper Godot 4.x node-and-scene architecture so game structure is visible in the editor, not hidden in scripts. TRIGGER when: code imports or references .gd/.tscn/.tres files, project has a project.godot file, or user asks to build game objects, scenes, enemies, levels, spawning, loot, or procedural content in Godot. Also triggers on 'add an enemy', 'create a scene', 'write a GDScript', 'build a level', 'set up a spawner', 'make a player controller', 'help me with my Godot game', 'how should I structure this in Godot', or any Godot MCP tool usage. DO NOT trigger for non-Godot projects, general programming, or game development in other engines (Unity, Unreal, Pygame)."
+description: "Godot 4.x development: architecture, scenes, nodes, GDScript, signals, Resources, components, decoupling, refactoring, debugging, and all Godot game engineering. TRIGGER when: project contains project.godot, OR user mentions Godot, GDScript, .gd, .tscn, .tres, gdshader, OR user says 'create a scene', 'add a node', 'write a GDScript', 'build a component', 'set up a spawner', 'fix my Godot game', 'refactor the architecture', 'decouple the systems', 'add signals', 'add autoload', 'add singleton', 'review my Godot project', 'audit for hardcoded values', 'debug this state machine', 'fix collision layers', 'optimize terrain', 'procedural generation', 'loot table', 'enemy AI', 'spawn config', OR any godot-mcp tool usage. DO NOT trigger for Unity, Unreal, Pygame, or non-Godot projects."
 compatibility: Requires Godot 4.x project. Godot MCP server recommended for editor integration.
 metadata:
   author: astrosteveo
@@ -95,23 +95,25 @@ Use groups (`"player"`, `"enemies"`, `"zone_root"`) for runtime lookups across t
 ### Recommended for All Scripts
 
 - **Static typing** — type your variables, parameters, and return values. GDScript's type system catches bugs at parse time and improves editor autocompletion. The official docs recommend it; use it as your default.
-- **`@export` for tunable values** — gameplay numbers belong in the inspector, not hardcoded in scripts. This lets designers (and you) adjust values without editing code.
+- **`@export` every tunable value — no exceptions.** Distances, durations, colors, sizes, thresholds, speeds, counts, multipliers. If a designer might ever want to change it, it MUST be an `@export` or a Resource property. Scripts should contain zero magic numbers that represent design decisions. The inspector is the design tool — not the code editor.
 
 ### Use Selectively, Not Everywhere
 
-- **`@tool`** — makes a script run in the editor. Use it for editor plugins, custom Resource previews, and scripts that need to show something in the viewport at edit time. Do NOT put it on gameplay scripts (enemy AI, player controllers, game managers) — it can cause editor instability, unintended side effects, and performance drag. Guard editor-only code with `Engine.is_editor_hint()`.
-- **`class_name`** — registers a global class. Use it on types you reference elsewhere (custom Resources, components used via `is` checks, classes used as type hints). Skip it on scripts that are only attached to one specific scene node — it pollutes the global namespace and clutters the "Add Node" dialog.
+- **`@tool`** — makes a script run in the editor. Use it for editor plugins, custom Resource previews, and scripts that need to show something in the viewport at edit time (e.g., procedural generators that preview in the editor viewport). Guard editor-only code with `Engine.is_editor_hint()`. Whether to use `@tool` on gameplay scripts depends on the project — some projects use it everywhere for editor visibility, others restrict it.
+- **`class_name`** — registers a global class. Use it on types you reference elsewhere (custom Resources, components used via `is` checks, classes used as type hints). Skip it on scripts that are only attached to one specific scene node. **Critical: never use `class_name` on autoload singleton scripts** — Godot 4 will error with "Class hides an autoload singleton" because the autoload name and class_name conflict. Access autoloads via `get_node_or_null("/root/AutoloadName")` instead.
 
 See `references/conventions.md` for the complete convention set with examples.
 
 ## Data-Driven Design with Resources
 
-When game content needs configuration or variation — enemy stats, loot tables, spawn rules, zone definitions — use custom Resource subclasses. This is standard Godot practice, equivalent to Unity's ScriptableObjects.
+**This is non-negotiable.** Scripts are logic engines. Resources are data. Every piece of content — enemy stats, loot tables, spawn rules, zone definitions, structure parameters, placement constraints — lives in custom Resource subclasses (.tres files), editable in the inspector. Scripts read Resources and execute behavior. Scripts never decide what content looks like — Resources do.
+
+The designer builds the game through the inspector and .tres files. If a value is buried in a script, the designer can't tune it without reading code. That is a failure.
 
 ### The Pattern
 
 1. **Config Resource** — a Resource subclass with `@export` fields defining rules and parameters. Pure data, no side effects. Designers edit it in the inspector. Saved as `.tres` files.
-2. **Logic** — a script (or static function) that reads the config and produces results. Takes a seeded `RandomNumberGenerator` when randomness is involved.
+2. **Logic** — a script (or static function) that reads the config and produces results. Takes a seeded `RandomNumberGenerator` when randomness is involved. The script contains zero design decisions — only algorithms.
 3. **Building blocks** — visual assets referenced by the config as `PackedScene` or `Resource` arrays. Editor-authored `.tscn` and `.tres` files.
 
 ### Example: Spawn Config
@@ -134,19 +136,22 @@ See `references/data-driven-resources.md` for detailed examples covering spawnin
 
 ## Procedural Geometry
 
-Godot provides `SurfaceTool`, `ArrayMesh`, `ImmediateMesh`, and `MeshDataTool` for generating meshes in code. These are legitimate tools for:
-
-- Voxel terrain (Minecraft-style worlds)
-- Heightmap-based terrain generation
-- Rope, chain, and cable physics visualization
-- Trail and ribbon effects
-- Dynamic water surfaces
-- Navigation meshes for procedural levels
-- Debug visualization
+Godot provides `SurfaceTool`, `ArrayMesh`, `ImmediateMesh`, and `MeshDataTool` for generating meshes in code. These are legitimate tools for terrain, structures, cables, trails, water surfaces, and any mesh whose shape is computed rather than authored.
 
 **When procedural geometry is appropriate:** the mesh itself needs to be algorithmic — its shape is computed, not authored.
 
-**When it is NOT appropriate:** using `BoxMesh.new()` or `SphereMesh.new()` as lazy placeholders because creating a proper `.tscn` scene feels like more work. If an artist could author it, it should be a scene. If it must be computed, use the procedural geometry tools.
+**When it is NOT appropriate:** using `BoxMesh.new()` or `SphereMesh.new()` as lazy placeholders because creating a proper `.tscn` scene feels like more work. If an artist could author it, it should be a scene.
+
+### Procedural Generation Pattern
+
+When building procedural generators, the same data-driven rule applies: **the Resource defines what to generate, the script defines how.**
+
+1. **Parameter Resource** — a Resource subclass with @exports for every generation parameter (dimensions, segment counts, decay levels, colors, noise settings). This is the blueprint. Designers tune it in the inspector.
+2. **Generator Script** — reads the Resource and builds geometry via SurfaceTool/ArrayMesh. Contains only the algorithm, never the design decisions. Uses `RandomNumberGenerator` seeded from the Resource for deterministic results.
+3. **Regeneration** — generators can regenerate at both editor time (`@tool`) and runtime. The Resource parameters are the source of truth; the mesh is derived data. Don't embed generated meshes into scene files (don't set `owner` on generated children) — they bloat .tscn files with serialized vertex data.
+4. **Collision** — generators should create their own StaticBody3D + trimesh collision shape as a child, so generated geometry is walkable/collidable without manual setup.
+
+Example: a `StructureResource` defines wall segments, pillar count, decay level, colors. A `StructureGenerator` (MeshInstance3D with @tool) reads it and builds an ArrayMesh. Change the Resource in the inspector → the structure updates in the viewport. Same Resource + same seed = same structure every time.
 
 ## MCP Workflow
 

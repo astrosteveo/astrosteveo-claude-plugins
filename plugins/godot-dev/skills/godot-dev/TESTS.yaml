@@ -3,35 +3,50 @@ skill: godot-dev
 
 config:
   default_model: sonnet
-  max_budget_per_test: 0.25
-  max_budget_total: 3.00
 
 triggers:
   should_trigger:
-    # Scene/node creation
+    # Scene/node creation — all mention Godot or GDScript
     - "add an enemy to my Godot game"
-    - "create a new scene for the player"
-    - "build a health component"
-    - "I need a projectile script"
+    - "create a new .tscn scene for the player in Godot"
+    - "build a health component in GDScript"
+    - "I need a projectile script in GDScript"
 
     # Procedural content systems
-    - "generate terrain for my zones"
-    - "I need a loot table system"
-    - "build enemy wave spawning"
-    - "procedural prop placement"
-    - "create a spawn config resource"
+    - "generate terrain for my Godot zones"
+    - "I need a loot table system in Godot"
+    - "build enemy wave spawning in my Godot game"
+    - "procedural prop placement in Godot"
+    - "create a spawn config Resource in GDScript"
 
-    # Architecture
+    # Architecture and refactoring — mention Godot/GDScript
     - "how should I structure my inventory system in Godot"
     - "refactor this GDScript to use components"
-    - "add a new autoload singleton"
-    - "set up collision layers for my game"
+    - "add a new autoload singleton in Godot"
+    - "set up collision layers in my Godot project"
+    - "the design of my Godot project is tightly coupled, needs decoupling"
+    - "add a signal bus to decouple systems in my Godot game"
+    - "refactor the Godot architecture to use managers and singletons"
+    - "the player spawn location is hardcoded in my GDScript, fix the architecture"
+    - "break apart this monolithic GDScript into proper components"
+    - "add signals and emitters to decouple my Godot scripts"
 
     # General Godot work
     - "write a GDScript for enemy AI"
     - "help me with this .tscn scene"
     - "fix this Godot shader"
-    - "create a Resource subclass for gear data"
+    - "create a Resource subclass for gear data in Godot"
+
+    # Debugging and fixing
+    - "my player keeps falling through the floor in Godot"
+    - "debug this enemy state machine in my Godot game"
+    - "fix the collision layers on my Godot player"
+    - "optimize my Godot terrain generation performance"
+
+    # Review and audit
+    - "review the architecture of my Godot project"
+    - "audit the GDScript codebase for hardcoded values"
+    - "find all the tight coupling in my GDScript files"
 
   should_not_trigger:
     - "write a Python web scraper"
@@ -39,24 +54,35 @@ triggers:
     - "create a REST API in Node.js"
     - "review this SQL query"
     - "set up a Docker container"
+    - "decouple my Django models from the views"
+    - "refactor this Unity C# script"
 
   edge_cases:
-    - query: "procedurally generate some rocks"
+    - query: "procedurally generate some rocks in Godot"
       expect: trigger
       note: "Should trigger and guide toward editor-authored rock scenes with a scatter config"
-    - query: "create a mesh in code"
+    - query: "create a mesh in GDScript code"
       expect: trigger
-      note: "Should trigger and evaluate whether procedural geometry is appropriate or if a scene would be better"
-    - query: "I need random enemy spawns"
+      note: "Should trigger and evaluate whether procedural geometry is appropriate"
+    - query: "I need random enemy spawns in my Godot game"
       expect: trigger
       note: "Should trigger and guide toward data-driven config with seeded RNG"
     - query: "make a simple game"
       expect: no_trigger
       note: "Too vague -- could be any engine or framework"
+    - query: "halt progress on Godot dev and fix the underlying design"
+      expect: trigger
+      note: "Architecture work in a Godot project should always trigger"
+    - query: "my Godot project is too tightly coupled, needs singletons and message buses"
+      expect: trigger
+      note: "Decoupling and architecture discussion in Godot context"
+    - query: "refactor to use Godot signals instead of direct references"
+      expect: trigger
+      note: "Signal-based decoupling is core Godot architecture"
 
 behavioral:
   - name: "builds scene tree instead of script-only construction"
-    input: "Create a basic enemy for my Godot 3D game with health and movement"
+    input: "Create a basic enemy for my Godot 4 3D game with health and movement"
     max_turns: 5
     assertions:
       - type: output_matches
@@ -65,7 +91,7 @@ behavioral:
         pattern: "(?i)(component|HealthComponent|health)"
 
   - name: "uses data-driven resources for configurable content"
-    input: "I need to procedurally scatter rocks around my Godot zone"
+    input: "I need to procedurally scatter rocks around my Godot zone using Resources"
     max_turns: 3
     assertions:
       - type: output_matches
@@ -80,11 +106,18 @@ behavioral:
       - type: output_does_not_match
         pattern: "PlaneMesh\\.new|BoxMesh\\.new|DirectionalLight3D\\.new\\(\\)"
 
-  - name: "does not put @tool on gameplay scripts"
-    input: "Write a GDScript for an enemy that chases the player in Godot"
+  - name: "does not put @tool on gameplay scripts by default"
+    input: "Write a GDScript for an enemy that chases the player in Godot 4"
     max_turns: 5
     assertions:
       - type: output_does_not_match
         pattern: "^@tool"
       - type: output_matches
         pattern: "(?i)(extends|CharacterBody|Node)"
+
+  - name: "recommends decoupling via signals and components for architecture work"
+    input: "My Godot project has tightly coupled GDScript files with hardcoded values everywhere. How do I fix the architecture?"
+    max_turns: 5
+    assertions:
+      - type: output_matches
+        pattern: "(?i)(signal|component|resource|export|decouple|autoload|singleton)"
