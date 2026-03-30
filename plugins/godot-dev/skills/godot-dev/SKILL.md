@@ -1,6 +1,18 @@
 ---
 name: godot-dev
-description: "Godot 4.x development: architecture, scenes, nodes, GDScript, signals, Resources, components, decoupling, refactoring, debugging, and all Godot game engineering. TRIGGER when: project contains project.godot, OR user mentions Godot, GDScript, .gd, .tscn, .tres, gdshader, OR user says 'create a scene', 'add a node', 'write a GDScript', 'build a component', 'set up a spawner', 'fix my Godot game', 'refactor the architecture', 'decouple the systems', 'add signals', 'add autoload', 'add singleton', 'review my Godot project', 'audit for hardcoded values', 'debug this state machine', 'fix collision layers', 'optimize terrain', 'procedural generation', 'loot table', 'enemy AI', 'spawn config', OR any godot-mcp tool usage. DO NOT trigger for Unity, Unreal, Pygame, or non-Godot projects."
+description: >
+  Godot 4.x development: architecture, scenes, nodes, GDScript, signals,
+  Resources, components, decoupling, refactoring, debugging, and all Godot
+  game engineering. TRIGGER when: project contains project.godot, OR user
+  mentions Godot, GDScript, .gd, .tscn, .tres, gdshader, OR user says
+  'create a scene', 'add a node', 'write a GDScript', 'build a component',
+  'set up a spawner', 'fix my Godot game', 'refactor the architecture',
+  'decouple the systems', 'add signals', 'add autoload', 'add singleton',
+  'review my Godot project', 'audit for hardcoded values', 'debug this state
+  machine', 'fix collision layers', 'optimize terrain', 'procedural
+  generation', 'loot table', 'enemy AI', 'spawn config', OR any godot-mcp
+  tool usage. DO NOT trigger for Unity, Unreal, Pygame, or non-Godot
+  projects.
 compatibility: Requires Godot 4.x project. Godot MCP server recommended for editor integration.
 metadata:
   author: astrosteveo

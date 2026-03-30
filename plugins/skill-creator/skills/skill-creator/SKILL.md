@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: |
+description: >
   Interactive toolkit for creating, editing, reviewing, and testing Claude skills.
   Use when the user says "create a skill", "build a skill", "new skill", "edit a skill",
   "review this skill", "fix this skill", "test a skill", "run skill tests",

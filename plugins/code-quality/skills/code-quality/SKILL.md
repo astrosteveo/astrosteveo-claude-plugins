@@ -1,6 +1,18 @@
 ---
 name: code-quality
-description: "Reviews codebases for quality issues: clean code, DRY violations, security vulnerabilities, performance problems, error handling, architecture smells, and best practice deviations. Builds full codebase understanding before making recommendations. All suggestions are non-breaking. TRIGGER when: user says 'review code quality', 'audit the codebase', 'check code quality', 'find code smells', 'review for best practices', 'security audit', 'performance review', 'check for DRY violations', 'code review the project', 'find tech debt', 'identify bad patterns', 'review code health', 'check for security issues', 'find performance problems', 'codebase audit'. DO NOT trigger for: writing new code, fixing a specific bug, implementing a feature, single-file edits, refactoring a specific function, or general coding assistance."
+description: >
+  Reviews codebases for quality issues: clean code, DRY violations, security
+  vulnerabilities, performance problems, error handling, architecture smells,
+  and best practice deviations. Builds full codebase understanding before
+  making recommendations. All suggestions are non-breaking. TRIGGER when:
+  user says 'review code quality', 'audit the codebase', 'check code quality',
+  'find code smells', 'review for best practices', 'security audit',
+  'performance review', 'check for DRY violations', 'code review the project',
+  'find tech debt', 'identify bad patterns', 'review code health', 'check for
+  security issues', 'find performance problems', 'codebase audit'. DO NOT
+  trigger for: writing new code, fixing a specific bug, implementing a feature,
+  single-file edits, refactoring a specific function, or general coding
+  assistance.
 metadata:
   author: astrosteveo
   version: 1.0.0

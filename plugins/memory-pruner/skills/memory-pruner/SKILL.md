@@ -1,6 +1,6 @@
 ---
 name: memory-pruner
-description: |
+description: >
   Consolidates and prunes stale auto-memory files in Claude Code project memory
   directories (~/.claude/projects/*/memory/). Reads MEMORY.md index and individual
   memory files, cross-references against git history, recent codebase activity, and

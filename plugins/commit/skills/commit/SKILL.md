@@ -1,6 +1,17 @@
 ---
 name: commit
-description: "Creates Conventional Commits for each logical unit of work in the current git diff. Use when the user says 'commit', 'commit my changes', 'create commits', 'commit this work', or runs /commit. Do NOT trigger when the user is asking for help, advice, or explanations about commits — e.g. 'help me write a commit message', 'how do I write a commit message', explaining commit history, reverting commits, or understanding conventions. Only trigger when the user wants commits created from their current changes. Analyzes staged and unstaged changes, groups them into logical units, presents a commit plan for approval, then creates one well-formatted commit per unit. Follows the Conventional Commits specification (type(scope): description)."
+description: >
+  Creates Conventional Commits for each logical unit of work in the current
+  git diff. Use when the user says 'commit', 'commit my changes', 'create
+  commits', 'commit this work', or runs /commit. Do NOT trigger when the user
+  is asking for help, advice, or explanations about commits — e.g. 'help me
+  write a commit message', 'how do I write a commit message', explaining
+  commit history, reverting commits, or understanding conventions. Only
+  trigger when the user wants commits created from their current changes.
+  Analyzes staged and unstaged changes, groups them into logical units,
+  presents a commit plan for approval, then creates one well-formatted commit
+  per unit. Follows the Conventional Commits specification
+  (type(scope): description).
 ---
 
 # Commit
