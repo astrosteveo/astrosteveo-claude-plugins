@@ -348,9 +348,9 @@ When using `--runs N`, the report includes a `flakiness` key with per-test stabi
 | `--save-results` | Save results to test-results/ in the skill folder |
 | `--compare BASELINE` | Compare results against a baseline file (path or 'latest') |
 
-## Integration with Skills-Creator
+## Integration with Skill-Creator
 
-The testing framework integrates into the skills-creator workflow:
+The testing framework integrates into the skill-creator workflow:
 
 - **Phase 1 (Discovery):** Use cases feed directly into trigger test cases
 - **Phase 3 (Instructions):** A TESTS.yaml is auto-generated from the use cases

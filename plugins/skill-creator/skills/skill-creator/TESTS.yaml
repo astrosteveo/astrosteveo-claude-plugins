@@ -1,5 +1,5 @@
 version: 1
-skill: skills-creator
+skill: skill-creator
 
 config:
   default_model: sonnet

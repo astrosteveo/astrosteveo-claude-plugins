@@ -18,11 +18,11 @@ Auto-memory awareness hooks for Claude Code. No skills — just hooks that promp
 
 Hooks never block, auto-commit, or auto-push. They prompt the agent and let it decide what to do.
 
-### skills-creator
+### skill-creator
 
 Interactive guide for creating new Claude Code skills. Walks you through a 6-phase workflow: discovery, frontmatter, trigger design, instruction writing, file structure, and validation.
 
-Invoke with `/skills-creator` or say "create a skill".
+Invoke with `/skill-creator` or say "create a skill".
 
 ## Installation
 
@@ -57,11 +57,11 @@ python plugins/project-state/scripts/test-hooks.py --dry-run
 
 ```bash
 # Structural validation
-python plugins/skills-creator/skills/skills-creator/scripts/validate-structure.py /path/to/skill
+python plugins/skill-creator/skills/skill-creator/scripts/validate-structure.py /path/to/skill
 
 # Trigger tests
-python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/to/skill --layer 2
+python plugins/skill-creator/skills/skill-creator/scripts/run-tests.py /path/to/skill --layer 2
 
 # Full suite
-python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/to/skill
+python plugins/skill-creator/skills/skill-creator/scripts/run-tests.py /path/to/skill
 ```

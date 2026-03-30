@@ -16,13 +16,13 @@
             "source": "./plugins/commit"
         },
         {
-            "name": "skills-creator",
+            "name": "skill-creator",
             "description": "Interactive guide for creating new Claude Code skills",
             "author": {
                 "name": "AstroSteveo",
                 "email": "astrosteveo@noreply.users.github.com"
             },
-            "source": "./plugins/skills-creator"
+            "source": "./plugins/skill-creator"
         },
         {
             "name": "godot-dev",
@@ -32,6 +32,15 @@
                 "email": "astrosteveo@noreply.users.github.com"
             },
             "source": "./plugins/godot-dev"
+        },
+        {
+            "name": "code-quality",
+            "description": "Codebase quality review skill — clean code, DRY, security, performance, and best practices",
+            "author": {
+                "name": "AstroSteveo",
+                "email": "astrosteveo@noreply.users.github.com"
+            },
+            "source": "./plugins/code-quality"
         }
     ]
 }

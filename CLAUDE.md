@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Claude Code plugin repository with three plugins — **commit** (Conventional Commits), **skills-creator** (interactive skill builder), and **godot-dev** (Godot 4.x guidance). The codebase is pure Markdown (skills), Bash (scripts), and Python (test tooling). There is no build step; plugins are loaded directly by Claude Code.
+Claude Code plugin repository with four plugins — **commit** (Conventional Commits), **skill-creator** (interactive skill builder), **godot-dev** (Godot 4.x guidance), and **code-quality** (codebase quality review). The codebase is pure Markdown (skills), Bash (scripts), and Python (test tooling). There is no build step; plugins are loaded directly by Claude Code.
 
 ## Architecture
 
@@ -12,10 +12,11 @@ Claude Code plugin repository with three plugins — **commit** (Conventional Co
 
 Each plugin lives under `plugins/{name}/` with its own `.claude-plugin/plugin.json` manifest. The top-level `.claude-plugin/marketplace.json` is the registry index.
 
-Three plugins:
+Four plugins:
 - **`commit`** (`plugins/commit/`) — Conventional Commits skill; analyzes diffs, groups changes into logical units, creates one commit per unit
-- **`skills-creator`** (`plugins/skills-creator/`) — interactive 6-phase workflow for building new Claude skills
+- **`skill-creator`** (`plugins/skill-creator/`) — interactive 6-phase workflow for building new Claude skills
 - **`godot-dev`** (`plugins/godot-dev/`) — Godot 4.x development guidance with architecture patterns, conventions, and MCP workflow; extensive reference docs
+- **`code-quality`** (`plugins/code-quality/`) — codebase quality review: clean code, DRY, security, performance, best practices; context-first analysis with non-breaking recommendations
 
 ### Skills
 
@@ -31,30 +32,30 @@ Skill tests use a YAML-based spec (`TESTS.yaml`) with three layers:
 
 ```bash
 # Layer 1 — structural validation
-python plugins/skills-creator/skills/skills-creator/scripts/validate-structure.py /path/to/skill
+python plugins/skill-creator/skills/skill-creator/scripts/validate-structure.py /path/to/skill
 
 # Layer 2 — trigger tests only
-python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/to/skill --layer 2
+python plugins/skill-creator/skills/skill-creator/scripts/run-tests.py /path/to/skill --layer 2
 
 # Full suite (all layers)
-python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/to/skill
+python plugins/skill-creator/skills/skill-creator/scripts/run-tests.py /path/to/skill
 ```
 
-Test scripts live in the skills-creator skill since it owns the testing framework. Skill `TESTS.yaml` files configure model, max turns, and per-test/total cost budgets.
+Test scripts live in the skill-creator skill since it owns the testing framework. Skill `TESTS.yaml` files configure model, max turns, and per-test/total cost budgets.
 
 Additional `run-tests.py` options:
 ```bash
 # Layer 1 only (structural, free, instant)
-python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/to/skill --layer 1
+python plugins/skill-creator/skills/skill-creator/scripts/run-tests.py /path/to/skill --layer 1
 
 # Parallel execution (4 workers)
-python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/to/skill --parallel 4
+python plugins/skill-creator/skills/skill-creator/scripts/run-tests.py /path/to/skill --parallel 4
 
 # Flakiness detection (run 3 times)
-python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/to/skill --runs 3
+python plugins/skill-creator/skills/skill-creator/scripts/run-tests.py /path/to/skill --runs 3
 
 # Compare against baseline
-python plugins/skills-creator/skills/skills-creator/scripts/run-tests.py /path/to/skill --compare latest
+python plugins/skill-creator/skills/skill-creator/scripts/run-tests.py /path/to/skill --compare latest
 ```
 
 ## Conventions

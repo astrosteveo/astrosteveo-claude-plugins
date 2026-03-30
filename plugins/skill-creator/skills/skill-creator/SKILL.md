@@ -1,11 +1,11 @@
 ---
-name: skills-creator
+name: skill-creator
 description: |
   Interactive toolkit for creating, editing, reviewing, and testing Claude skills.
   Use when the user says "create a skill", "build a skill", "new skill", "edit a skill",
   "review this skill", "fix this skill", "test a skill", "run skill tests",
   "validate a skill", "skill creator", "help me write a skill", or "generate a SKILL.md".
-  Also use when the user runs /skills-creator. Supports three modes: create (guided
+  Also use when the user runs /skill-creator. Supports three modes: create (guided
   multi-phase workflow), edit (review and fix an existing skill), and test (run the
   eval framework against a skill). Do NOT use for general coding tasks unrelated to
   Claude skill authoring.
@@ -13,7 +13,7 @@ compatibility: Requires Claude Code with file system access for creating skill d
 argument-hint: "[create | edit path/to/skill | test path/to/skill]"
 ---
 
-# Skills Creator
+# Skill Creator
 
 Interactive toolkit for creating, editing, and testing Claude skills.
 
@@ -26,9 +26,9 @@ When invoked, check for arguments. If no arguments are provided, present the use
 3. **Test** — Run the eval framework against a skill (provide the path to the skill folder)
 
 If the user provides arguments:
-- `/skills-creator create` or `/skills-creator` with a description of what they want to build -- **Create flow**
-- `/skills-creator edit path/to/skill` or the user mentions editing/reviewing/fixing a skill -- **Edit flow**
-- `/skills-creator test path/to/skill` or the user mentions testing/validating/running evals -- **Test flow**
+- `/skill-creator create` or `/skill-creator` with a description of what they want to build -- **Create flow**
+- `/skill-creator edit path/to/skill` or the user mentions editing/reviewing/fixing a skill -- **Edit flow**
+- `/skill-creator test path/to/skill` or the user mentions testing/validating/running evals -- **Test flow**
 
 If the intent is ambiguous, ask.
 
