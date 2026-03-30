@@ -1,0 +1,27 @@
+version: 1
+skill: code-quality
+
+config:
+  default_model: sonnet
+  default_max_turns: 3
+
+triggers:
+  should_trigger:
+    - "review the code quality of this project"
+    - "audit the codebase for issues"
+    - "check for security vulnerabilities and code smells"
+
+  should_not_trigger:
+    - "fix the login bug"
+    - "add a new endpoint for user profiles"
+    - "refactor this function to use async"
+
+  edge_cases:
+    - query: "review this pull request"
+      expect: no_trigger
+      note: "PR review is a different workflow, not a codebase quality audit"
+    - query: "find all the tech debt"
+      expect: trigger
+      note: "Tech debt scanning is a form of quality review"
+
+behavioral: []

@@ -1,0 +1,8 @@
+{
+    "name": "code-quality",
+    "description": "Codebase quality review skill — clean code, DRY, security, performance, and best practices",
+    "author": {
+        "name": "AstroSteveo",
+        "email": "astrosteveo@noreply.users.github.com"
+    }
+}
