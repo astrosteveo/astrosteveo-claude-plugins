@@ -196,10 +196,20 @@ def validate_skill(skill_dir):
         severity="error" if line_count > 500 else "error"
     ))
 
-    # Check no XML angle brackets (outside of code blocks)
+    # Check no XML angle brackets (outside of code blocks and frontmatter)
+    # Frontmatter is validated separately via description_no_xml;
+    # skip it here to avoid false positives on YAML indicators like > and |
+    fm_end_line = 0
+    if content.startswith("---"):
+        fm_close = content.find("---", 3)
+        if fm_close > 0:
+            fm_end_line = content[:fm_close + 3].count("\n")
+
     in_code_block = False
     xml_bracket_lines = []
     for i, line in enumerate(lines, 1):
+        if i <= fm_end_line:
+            continue
         if line.strip().startswith("```"):
             in_code_block = not in_code_block
             continue
