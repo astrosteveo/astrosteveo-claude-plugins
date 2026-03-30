@@ -7,9 +7,12 @@ The YAML frontmatter is how Claude decides whether to load your skill. It appear
 ```yaml
 ---
 name: your-skill-name
-description: What it does and when to use it. Include trigger phrases.
+description: >
+  What it does and when to use it. Include trigger phrases.
 ---
 ```
+
+Always use the YAML folded block scalar (`>`) for descriptions. This folds multi-line text into a single continuous string, which renders cleanly in Claude Code's system prompt. Using `|` (literal block) preserves line breaks and makes descriptions appear fragmented.
 
 The `---` delimiters are mandatory. Missing them is a common upload error.
 
@@ -41,7 +44,7 @@ Must include BOTH:
 
 Constraints:
 - Under 1024 characters
-- No XML angle brackets (< or >)
+- No XML angle brackets in the description text content (the YAML `>` folding indicator is fine)
 - Include specific tasks users might say
 - Mention file types if relevant
 
