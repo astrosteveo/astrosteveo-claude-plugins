@@ -41,7 +41,7 @@ python plugins/skill-creator/skills/skill-creator/scripts/run-tests.py /path/to/
 python plugins/skill-creator/skills/skill-creator/scripts/run-tests.py /path/to/skill
 ```
 
-Test scripts live in the skill-creator skill since it owns the testing framework. Skill `TESTS.yaml` files configure model, max turns, and per-test/total cost budgets.
+Test scripts live in the skill-creator skill since it owns the testing framework. Layer 1 is free (structural checks only); Layers 2 and 3 spawn headless `claude -p` processes and consume API tokens — always confirm with the user before running them. Skill `TESTS.yaml` files configure model, max turns, and per-test/total cost budgets.
 
 Additional `run-tests.py` options:
 ```bash

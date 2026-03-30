@@ -1,28 +1,32 @@
 # astrosteveo-claude-plugins
 
-Claude Code plugins for auto-memory awareness and skill creation.
+Curated Claude Code plugins for engineers.
 
 ## Plugins
 
-### project-state
+### commit
 
-Auto-memory awareness hooks for Claude Code. No skills — just hooks that prompt the agent to maintain its memory system.
+Conventional Commits skill for Claude Code. Analyzes diffs, groups changes into logical units, and creates one well-formatted commit per unit.
 
-**Hooks:**
-
-| Hook | What it does |
-|------|-------------|
-| **SessionStart** | Primes auto-memory awareness for the session |
-| **PostCompact** | Shows recent commits for orientation; reminds agent to persist learnings before they are lost |
-| **Stop** | Prompts auto-memory evaluation before stopping; does not block |
-
-Hooks never block, auto-commit, or auto-push. They prompt the agent and let it decide what to do.
+Invoke with `/commit` or say "commit my changes".
 
 ### skill-creator
 
 Interactive guide for creating new Claude Code skills. Walks you through a 6-phase workflow: discovery, frontmatter, trigger design, instruction writing, file structure, and validation.
 
 Invoke with `/skill-creator` or say "create a skill".
+
+### godot-dev
+
+Godot 4.x development skill with engine conventions, architecture patterns, and MCP workflow guidance.
+
+Triggers automatically in projects containing `project.godot`, or invoke with `/godot-dev`.
+
+### code-quality
+
+Codebase quality review — clean code, DRY, security, performance, and best practices. Builds full codebase understanding before making recommendations.
+
+Invoke with `/code-quality` or say "review code quality".
 
 ## Installation
 
@@ -34,29 +38,8 @@ https://github.com/astrosteveo/astrosteveo-claude-plugins
 
 ## Testing
 
-### Hook tests
-
 ```bash
-# All hooks
-python plugins/project-state/scripts/test-hooks.py
-
-# Single hook
-python plugins/project-state/scripts/test-hooks.py --hook stop-gate
-
-# Single scenario
-python plugins/project-state/scripts/test-hooks.py --scenario outputs-memory-prompt
-
-# JSON output
-python plugins/project-state/scripts/test-hooks.py --json
-
-# Show plan without running
-python plugins/project-state/scripts/test-hooks.py --dry-run
-```
-
-### Skill tests
-
-```bash
-# Structural validation
+# Structural validation (free, instant)
 python plugins/skill-creator/skills/skill-creator/scripts/validate-structure.py /path/to/skill
 
 # Trigger tests
