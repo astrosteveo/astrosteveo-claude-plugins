@@ -50,6 +50,15 @@
                 "email": "astrosteveo@noreply.users.github.com"
             },
             "source": "./plugins/memory-pruner"
+        },
+        {
+            "name": "story",
+            "description": "Structured, phased feature development workflow inspired by Agile methodology",
+            "author": {
+                "name": "AstroSteveo",
+                "email": "astrosteveo@noreply.users.github.com"
+            },
+            "source": "./plugins/story"
         }
     ]
 }

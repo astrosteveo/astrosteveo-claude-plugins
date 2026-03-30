@@ -1,0 +1,30 @@
+version: 1
+skill: story
+
+config:
+  default_model: sonnet
+  default_max_turns: 5
+
+triggers:
+  should_trigger:
+    - "let's build a new authentication system"
+    - "start a story for adding dark mode support"
+    - "/story implement a caching layer for the API"
+
+  should_not_trigger:
+    - "fix the typo in the README"
+    - "what does this function do?"
+    - "rename this variable to camelCase"
+
+  edge_cases:
+    - query: "implement issue #42"
+      expect: trigger
+      note: "GitHub issue reference should trigger the workflow"
+    - query: "I want to add a small helper function"
+      expect: no_trigger
+      note: "Small additions don't need a formal workflow"
+    - query: "let's plan out this refactor"
+      expect: trigger
+      note: "Planning language suggests a structured workflow is wanted"
+
+behavioral: []
