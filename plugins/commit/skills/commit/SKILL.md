@@ -70,21 +70,26 @@ For breaking changes, add `!` before the colon: `feat!:` or `feat(api)!:`
 
 ### Step 3: Present the Commit Plan
 
-Present the plan to the user in this format:
+Present the plan using markdown formatting for scannability. Use backticks around commit messages so they stand out, bold labels, and bullet points:
 
 ```
 Commit Plan:
 
-1. type(scope): description
-   Files: file1.js, file2.js
-   Why: brief rationale for the type choice
+**1.** `type(scope): description`
+   - **Files:** file1.js, file2.js
+   - **Why:** brief rationale for the type choice
 
-2. type(scope): description
-   Files: file3.js
-   Why: brief rationale for the type choice
+**2.** `type(scope): description`
+   - **Files:** file3.js
+   - **Why:** brief rationale for the type choice
 ```
 
-The "Why" line is especially important for borderline decisions (e.g., refactor vs. feat, fix vs. chore). Keep it to one sentence.
+Formatting rules:
+- Wrap the commit message in backticks so it reads as a distinct code-like element
+- Use bold numbered prefixes (**1.**) for each commit
+- Use bullet points with bold labels (**Files:**, **Why:**) for metadata
+- Keep a blank line between commits for visual separation
+- The "Why" line is especially important for borderline decisions (e.g., refactor vs. feat, fix vs. chore). Keep it to one sentence.
 
 Wait for user approval before proceeding. If the user wants changes, adjust and re-present.
 
@@ -163,35 +168,41 @@ All parts of the commit message are case-insensitive EXCEPT `BREAKING CHANGE` wh
 User says: "/commit"
 Git diff shows: auth module changes + its tests
 Plan:
-1. `feat(auth): add JWT token refresh on expiry`
-   Files: src/auth.js, tests/auth.test.js
-   Why: new capability, not modifying existing refresh behavior
+
+**1.** `feat(auth): add JWT token refresh on expiry`
+   - **Files:** src/auth.js, tests/auth.test.js
+   - **Why:** new capability, not modifying existing refresh behavior
 
 ### Example 2: Multiple units of work
 User says: "commit my changes"
 Git diff shows: bug fix in API + unrelated README update + new config file
 Plan:
-1. `fix(api): handle null response from upstream service`
-   Files: src/api/handler.js
-   Why: fixes a crash when upstream returns null, not a new feature
-2. `docs: update setup instructions in README`
-   Files: README.md
-   Why: only markdown changes, no code affected
-3. `chore: add production config template`
-   Files: config/production.template.json
-   Why: config template, not a source or test change
+
+**1.** `fix(api): handle null response from upstream service`
+   - **Files:** src/api/handler.js
+   - **Why:** fixes a crash when upstream returns null, not a new feature
+
+**2.** `docs: update setup instructions in README`
+   - **Files:** README.md
+   - **Why:** only markdown changes, no code affected
+
+**3.** `chore: add production config template`
+   - **Files:** config/production.template.json
+   - **Why:** config template, not a source or test change
 
 ### Example 3: Pre-staged changes
 User says: "/commit"
 Staged changes: two files the user already staged via `git add`
 Unstaged changes: unrelated formatting fix
 Plan:
-1. `feat(auth): add session timeout configuration`
-   Files: src/auth.js, src/config.js (pre-staged)
-   Why: new capability — user intentionally staged these together
-2. `style: fix whitespace in utils`
-   Files: src/utils.js
-   Why: formatting only, no logic change
+
+**1.** `feat(auth): add session timeout configuration`
+   - **Files:** src/auth.js, src/config.js (pre-staged)
+   - **Why:** new capability — user intentionally staged these together
+
+**2.** `style: fix whitespace in utils`
+   - **Files:** src/utils.js
+   - **Why:** formatting only, no logic change
 
 ## Troubleshooting
 
