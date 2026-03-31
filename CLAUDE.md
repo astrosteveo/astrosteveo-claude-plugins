@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Claude Code plugin repository with four plugins — **commit** (Conventional Commits), **skill-creator** (interactive skill builder), **godot-dev** (Godot 4.x guidance), and **code-quality** (codebase quality review). The codebase is pure Markdown (skills), Bash (scripts), and Python (test tooling). There is no build step; plugins are loaded directly by Claude Code.
+Claude Code plugin repository with six plugins — **commit** (Conventional Commits), **skill-creator** (interactive skill builder), **godot-dev** (Godot 4.x guidance), **code-quality** (codebase quality review), **reconcile-memory** (memory audit and cleanup), and **story** (phased feature development). The codebase is pure Markdown (skills), Bash (scripts), and Python (test tooling). There is no build step; plugins are loaded directly by Claude Code.
 
 ## Architecture
 
@@ -12,11 +12,13 @@ Claude Code plugin repository with four plugins — **commit** (Conventional Com
 
 Each plugin lives under `plugins/{name}/` with its own `.claude-plugin/plugin.json` manifest. The top-level `.claude-plugin/marketplace.json` is the registry index.
 
-Four plugins:
+Six plugins:
 - **`commit`** (`plugins/commit/`) — Conventional Commits skill; analyzes diffs, groups changes into logical units, creates one commit per unit
 - **`skill-creator`** (`plugins/skill-creator/`) — interactive 6-phase workflow for building new Claude skills
 - **`godot-dev`** (`plugins/godot-dev/`) — Godot 4.x development guidance with architecture patterns, conventions, and MCP workflow; extensive reference docs
 - **`code-quality`** (`plugins/code-quality/`) — codebase quality review: clean code, DRY, security, performance, best practices; context-first analysis with non-breaking recommendations
+- **`reconcile-memory`** (`plugins/reconcile-memory/`) — audit and reconcile auto-memory files: deduplication, contradiction detection, staleness assessment, context hygiene
+- **`story`** (`plugins/story/`) — structured, phased feature development workflow inspired by Agile methodology
 
 ### Skills
 

@@ -1,0 +1,46 @@
+version: 1
+skill: reconcile-memory
+
+config:
+  default_model: sonnet
+  default_max_turns: 1
+  max_budget_per_test: 0.02
+  max_budget_total: 0.60
+
+triggers:
+  should_trigger:
+    - "reconcile memory"
+    - "audit my memories"
+    - "clean up memory files"
+    - "my memories are getting bloated"
+    - "check for stale memories"
+    - "dedupe my memories"
+    - "reconcile my context files"
+    - "prune my memory files"
+    - "clean up memory"
+    - "consolidate memories"
+
+  should_not_trigger:
+    - "how does Claude memory work?"
+    - "remember that I prefer tabs over spaces"
+    - "what is auto-memory?"
+    - "explain the memory system"
+    - "save this to memory"
+    - "what have you remembered about this project?"
+
+  edge_cases:
+    - query: "clean up my context"
+      expect: trigger
+      note: "Context cleanup implies memory reconciliation"
+    - query: "check my memory files for conflicts"
+      expect: trigger
+      note: "Explicit conflict check is a reconciliation request"
+    - query: "how do I manage my memories?"
+      expect: no_trigger
+      note: "Asking for help about memory management, not requesting reconciliation"
+    - query: "audit my memory files for stale entries"
+      expect: trigger
+      note: "Uses 'audit' with 'stale' — clearly targets memory cleanup"
+    - query: "delete old project notes"
+      expect: no_trigger
+      note: "'Notes' is ambiguous — could mean files in the repo, not memory"

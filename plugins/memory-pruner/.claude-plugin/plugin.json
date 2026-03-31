@@ -1,8 +1,0 @@
-{
-    "name": "memory-pruner",
-    "description": "Consolidates and prunes stale auto-memory files in Claude Code project memory directories",
-    "author": {
-        "name": "AstroSteveo",
-        "email": "astrosteveo@noreply.users.github.com"
-    }
-}

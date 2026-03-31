@@ -1,0 +1,8 @@
+{
+    "name": "reconcile-memory",
+    "description": "Audit and reconcile Claude Code auto-memory files to prevent context poisoning",
+    "author": {
+        "name": "AstroSteveo",
+        "email": "astrosteveo@noreply.users.github.com"
+    }
+}
