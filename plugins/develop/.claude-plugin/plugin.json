@@ -1,0 +1,8 @@
+{
+    "name": "develop",
+    "description": "End-to-end development workflow — adaptive phases for features, bug fixes, refactors, and any substantial code change",
+    "author": {
+        "name": "AstroSteveo",
+        "email": "astrosteveo@noreply.users.github.com"
+    }
+}

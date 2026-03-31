@@ -52,13 +52,13 @@
             "source": "./plugins/reconcile-memory"
         },
         {
-            "name": "story",
-            "description": "Structured, phased feature development workflow inspired by Agile methodology",
+            "name": "develop",
+            "description": "End-to-end development workflow — adaptive phases for features, bug fixes, refactors, and any substantial code change",
             "author": {
                 "name": "AstroSteveo",
                 "email": "astrosteveo@noreply.users.github.com"
             },
-            "source": "./plugins/story"
+            "source": "./plugins/develop"
         }
     ]
 }

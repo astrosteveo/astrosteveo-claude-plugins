@@ -1,5 +1,5 @@
 version: 1
-skill: story
+skill: develop
 
 config:
   default_model: sonnet
@@ -7,9 +7,9 @@ config:
 
 triggers:
   should_trigger:
-    - "let's build a new authentication system"
-    - "start a story for adding dark mode support"
-    - "/story implement a caching layer for the API"
+    - "let's develop a new authentication system"
+    - "I need to implement a caching layer that touches the API and database modules"
+    - "/develop refactor the payment processing pipeline"
 
   should_not_trigger:
     - "fix the typo in the README"
@@ -22,9 +22,9 @@ triggers:
       note: "GitHub issue reference should trigger the workflow"
     - query: "I want to add a small helper function"
       expect: no_trigger
-      note: "Small additions don't need a formal workflow"
-    - query: "let's plan out this refactor"
+      note: "Small single-file additions don't need a formal workflow"
+    - query: "let's think through how to approach this refactor"
       expect: trigger
-      note: "Planning language suggests a structured workflow is wanted"
+      note: "Methodical language signals the user wants the full workflow"
 
 behavioral: []
