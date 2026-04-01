@@ -16,7 +16,7 @@ Six plugins:
 - **`commit`** (`plugins/commit/`) — Conventional Commits skill; analyzes diffs, groups changes into logical units, creates one commit per unit
 - **`skill-creator`** (`plugins/skill-creator/`) — interactive 6-phase workflow for building new Claude skills
 - **`godot-dev`** (`plugins/godot-dev/`) — Godot 4.x development guidance with architecture patterns, conventions, and MCP workflow; extensive reference docs
-- **`code-quality`** (`plugins/code-quality/`) — codebase quality review: clean code, DRY, security, performance, best practices; context-first analysis with non-breaking recommendations
+- **`code-quality`** (`plugins/code-quality/`) — two skills: **code-quality** for comprehensive codebase audits (clean code, DRY, security, performance, best practices; context-first analysis with non-breaking recommendations) and **code-sniffer** for detecting code smells and AI-generated slop (cargo-culted patterns, ceremonial error handling, vibe-coded signals, ceremony-to-substance ratio)
 - **`reconcile-memory`** (`plugins/reconcile-memory/`) — audit and reconcile auto-memory files: deduplication, contradiction detection, staleness assessment, context hygiene
 - **`develop`** (`plugins/develop/`) — end-to-end development workflow with adaptive phases for features, bug fixes, refactors, and substantial code changes; TDD-driven with user gates between every phase
 

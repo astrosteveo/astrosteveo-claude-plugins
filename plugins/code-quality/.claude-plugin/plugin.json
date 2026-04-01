@@ -1,6 +1,6 @@
 {
     "name": "code-quality",
-    "description": "Codebase quality review skill — clean code, DRY, security, performance, and best practices",
+    "description": "Codebase quality skills — code-quality for comprehensive audits, code-sniffer for detecting code smells and AI slop",
     "author": {
         "name": "AstroSteveo",
         "email": "astrosteveo@noreply.users.github.com"

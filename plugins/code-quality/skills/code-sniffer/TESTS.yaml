@@ -1,0 +1,31 @@
+version: 1
+skill: code-sniffer
+
+config:
+  default_model: sonnet
+  default_max_turns: 5
+  permission_mode: bypassPermissions
+
+triggers:
+  should_trigger:
+    - "sniff this code for smells"
+    - "is this codebase vibe coded?"
+    - "check for AI slop in src/"
+
+  should_not_trigger:
+    - "review the code quality of this project"
+    - "fix this bug in the auth module"
+    - "refactor this function to use async"
+
+  edge_cases:
+    - query: "check for code smells in the tests"
+      expect: trigger
+      note: "Code smells is a direct trigger even with specific scope"
+    - query: "audit the codebase for best practices"
+      expect: no_trigger
+      note: "Audit language should route to code-quality, not code-sniffer"
+    - query: "how smelly is this PR?"
+      expect: trigger
+      note: "Colloquial smell language should trigger"
+
+behavioral: []
