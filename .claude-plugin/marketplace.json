@@ -59,6 +59,15 @@
                 "email": "astrosteveo@noreply.users.github.com"
             },
             "source": "./plugins/develop"
+        },
+        {
+            "name": "autopilot",
+            "description": "Autonomous development mode — Claude continuously analyzes the codebase and implements improvements in a loop",
+            "author": {
+                "name": "AstroSteveo",
+                "email": "astrosteveo@noreply.users.github.com"
+            },
+            "source": "./plugins/autopilot"
         }
     ]
 }

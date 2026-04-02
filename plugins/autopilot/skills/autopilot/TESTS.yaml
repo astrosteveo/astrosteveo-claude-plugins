@@ -1,0 +1,27 @@
+version: 1
+skill: autopilot
+
+config:
+  default_model: sonnet
+  default_max_turns: 3
+
+triggers:
+  should_trigger:
+    - "go on autopilot"
+    - "autopilot mode, just do your thing"
+    - "/autopilot focus on test coverage"
+
+  should_not_trigger:
+    - "fix this bug in the login form"
+    - "what does this function do?"
+    - "help me write a unit test for the parser"
+
+  edge_cases:
+    - query: "just run autonomously and see what you can improve"
+      expect: trigger
+      note: "Natural language variant without the word autopilot"
+    - query: "can you review the codebase and suggest improvements?"
+      expect: no_trigger
+      note: "Review request is a one-shot task, not autonomous looping"
+
+behavioral: []
