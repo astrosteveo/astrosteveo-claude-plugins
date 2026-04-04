@@ -4,13 +4,13 @@ description: >
   Detects code smells and AI-generated slop in codebases. Analyzes code for
   suspicious patterns: over-engineering, cargo-culted abstractions, ceremonial
   error handling, defensive code against impossible states, tests that assert
-  truthy instead of behavior, docstring-on-everything syndrome, and
-  ceremony-to-substance ratio problems. Use when: "sniff this code",
-  "check for AI slop", "is this vibe coded", "smell check this PR",
-  "detect AI-generated code", "how smelly is this", "check for code smells",
-  "sniff for slop". Works on any language or framework.
-  Do NOT use for: comprehensive quality audits (use code-quality instead),
-  formatting/linting, writing or fixing code, single-function refactors.
+  truthy instead of behavior, and ceremony-to-substance ratio problems. Use
+  when the user says "sniff this code", "check for AI slop", "is this vibe
+  coded", "smell check", "detect AI-generated code", "how smelly is this",
+  "check for code smells", "sniff for slop", or asks whether code looks
+  AI-generated or over-engineered. Works on any language or framework. Do NOT
+  use for comprehensive quality audits (use code-quality instead),
+  formatting/linting, writing or fixing code, or single-function refactors.
 metadata:
   author: astrosteveo
   version: 0.1.0

@@ -3,14 +3,15 @@ name: develop
 description: >
   End-to-end development workflow for implementing features, fixing bugs,
   refactoring code, and any substantial code change touching multiple files
-  or systems. Guides work through seven adaptive phases: Discover, Research,
-  Strategize, Plan, Implement, Validate, and Deliver — with user review gates
-  between each phase. Adapts depth and approach based on the nature of the
-  task. Use when the user says "let's develop this", "build this feature",
-  "implement this", "fix this bug", "refactor this", "let's think through
-  this", or runs /develop. Also triggers when the user describes a substantial
-  code change and wants to approach it methodically. Do NOT trigger for
-  one-line fixes, simple renames, quick formatting, or questions about code.
+  or systems. Guides work through adaptive phases with user review gates
+  between each phase. Use when the user says "build this feature", "implement
+  this", "add [feature]", "fix this bug", "refactor this", "I need to build",
+  "help me implement", "plan and implement", "walk me through building this",
+  "let's develop this", "let's think through this", or describes a substantial
+  code change and wants a structured approach. Also triggers when the user
+  provides a bug report, feature request, or issue number and wants it
+  implemented. Do NOT use for one-line fixes, simple renames, quick
+  formatting, questions about code, or tasks that only touch a single file.
 argument-hint: "[feature description, bug report, or issue number]"
 metadata:
   author: AstroSteveo
