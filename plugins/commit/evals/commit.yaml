@@ -38,3 +38,6 @@ triggers:
     - query: "stage and commit these files"
       expect: trigger
       note: "Explicit commit request with staging intent"
+    - query: "commit fix the login bug"
+      expect: trigger
+      note: "Commit with arguments should trigger and use message as guidance"

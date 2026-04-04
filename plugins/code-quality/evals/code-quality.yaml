@@ -23,5 +23,11 @@ triggers:
     - query: "find all the tech debt"
       expect: trigger
       note: "Tech debt scanning is a form of quality review"
+    - query: "check the auth module for security issues"
+      expect: trigger
+      note: "Scoped quality review with arguments should trigger"
+    - query: "sniff this code for smells"
+      expect: no_trigger
+      note: "Smell-specific language should route to code-sniffer"
 
 behavioral: []

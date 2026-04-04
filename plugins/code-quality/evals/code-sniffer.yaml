@@ -27,5 +27,8 @@ triggers:
     - query: "how smelly is this PR?"
       expect: trigger
       note: "Colloquial smell language should trigger"
+    - query: "sniff src/auth/ for AI slop"
+      expect: trigger
+      note: "Scoped sniff with arguments should trigger"
 
 behavioral: []
