@@ -1,16 +1,7 @@
 ---
-name: reconcile-memory
-description: Audits and reconciles Claude Code auto-memory files for the current project. Use when the user says 'reconcile memory', 'audit my memories', 'clean up memory files', 'memory is getting bloated', 'check for stale memories', 'dedupe my memories', 'prune memory', 'consolidate memories', 'remove stale memories', 'memory cleanup', or runs /reconcile-memory. Do NOT trigger for general questions about how memory works, discussions about LLM memory theory, or requests to remember something new. Reads all memory files, identifies duplicates, contradictions, stale references, and over-specific entries, then presents a reconciliation plan for approval before making changes. Can optionally extend the audit to .claude/rules/ and CLAUDE.md files.
+description: Audits and reconciles Claude Code auto-memory files. Finds duplicates, contradictions, stale references, and over-specific entries that degrade session quality through context poisoning.
 disable-model-invocation: true
-allowed-tools: Read, Glob, Grep, Edit, Write, Bash
-metadata:
-  author: AstroSteveo
-  version: 1.0.0
-  category: developer-tools
-  tags:
-    - memory
-    - maintenance
-    - context-hygiene
+allowed-tools: Read Glob Grep Edit Write Bash
 argument-hint: "[--full to include rules and CLAUDE.md]"
 ---
 
@@ -28,7 +19,7 @@ Auto-memory accumulates monotonically with no built-in cleanup. Every memory fil
 
 ## Important
 
-Use ultrathink for staleness assessment. Each memory requires careful cross-referencing across multiple sources -- git history, codebase state, and chat transcripts. Shallow analysis risks deleting memories the user still relies on.
+Staleness assessment requires careful cross-referencing across multiple sources — git history, codebase state, and chat transcripts. Shallow analysis risks deleting memories the user still relies on.
 
 NEVER delete or modify any memory file without presenting the full plan to the user and receiving explicit confirmation. All changes are destructive and irreversible.
 

@@ -1,13 +1,5 @@
 ---
-name: godot-dev
-description: Godot 4.x development guidance: architecture, scenes, nodes, GDScript, signals, Resources, components, and game engineering patterns. Use when the project contains project.godot or .gd/.tscn/.tres files, or the user mentions Godot, GDScript, gdshader, or game development tasks like "create a scene", "add a node", "write a script", "build a component", "set up a spawner", "fix my game", "refactor the architecture", "add signals", "procedural generation", "enemy AI", "loot table", or "debug this state machine". Also activates for any godot-mcp tool usage. Do NOT use for Unity, Unreal, Pygame, or non-Godot game engines.
-compatibility: Requires Godot 4.x project. Godot MCP server recommended for editor integration.
-metadata:
-  author: astrosteveo
-  version: 2.0.0
-  mcp-server: godot-mcp
-  category: game-development
-  tags: [godot, gdscript, game-dev, procedural-generation, architecture]
+description: Godot 4.x development guidance for architecture, scenes, nodes, GDScript, signals, and Resources. Use when the project has .gd/.tscn/.tres files or the user mentions Godot or GDScript. Not for Unity, Unreal, or other engines.
 ---
 
 # Godot Dev
