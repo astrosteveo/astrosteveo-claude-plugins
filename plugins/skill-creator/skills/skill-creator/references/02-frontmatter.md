@@ -7,12 +7,11 @@ The YAML frontmatter is how Claude decides whether to load your skill. It appear
 ```yaml
 ---
 name: your-skill-name
-description: >
-  What it does and when to use it. Include trigger phrases.
+description: What it does and when to use it. Include trigger phrases.
 ---
 ```
 
-Always use the YAML folded block scalar (`>`) for descriptions. This folds multi-line text into a single continuous string, which renders cleanly in Claude Code's system prompt. Using `|` (literal block) preserves line breaks and makes descriptions appear fragmented.
+Write descriptions as a single-line string. Do NOT use YAML block scalars (`>` or `|`) — they break the description across multiple lines in the file, making it harder to read and edit. Keep the entire description on one line after `description: `.
 
 The `---` delimiters are mandatory. Missing them is a common upload error.
 
@@ -44,11 +43,19 @@ Must include BOTH:
 
 Constraints:
 - Under 1024 characters
-- No XML angle brackets in the description text content (the YAML `>` folding indicator is fine)
+- No XML angle brackets in the description text content
 - Include specific tasks users might say
 - Mention file types if relevant
 
 See `03-descriptions-and-triggers.md` for detailed guidance and examples.
+
+### version (optional)
+
+Semantic version of the skill. Can be specified at the top level or under `metadata`. Top-level `version` is preferred.
+
+```yaml
+version: 1.0.0
+```
 
 ### license (optional)
 
@@ -86,10 +93,22 @@ metadata:
 Restricts which tools Claude can use without permission prompts when the skill is active.
 
 ```yaml
-allowed-tools: "Bash(python:*) Bash(npm:*) WebFetch"
-# or as a list:
-allowed-tools: Read, Grep, Glob
+# Comma-separated string:
+allowed-tools: Read, Write, Edit
+
+# Bash with command filters:
+allowed-tools: "Read, Bash(git:*), Bash(npm:*)"
+
+# Array format:
+allowed-tools:
+  - Read
+  - Write
+  - Bash(git:*)
+  - Bash(python:*)
+  - Bash(docker:*)
 ```
+
+**Bash patterns:** `Bash(command:*)` restricts Bash to commands starting with that prefix. Use this for fine-grained control over shell access.
 
 ### disable-model-invocation (optional)
 
@@ -163,15 +182,12 @@ hooks:
 ```yaml
 ---
 name: sprint-planner
-description: >
-  Manages Linear project workflows including sprint planning, task creation,
-  and status tracking. Use when user mentions "sprint", "Linear tasks",
-  "project planning", or asks to "create tickets".
+description: Manages Linear project workflows including sprint planning, task creation, and status tracking. Use when user mentions "sprint", "Linear tasks", "project planning", or asks to "create tickets".
+version: 1.0.0
 license: MIT
 compatibility: Requires Linear MCP server connection.
 metadata:
   author: DevTeam
-  version: 1.0.0
   mcp-server: linear
   category: project-management
 ---
@@ -187,7 +203,7 @@ metadata:
 - Any standard YAML types (strings, numbers, booleans, lists, objects)
 - Custom metadata fields
 - Long descriptions (up to 1024 characters)
-- Multi-line strings using `>` or `|` YAML syntax
+- Long single-line strings for descriptions
 
 ## Common Mistakes
 

@@ -1,14 +1,6 @@
 ---
 name: skill-creator
-description: >
-  Interactive toolkit for creating, editing, reviewing, and testing Claude skills.
-  Use when the user says "create a skill", "build a skill", "new skill", "edit a skill",
-  "review this skill", "fix this skill", "test a skill", "run skill tests",
-  "validate a skill", "skill creator", "help me write a skill", or "generate a SKILL.md".
-  Also use when the user runs /skill-creator. Supports three modes: create (guided
-  multi-phase workflow), edit (review and fix an existing skill), and test (run the
-  eval framework against a skill). Do NOT use for general coding tasks unrelated to
-  Claude skill authoring.
+description: Interactive toolkit for creating, editing, reviewing, and testing Claude skills. Use when the user says "create a skill", "build a skill", "new skill", "edit a skill", "review this skill", "fix this skill", "test a skill", "run skill tests", "validate a skill", "skill creator", "help me write a skill", or "generate a SKILL.md". Also use when the user runs /skill-creator. Supports three modes: create (guided multi-phase workflow), edit (review and fix an existing skill), and test (run the eval framework against a skill). Do NOT use for general coding tasks unrelated to Claude skill authoring.
 compatibility: Requires Claude Code with file system access for creating skill directories and files.
 argument-hint: "[create | edit path/to/skill | test path/to/skill]"
 ---
@@ -99,9 +91,10 @@ Read `references/02-frontmatter.md` for field specs, constraints, and security r
    Read `references/03-descriptions-and-triggers.md` for good/bad examples and trigger-phrase guidance. The description MUST include both what the skill does AND when to use it. Keep under 1024 characters. No XML angle brackets.
 
 3. **Optional fields** — Ask if any apply (see `references/02-frontmatter.md` for full details):
+   - `version` (semantic version, e.g. `1.0.0`)
    - `license` (MIT, Apache-2.0, etc.)
    - `compatibility` (environment requirements)
-   - `metadata` (author, version, mcp-server, tags)
+   - `metadata` (author, mcp-server, category, tags)
    - `allowed-tools` (restrict tool access when skill is active)
    - `argument-hint` (autocomplete hint, e.g. `[issue-number]`)
    - `model` (specify Claude model)

@@ -1,15 +1,6 @@
 ---
 name: commit
-description: >
-  Creates Conventional Commits for each logical unit of work in the current
-  git diff. Use when the user says "commit", "commit my changes", "create
-  commits", "commit this work", or runs /commit. Analyzes staged and unstaged
-  changes, groups them into logical units, presents a commit plan for
-  approval, then creates one well-formatted commit per unit. Follows the
-  Conventional Commits specification (type(scope): description). Do NOT use
-  when the user is asking for help or advice about commits, explaining commit
-  history, reverting commits, or understanding conventions — only when they
-  want commits created from current changes.
+description: Creates Conventional Commits for each logical unit of work in the current git diff. Use when the user says "commit", "commit my changes", "create commits", "commit this work", or runs /commit. Analyzes staged and unstaged changes, groups them into logical units, presents a commit plan for approval, then creates one well-formatted commit per unit. Follows the Conventional Commits specification (type(scope): description). Do NOT use when the user is asking for help or advice about commits, explaining commit history, reverting commits, or understanding conventions — only when they want commits created from current changes.
 ---
 
 # Commit

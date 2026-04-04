@@ -1,16 +1,6 @@
 ---
 name: reconcile-memory
-description: >
-  Audits and reconciles Claude Code auto-memory files for the current project.
-  Use when the user says 'reconcile memory', 'audit my memories', 'clean up
-  memory files', 'memory is getting bloated', 'check for stale memories',
-  'dedupe my memories', 'prune memory', 'consolidate memories', 'remove stale
-  memories', 'memory cleanup', or runs /reconcile-memory. Do NOT trigger for
-  general questions about how memory works, discussions about LLM memory theory,
-  or requests to remember something new. Reads all memory files, identifies
-  duplicates, contradictions, stale references, and over-specific entries, then
-  presents a reconciliation plan for approval before making changes. Can
-  optionally extend the audit to .claude/rules/ and CLAUDE.md files.
+description: Audits and reconciles Claude Code auto-memory files for the current project. Use when the user says 'reconcile memory', 'audit my memories', 'clean up memory files', 'memory is getting bloated', 'check for stale memories', 'dedupe my memories', 'prune memory', 'consolidate memories', 'remove stale memories', 'memory cleanup', or runs /reconcile-memory. Do NOT trigger for general questions about how memory works, discussions about LLM memory theory, or requests to remember something new. Reads all memory files, identifies duplicates, contradictions, stale references, and over-specific entries, then presents a reconciliation plan for approval before making changes. Can optionally extend the audit to .claude/rules/ and CLAUDE.md files.
 disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash
 metadata:

@@ -27,22 +27,13 @@ description: You can use this to analyze Figma design files.
 
 ```yaml
 # Specific and actionable
-description: >
-  Analyzes Figma design files and generates developer handoff documentation.
-  Use when user uploads .fig files, asks for "design specs", "component
-  documentation", or "design-to-code handoff".
+description: Analyzes Figma design files and generates developer handoff documentation. Use when user uploads .fig files, asks for "design specs", "component documentation", or "design-to-code handoff".
 
 # Includes trigger phrases
-description: >
-  Manages Linear project workflows including sprint planning, task creation,
-  and status tracking. Use when user mentions "sprint", "Linear tasks",
-  "project planning", or asks to "create tickets".
+description: Manages Linear project workflows including sprint planning, task creation, and status tracking. Use when user mentions "sprint", "Linear tasks", "project planning", or asks to "create tickets".
 
 # Clear value proposition
-description: >
-  End-to-end customer onboarding workflow for PayFlow. Handles account
-  creation, payment setup, and subscription management. Use when user says
-  "onboard new customer", "set up subscription", or "create PayFlow account".
+description: End-to-end customer onboarding workflow for PayFlow. Handles account creation, payment setup, and subscription management. Use when user says "onboard new customer", "set up subscription", or "create PayFlow account".
 ```
 
 ## Bad Descriptions
@@ -79,20 +70,13 @@ If your skill loads for unrelated queries, add specificity:
 
 ```yaml
 # Add negative triggers
-description: >
-  Advanced data analysis for CSV files. Use for statistical modeling,
-  regression, clustering. Do NOT use for simple data exploration
-  (use data-viz skill instead).
+description: Advanced data analysis for CSV files. Use for statistical modeling, regression, clustering. Do NOT use for simple data exploration (use data-viz skill instead).
 
 # Be more specific
-description: >
-  Processes PDF legal documents for contract review.
-  # NOT: "Processes documents"
+description: Processes PDF legal documents for contract review. Do NOT use for general document processing.
 
 # Clarify scope
-description: >
-  PayFlow payment processing for e-commerce. Use specifically for online
-  payment workflows, not for general financial queries.
+description: PayFlow payment processing for e-commerce. Use specifically for online payment workflows, not for general financial queries.
 ```
 
 ## Preventing Under-Triggering

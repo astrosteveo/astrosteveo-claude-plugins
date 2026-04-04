@@ -1,13 +1,6 @@
 ---
 name: autopilot
-description: >
-  Autonomous development mode where Claude continuously analyzes the codebase,
-  decides what to work on next, and implements improvements in a loop. Use when
-  the user says "go on autopilot", "autopilot mode", "just do your thing",
-  "run autonomously", "free roam", or runs /autopilot. Accepts an optional
-  prompt to steer the direction of work. Runs until the user asks it to stop.
-  Do NOT trigger for general coding requests, single tasks, or when the user
-  asks for help with a specific problem.
+description: Autonomous development mode where Claude continuously analyzes the codebase, decides what to work on next, and implements improvements in a loop. Use when the user says "go on autopilot", "autopilot mode", "just do your thing", "run autonomously", "free roam", or runs /autopilot. Accepts an optional prompt to steer the direction of work. Runs until the user asks it to stop. Do NOT trigger for general coding requests, single tasks, or when the user asks for help with a specific problem.
 argument-hint: "[optional direction]"
 metadata:
   author: astrosteveo

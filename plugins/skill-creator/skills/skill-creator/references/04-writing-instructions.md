@@ -130,6 +130,7 @@ Skills support variable substitution for dynamic content:
 | `$N` | Shorthand for `$ARGUMENTS[N]` (e.g., `$0`, `$1`) |
 | `${CLAUDE_SESSION_ID}` | Current session ID (useful for logging) |
 | `${CLAUDE_SKILL_DIR}` | Directory containing the skill's SKILL.md |
+| `${CLAUDE_PLUGIN_ROOT}` | Root directory of the plugin (for portability in plugin contexts) |
 
 Example:
 
@@ -144,6 +145,24 @@ description: Reviews a GitHub issue. Use when user says "review issue".
 
 Fetch and analyze GitHub issue #$0.
 Use scripts in ${CLAUDE_SKILL_DIR}/scripts/ for validation.
+```
+
+## File References
+
+Use `@path/to/file` syntax to include file contents inline. The file content is loaded and inserted before the skill content is sent to Claude.
+
+```markdown
+---
+name: style-guide
+description: Enforces project style conventions. Use when user asks about code style or formatting.
+---
+
+## Project Style Rules
+
+@.eslintrc.json
+@prettier.config.js
+
+Apply these rules when reviewing or writing code.
 ```
 
 ## Dynamic Context Injection
