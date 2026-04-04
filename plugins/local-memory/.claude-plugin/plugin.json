@@ -1,0 +1,8 @@
+{
+    "name": "local-memory",
+    "description": "Configure auto-memory to live inside the project for version control",
+    "author": {
+        "name": "AstroSteveo",
+        "email": "astrosteveo@noreply.users.github.com"
+    }
+}
