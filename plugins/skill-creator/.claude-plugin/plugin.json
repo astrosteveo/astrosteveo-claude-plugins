@@ -1,0 +1,8 @@
+{
+    "name": "skill-creator",
+    "description": "Interactive guide for creating new Claude Code skills",
+    "author": {
+        "name": "AstroSteveo",
+        "email": "astrosteveo@noreply.users.github.com"
+    }
+}
