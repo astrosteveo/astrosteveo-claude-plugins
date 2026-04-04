@@ -2,11 +2,6 @@
 name: develop
 description: End-to-end development workflow for implementing features, fixing bugs, refactoring code, and any substantial code change touching multiple files or systems. The main chat orchestrates — discovering requirements, researching the codebase, planning the work — then dispatches implementation agents with precise briefs and a review agent for final validation. Use when the user says "build this feature", "implement this", "add [feature]", "fix this bug", "refactor this", "I need to build", "help me implement", "plan and implement", "walk me through building this", "let's develop this", "let's think through this", or describes a substantial code change and wants a structured approach. Also triggers when the user provides a bug report, feature request, or issue number and wants it implemented. Do NOT use for one-line fixes, simple renames, quick formatting, questions about code, or tasks that only touch a single file.
 argument-hint: "[feature description, bug report, or issue number]"
-metadata:
-  author: AstroSteveo
-  version: 3.0.0
-  category: workflow
-  tags: [development, workflow, tdd, feature, bugfix, refactor, orchestrator, agents]
 ---
 
 # Develop

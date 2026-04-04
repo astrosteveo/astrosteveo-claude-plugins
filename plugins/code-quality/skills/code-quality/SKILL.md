@@ -1,11 +1,6 @@
 ---
 name: code-quality
 description: Reviews codebases for quality issues: clean code, DRY violations, security vulnerabilities, performance problems, error handling, architecture smells, and best practice deviations. Builds full codebase understanding before making recommendations. All suggestions are non-breaking. Use when the user says "review code quality", "audit the codebase", "check code quality", "find code smells", "security audit", "performance review", "check for DRY violations", "code review the project", "find tech debt", "review code health", "check for security issues", "codebase audit", or asks for a broad quality assessment of the project. Do NOT use for writing new code, fixing a specific bug, implementing a feature, single-file edits, or general coding assistance.
-metadata:
-  author: astrosteveo
-  version: 1.0.0
-  category: code-quality
-  tags: [clean-code, security, performance, best-practices, review, audit]
 ---
 
 # Code Quality
