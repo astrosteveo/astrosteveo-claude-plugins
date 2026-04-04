@@ -15,16 +15,7 @@
             },
             "source": "./plugins/commit"
         },
-        {
-            "name": "skill-creator",
-            "description": "Interactive guide for creating new Claude Code skills",
-            "author": {
-                "name": "AstroSteveo",
-                "email": "astrosteveo@noreply.users.github.com"
-            },
-            "source": "./plugins/skill-creator"
-        },
-        {
+{
             "name": "godot-dev",
             "description": "Godot 4.x development skill with engine conventions, architecture patterns, and Recipe-Generator pattern",
             "author": {
@@ -68,6 +59,15 @@
                 "email": "astrosteveo@noreply.users.github.com"
             },
             "source": "./plugins/autopilot"
+        },
+        {
+            "name": "local-memory",
+            "description": "Configure auto-memory to live inside the project for version control",
+            "author": {
+                "name": "AstroSteveo",
+                "email": "astrosteveo@noreply.users.github.com"
+            },
+            "source": "./plugins/local-memory"
         }
     ]
 }
