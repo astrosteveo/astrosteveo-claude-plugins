@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Creates Conventional Commits for each logical unit of work in the current git diff. Use when the user says "commit", "commit my changes", "create commits", "commit this work", or runs /commit. Analyzes staged and unstaged changes, groups them into logical units, presents a commit plan for approval, then creates one well-formatted commit per unit. Follows the Conventional Commits specification (type(scope): description). Do NOT use when the user is asking for help or advice about commits, explaining commit history, reverting commits, or understanding conventions — only when they want commits created from current changes.
+description: Creates Conventional Commits for each logical unit of work in the current git diff. Use when the user says "commit", "commit my changes", "create commits", "commit this work", or runs /commit. Analyzes staged and unstaged changes, groups them into logical units, and creates one well-formatted commit per unit. Follows the Conventional Commits specification (type(scope): description). Do NOT use when the user is asking for help or advice about commits, explaining commit history, reverting commits, or understanding conventions — only when they want commits created from current changes.
 ---
 
 # Commit
@@ -68,34 +68,9 @@ Scope is optional. Use it when the change is clearly scoped to a specific area (
 
 For breaking changes, add `!` before the colon: `feat!:` or `feat(api)!:`
 
-### Step 3: Present the Commit Plan
+### Step 3: Execute Commits
 
-Present the plan using markdown formatting for scannability. Use backticks around commit messages so they stand out, bold labels, and bullet points:
-
-```
-Commit Plan:
-
-**1.** `type(scope): description`
-   - **Files:** file1.js, file2.js
-   - **Why:** brief rationale for the type choice
-
-**2.** `type(scope): description`
-   - **Files:** file3.js
-   - **Why:** brief rationale for the type choice
-```
-
-Formatting rules:
-- Wrap the commit message in backticks so it reads as a distinct code-like element
-- Use bold numbered prefixes (**1.**) for each commit
-- Use bullet points with bold labels (**Files:**, **Why:**) for metadata
-- Keep a blank line between commits for visual separation
-- The "Why" line is especially important for borderline decisions (e.g., refactor vs. feat, fix vs. chore). Keep it to one sentence.
-
-Wait for user approval before proceeding. If the user wants changes, adjust and re-present.
-
-### Step 4: Execute Commits
-
-For each approved unit of work, in order:
+Present each commit as you create it. For each unit of work, in order:
 
 1. Stage the specific files by name: `git add file1.js file2.js`
 2. Create the commit with the approved message
@@ -109,7 +84,7 @@ Rules:
 - Pass multi-line commit messages via a HEREDOC
 - If a pre-commit hook fails, fix the issue and create a NEW commit (do not use --amend)
 
-### Step 5: Summary
+### Step 4: Summary
 
 After all commits are created, show the new commits via `git log --oneline`.
 
@@ -211,6 +186,3 @@ The working tree is clean. Make changes before running /commit.
 
 **Pre-commit hook failure**
 Fix the issue identified by the hook, re-stage the files, and create a NEW commit. Do not use --amend as it would modify the previous commit.
-
-**User disagrees with grouping**
-Ask the user how they would like to group the changes. Adjust the plan and re-present for approval.
