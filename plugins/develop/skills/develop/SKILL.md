@@ -1,32 +1,35 @@
 ---
 name: develop
-description: >
-  End-to-end development workflow for implementing features, fixing bugs,
-  refactoring code, and any substantial code change touching multiple files
-  or systems. Guides work through adaptive phases with user review gates
-  between each phase. Use when the user says "build this feature", "implement
-  this", "add [feature]", "fix this bug", "refactor this", "I need to build",
-  "help me implement", "plan and implement", "walk me through building this",
-  "let's develop this", "let's think through this", or describes a substantial
-  code change and wants a structured approach. Also triggers when the user
-  provides a bug report, feature request, or issue number and wants it
-  implemented. Do NOT use for one-line fixes, simple renames, quick
-  formatting, questions about code, or tasks that only touch a single file.
+description: End-to-end development workflow for implementing features, fixing bugs, refactoring code, and any substantial code change touching multiple files or systems. The main chat orchestrates — discovering requirements, researching the codebase, planning the work — then dispatches implementation agents with precise briefs and a review agent for final validation. Use when the user says "build this feature", "implement this", "add [feature]", "fix this bug", "refactor this", "I need to build", "help me implement", "plan and implement", "walk me through building this", "let's develop this", "let's think through this", or describes a substantial code change and wants a structured approach. Also triggers when the user provides a bug report, feature request, or issue number and wants it implemented. Do NOT use for one-line fixes, simple renames, quick formatting, questions about code, or tasks that only touch a single file.
 argument-hint: "[feature description, bug report, or issue number]"
 metadata:
   author: AstroSteveo
-  version: 2.0.0
+  version: 3.0.0
   category: workflow
-  tags: [development, workflow, tdd, feature, bugfix, refactor]
+  tags: [development, workflow, tdd, feature, bugfix, refactor, orchestrator, agents]
 ---
 
 # Develop
 
-End-to-end development workflow that adapts to the task at hand. Every phase has a user gate — nothing moves forward without explicit approval.
+Orchestrator-driven development workflow. The main chat stays clean — it understands the problem, plans the work, and dispatches agents. Implementation happens in fresh agent contexts with precise briefs. A separate review agent validates everything at the end.
+
+## Core Architecture
+
+You are the **orchestrator**. You do NOT write implementation code yourself. Your job:
+
+1. Understand the problem deeply (Discover)
+2. Research the codebase (Research)
+3. Design the approach (Strategize)
+4. Break work into dispatchable tasks (Plan)
+5. Dispatch implementation agents — parallel when independent, sequential when dependent (Implement)
+6. Dispatch a review agent to validate all changes (Review)
+7. Handle delivery — commits and PRs (Deliver)
+
+Every phase has a user gate. Nothing moves forward without explicit approval.
 
 ## Critical Rule: One Question at a Time
 
-Throughout this entire workflow, when you need to ask the user a clarifying question, ask exactly ONE question per message. Do not bundle multiple questions. The number of questions you ask should scale with the complexity of the task — there is no right or wrong count. But each question gets its own message so the user can focus and give a complete answer. If the user says "use your best judgment" on a question, accept that and move on.
+When you need a clarifying question, ask exactly ONE per message. The number of questions scales with complexity, but each gets its own message. If the user says "use your best judgment," accept that and move on.
 
 ## Routing
 
@@ -38,40 +41,40 @@ When invoked, check for arguments:
 
 ## Phase 1: Discover
 
-Goal: Deeply understand the task, classify it, and surface every unknown and edge case you can think of before any code is explored.
+Goal: Deeply understand the task, classify it, and surface every unknown before any code is explored.
 
 ### Classify the Task
 
-After hearing the user's description, infer the nature of the work. This is not a rigid taxonomy — use your judgment to characterize what kind of work this is. Common patterns include:
+After hearing the user's description, infer the nature of the work:
 
-- **Feature** — New capability that doesn't exist yet. Needs the most thorough treatment: full research, multiple approaches, comprehensive test strategy.
-- **Bug fix** — Something is broken. Focus shifts to reproduction, root cause analysis, and regression testing. May be simpler or deeply complex depending on the bug.
-- **Refactor** — Code works but needs restructuring. Key concern is preserving existing behavior while improving internals. Tests are the safety net.
-- **Integration** — Connecting systems or services. Heavy emphasis on interface design, error handling, and dependency mapping.
-- **Optimization** — Code works but needs to be faster, smaller, or more efficient. Requires measurement before and after.
+- **Feature** — New capability. Full treatment: thorough research, multiple approaches, comprehensive test strategy.
+- **Bug fix** — Something is broken. Focus on reproduction, root cause, and regression testing.
+- **Refactor** — Code works but needs restructuring. Preserve behavior, improve internals.
+- **Integration** — Connecting systems. Interface design, error handling, dependency mapping.
+- **Optimization** — Code works but needs to be faster/smaller/more efficient. Measure before and after.
 
-State your classification to the user and explain how it shapes the approach you'll take. If the task blends categories, say so.
+State your classification and explain how it shapes the approach. If the task blends categories, say so.
 
 ### Probe for Unknowns
 
-This is the most important part of this phase. Your job is to think about what the user has NOT told you — the edge cases, the implicit assumptions, the things that will bite you during implementation if left unaddressed.
+Think about what the user has NOT told you — edge cases, implicit assumptions, things that will bite during implementation.
 
 Ask about:
-- Constraints the user hasn't mentioned (performance, compatibility, accessibility, security)
-- Edge cases in the inputs or behavior
-- How this interacts with existing functionality
+- Constraints not mentioned (performance, compatibility, accessibility, security)
+- Edge cases in inputs or behavior
+- Interactions with existing functionality
 - What "done" looks like — concrete acceptance criteria
-- Anything ambiguous in the description
+- Anything ambiguous
 
-Remember: one question at a time. Keep asking until you are confident you understand the full picture. The user can always say "that's enough, let's move on."
+One question at a time. Keep asking until you're confident. The user can say "that's enough, let's move on."
 
 ### If Seeded from a GitHub Issue
 
-Fetch the issue first (title, body, labels, comments). Extract what you can, then ask about anything the issue leaves ambiguous.
+Fetch the issue first (title, body, labels, comments). Extract what you can, then ask about anything left ambiguous.
 
 ### Gate
 
-Present a **Discovery Summary** back to the user:
+Present a **Discovery Summary**:
 
 ```
 ## Discovery Summary
@@ -90,7 +93,7 @@ Wait for approval before proceeding.
 
 ## Phase 2: Research
 
-Goal: Understand the codebase deeply enough to propose informed approaches. Adapt depth to the task classification.
+Goal: Understand the codebase deeply enough to write precise agent briefs. This is YOUR context-building phase — agents won't have it, so you need to gather everything they'll need.
 
 ### For Features and Integrations
 - Explore existing patterns relevant to this work
@@ -100,7 +103,7 @@ Goal: Understand the codebase deeply enough to propose informed approaches. Adap
 - Look for existing tests that cover related functionality
 
 ### For Bug Fixes
-- Attempt to understand the reproduction path from the code
+- Understand the reproduction path from the code
 - Trace the code path where the bug likely lives
 - Identify what changed recently in the affected area (git log)
 - Find existing tests that should have caught this (and didn't)
@@ -131,18 +134,18 @@ If there are open questions, ask them now — one at a time. Wait for approval b
 
 ## Phase 3: Strategize
 
-Goal: Present three distinct approaches, weigh their tradeoffs, and collaborate with the user on a final decision.
+Goal: Present distinct approaches, weigh tradeoffs, and collaborate with the user on a decision.
 
-### Develop Three Approaches
+### Develop Approaches
 
-Based on Discovery and Research, design three meaningfully different ways to solve the problem. These should not be trivial variations — each should represent a genuinely different philosophy or tradeoff.
+Based on Discovery and Research, design meaningfully different ways to solve the problem — not trivial variations, but genuinely different philosophies or tradeoffs.
 
-For each approach, present:
+For each approach:
 
 ```
 ### Approach [N]: [Name]
-**Philosophy:** [The core idea in one sentence]
-**How it works:** [Brief description of the implementation]
+**Philosophy:** [Core idea in one sentence]
+**How it works:** [Brief implementation description]
 **Pros:**
 - [Advantage 1]
 - [Advantage 2]
@@ -156,102 +159,184 @@ For each approach, present:
 
 ### Make a Recommendation
 
-After presenting all three, state which approach you recommend and why. Be transparent about the tradeoffs. This is a collaboration — the user may see angles you don't.
+State which approach you recommend and why. Be transparent about tradeoffs.
 
 ### Adapt to Task Complexity
 
-For simpler tasks (straightforward bug fixes, small refactors), three full approaches may be overkill. In those cases, you may present fewer — but always present at least two distinct options so the user has a real choice. Use your judgment on when three is warranted vs. when two suffices.
+For simpler tasks, two options may suffice. For complex tasks, present three. Use your judgment.
 
 ### Gate
 
-The user picks an approach (or proposes a hybrid). Do not proceed until the approach is explicitly chosen.
+The user picks an approach (or proposes a hybrid). Do not proceed until explicitly chosen.
 
 ## Phase 4: Plan
 
-Goal: Break the chosen approach into discrete, ordered tasks with a test strategy baked into every step.
+Goal: Break the chosen approach into discrete, ordered tasks — each one a dispatchable unit of work for an agent. This is the most critical orchestration phase.
 
 ### Build the Implementation Plan
+
+Design each task as a self-contained agent brief. Each task must include everything an agent with zero prior context needs to execute correctly.
 
 For each task:
 
 ```
 ### Task [N]: [Name]
 **What:** [What changes to make]
-**Where:** [Which files/modules]
-**How:** [The approach — new code, refactor, extend existing]
-**Tests:** [What tests to write or update for this task]
-**Verify:** [How to confirm this task is correct before moving on]
-**Depends on:** [Which prior tasks, if any]
+**Where:** [Specific files and line ranges]
+**How:** [The approach — be precise about patterns to follow, functions to call, structures to use]
+**Context:** [Relevant codebase patterns, conventions, existing code the agent needs to know about]
+**Tests:** [What tests to write or update — specific test file paths and test descriptions]
+**Verify:** [How to confirm this task is correct — specific commands to run]
+**Depends on:** [Which prior tasks, if any — "none" if independent]
+```
+
+### Dependency Graph
+
+After listing all tasks, present the dependency structure:
+
+```
+## Execution Plan
+**Parallel group 1:** Tasks [X, Y] (independent — will dispatch simultaneously)
+**Sequential after group 1:** Task [Z] (depends on X)
+**Parallel group 2:** Tasks [A, B] (independent, but depend on Z)
+**Sequential after group 2:** Task [C] (depends on A and B)
 ```
 
 ### Test Strategy
 
-Testing is not optional and not an afterthought. The plan must include:
+Testing is not optional. The plan must include:
 - **What kind of tests** — unit, integration, e2e, or a combination
 - **When tests are written** — before implementation (TDD) when feasible, alongside at minimum
-- **What's covered** — happy path, edge cases surfaced in Discovery, error handling, regression cases for bug fixes
+- **What's covered** — happy path, edge cases from Discovery, error handling, regression cases
 - **How to run them** — the actual commands
 
 ### Gate
 
-Present the full plan. Wait for the user to approve, reorder tasks, or adjust scope.
+Present the full plan with the execution graph. Wait for the user to approve, reorder, or adjust scope.
 
 ## Phase 5: Implement
 
-Goal: Execute the plan task-by-task with TDD discipline and user check-ins.
+Goal: Dispatch agents to execute the plan. You stay in the orchestrator role — you do not write implementation code yourself.
 
-### For Each Task
+### Dispatching Agents
 
-1. **Announce** which task you're starting
-2. **Write tests first** when feasible — tests that define the expected behavior before writing the implementation
-3. **Implement** the changes
-4. **Run the tests** — both new tests and existing tests to catch regressions
-5. **Summarize** what was done and show test results
+For each task (or parallel group of tasks), dispatch using the Agent tool. Structure each agent's prompt using this template:
 
-### Between Tasks
+```
+## Task: [Name from the plan]
 
-Check in with the user:
-- Show what was completed and test results
-- Flag anything that deviated from the plan
-- If the plan needs adjustment based on what you discovered during implementation, stop and propose changes before continuing
+### Objective
+[1-2 sentences: what this agent must accomplish]
 
-### If Tests Fail
+### Codebase Context
+- Project uses [language/framework] with [relevant conventions]
+- Related file: `path/to/file.ext` — [what it does and how it relates to this task]
+- Existing pattern to follow: [describe the pattern, include function signatures or code snippets]
+- Test framework: [what's used, how to run tests]
 
-Fix the issue before moving to the next task. Do not accumulate failures. If a failure reveals a deeper problem, stop and discuss with the user rather than silently working around it.
+### What to Change
+1. [Specific change 1 — file, location, what to add/modify]
+2. [Specific change 2]
 
-## Phase 6: Validate
+### Boundaries
+- Files you SHOULD touch: [list]
+- Files you must NOT touch: [list]
 
-Goal: The user confirms everything works. This is not your verification — this is theirs.
+### Tests
+Write tests first when feasible. Specifically:
+- [Test 1: description, expected behavior]
+- [Test 2: description, expected behavior]
+- Test file location: `path/to/test/file`
 
-### Walk Through Acceptance Criteria
+### Verification
+Run these commands when done and confirm they pass:
+- `[test command]`
+- `[lint command, if applicable]`
+```
 
-Go through each criterion from the Discovery Summary one by one:
-- Explain how it was met
-- Point to the specific code and tests that satisfy it
-- Let the user verify — they may want to test manually
+The goal is that the agent can execute without asking questions — every decision is already made.
 
-### Run the Full Test Suite
+### Dispatch Rules
 
-Execute the project's complete test suite, not just the new tests. Report results clearly.
+- **Independent tasks:** Dispatch in parallel using multiple Agent tool calls in a single message.
+- **Dependent tasks:** Wait for the dependency to complete and verify success before dispatching the next task.
+- **Agent failures:** If an agent reports a problem, diagnose it yourself (read the code, understand the issue) and either re-dispatch with a corrected brief or adjust the plan. Do NOT blindly retry.
 
-### Review the Full Diff
+### Between Dispatches
 
-Read through all changes holistically:
-- Check for consistency with existing codebase patterns
-- Look for leftover TODOs, debug code, or commented-out blocks
-- Verify no unintended side effects
+After each agent (or parallel group) completes:
+1. Read and summarize the agent's results for the user
+2. Verify the work — check that tests pass, code looks right
+3. Flag anything that deviated from the plan
+4. If the plan needs adjustment, stop and propose changes before continuing
 
-### Gate
+### If Something Goes Wrong
 
-Present a **Validation Report**:
+- **Agent couldn't complete the task:** Read its output, understand why, and decide whether to re-dispatch with better instructions, split the task, or adjust the plan.
+- **Tests fail after an agent completes:** Fix it before moving on. If the failure reveals a deeper issue, discuss with the user.
+- **Tasks conflict with each other:** If parallel agents made conflicting changes, resolve the conflict yourself or re-dispatch one of the tasks with updated context.
+
+## Phase 6: Review
+
+Goal: Dispatch a dedicated review agent to validate all changes holistically. This is a fresh set of eyes — the reviewer has no context from the implementation and evaluates the work on its own merits.
+
+### Dispatch the Review Agent
+
+Send a single Agent with a prompt structured like this:
+
+```
+## Code Review
+
+### What Was Built
+[Paste the Discovery Summary — task description, classification, scope]
+
+### Acceptance Criteria
+- [ ] [Criterion 1]
+- [ ] [Criterion 2]
+- [ ] [Criterion 3]
+
+### Changed Files
+- `path/to/file1.ext` — [what changed and why]
+- `path/to/file2.ext` — [what changed and why]
+
+### Your Job
+1. Read every changed file. Evaluate code quality, consistency, and correctness.
+2. Check each acceptance criterion against the actual implementation. Mark pass/fail.
+3. Run the full test suite: `[command]`. Report results.
+4. Look for: leftover TODOs, debug code, commented-out blocks, unintended side effects.
+5. Check for security issues, performance concerns, and unhandled edge cases.
+6. Verify new code is consistent with existing codebase patterns.
+7. Produce a Validation Report using the format below.
+
+### Validation Report Format
+[Paste the report template from Phase 6]
+```
+
+### Handle the Review
+
+When the review agent returns:
+1. Present the Validation Report to the user
+2. If the reviewer flagged issues, discuss with the user and dispatch fix-up agents as needed
+3. If fixes were made, re-dispatch the review agent on the affected areas
+
+### Validation Report Format
+
+The review agent should produce:
 
 ```
 ## Validation Report
-**Tests:** [All passing / failures noted]
+**Tests:** [All passing / failures noted with details]
 **Acceptance Criteria:**
 - [x] [Criterion 1] — [How verified]
 - [x] [Criterion 2] — [How verified]
-**Code Review Notes:** [Any concerns or observations]
+**Code Quality:**
+- [Observation 1]
+- [Observation 2]
+**Issues Found:**
+- [Issue 1 — severity and recommendation]
+- [Issue 2 — severity and recommendation]
+**Security/Performance Notes:** [Any concerns]
+**Verdict:** [Ready to ship / Needs fixes]
 ```
 
 The user must confirm the work meets their definition of done. If anything fails, loop back to fix it.
@@ -263,8 +348,8 @@ Goal: Clean up, commit, and prepare the work for review or merge.
 ### Clean Up
 - Remove any debug code, temporary files, or scratch work
 - Ensure all new files are properly organized
-- Check that documentation is updated if the changes affect public APIs, configuration, or user-facing behavior
-- Verify the branch is up to date with the base branch (rebase or merge as appropriate)
+- Check that documentation is updated if changes affect public APIs, configuration, or user-facing behavior
+- Verify the branch is up to date with the base branch
 
 ### Commit
 - Group changes into logical Conventional Commits
@@ -295,12 +380,43 @@ Present a final summary:
 
 Not every task needs the same treatment. Use your judgment:
 
-- **Simple bug fix:** Discovery can be brief, Research focuses on root cause, Strategize may only need 2 options, Plan may be a single task. But Validate is still thorough — regressions matter.
-- **Large feature:** Every phase gets full depth. Discovery asks many questions. Research is comprehensive. Three full approaches. Detailed multi-task plan.
-- **Refactor:** Research is heavy (must understand everything before changing it). Strategize focuses on how to restructure safely. Test coverage is the safety net — verify it exists before touching code.
-- **Quick integration:** Focus on interface design in Strategize, error handling in Plan, and contract testing in Implement.
+- **Simple bug fix:** Discovery can be brief, Research focuses on root cause, Strategize may only need 2 options, Plan may be a single task. But Review is still thorough — regressions matter.
+- **Large feature:** Every phase gets full depth. Discovery asks many questions. Research is comprehensive. Multiple approaches. Detailed multi-task plan with parallel groups.
+- **Refactor:** Research is heavy (must understand everything before changing it). Test coverage is the safety net — verify it exists before dispatching agents.
+- **Quick integration:** Focus on interface design in Strategize, error handling in Plan, and contract testing in agent briefs.
 
 The seven phases always apply, but their weight shifts based on what you're building.
+
+## Examples
+
+### Example: Feature request with parallel dispatch
+
+User says: "/develop add a webhook notification system to the API"
+
+1. **Discover:** Classify as Feature. Probe for unknowns — what events trigger webhooks? What payload format? Retry policy? Produce Discovery Summary with acceptance criteria.
+2. **Research:** Find existing event system, identify where hooks should fire, map the database schema, check test patterns. Present Research Summary.
+3. **Strategize:** Present approaches — polling vs push, sync vs async dispatch, in-process vs queue-backed. Recommend async with a queue. User approves.
+4. **Plan:** Break into tasks:
+   - Task 1: Webhook registration model and migrations (depends on: none)
+   - Task 2: Webhook delivery service with retry logic (depends on: none)
+   - Task 3: Wire events to delivery service (depends on: 1 and 2)
+   - Task 4: Admin API endpoints for managing webhooks (depends on: 1)
+   - Execution plan: Tasks 1 and 2 in parallel, then 3 and 4 in parallel after their dependencies complete.
+5. **Implement:** Dispatch Tasks 1 and 2 simultaneously. Both complete. Dispatch Tasks 3 and 4 simultaneously. Summarize results after each group.
+6. **Review:** Dispatch review agent with the Discovery Summary, acceptance criteria, and all changed files. Reviewer returns a Validation Report — one issue found (missing rate limit on delivery). Dispatch a fix-up agent. Re-review passes.
+7. **Deliver:** Group into commits, create PR referencing the original request.
+
+### Example: Bug fix with single agent
+
+User says: "/develop users are getting 500 errors when uploading avatars over 2MB"
+
+1. **Discover:** Classify as Bug fix. Quick — user provides the error, reproduction is clear.
+2. **Research:** Trace the upload path, find the size validation, check the error handler. Discover the middleware rejects the file but the error isn't caught by the controller.
+3. **Strategize:** Two options — catch at controller level vs increase middleware limit with proper validation. Recommend controller-level catch.
+4. **Plan:** Single task — add error handling in the upload controller, write a regression test.
+5. **Implement:** Dispatch one agent with the brief. Agent completes.
+6. **Review:** Dispatch review agent. Clean pass.
+7. **Deliver:** One commit, done.
 
 ## Troubleshooting
 
@@ -313,8 +429,11 @@ Break the Plan into milestones. Complete and commit one milestone at a time. Whe
 **Acceptance criteria change mid-implementation**
 Return to the Discovery Summary, update the criteria, and assess impact on the current plan. Adjust remaining tasks as needed.
 
-**Tests fail during Validation**
-Do not proceed to Deliver. Diagnose failures, fix them, and re-run. If the fix changes the implementation significantly, re-verify all acceptance criteria.
+**Agent keeps failing on a task**
+The brief is probably incomplete or the task is too large. Split it into smaller pieces or add more context to the brief. If you've re-dispatched twice without success, implement that piece yourself and move on.
+
+**Tests fail during Review**
+Do not proceed to Deliver. Diagnose failures, dispatch fix-up agents, and re-run the review.
 
 **User says "just do it" or "skip the questions"**
-Respect their preference but note: "I'll proceed with my best judgment on the unknowns. If I hit something ambiguous during implementation, I'll ask then." Then compress Discovery and move faster through the phases.
+Respect their preference but note: "I'll proceed with my best judgment on the unknowns. If I hit something ambiguous, I'll ask then." Compress Discovery and move faster through the phases.

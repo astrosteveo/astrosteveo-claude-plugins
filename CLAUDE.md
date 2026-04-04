@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Claude Code plugin repository with six plugins — **commit** (Conventional Commits), **skill-creator** (interactive skill builder), **godot-dev** (Godot 4.x guidance), **code-quality** (codebase quality review), **reconcile-memory** (memory audit and cleanup), and **develop** (end-to-end development workflow). The codebase is pure Markdown (skills), Bash (scripts), and Python (test tooling). There is no build step; plugins are loaded directly by Claude Code.
+Claude Code plugin repository with seven plugins — **commit** (Conventional Commits), **skill-creator** (interactive skill builder), **godot-dev** (Godot 4.x guidance), **code-quality** (codebase quality review), **reconcile-memory** (memory audit and cleanup), **develop** (orchestrator-driven development workflow), and **autopilot** (autonomous development mode). The codebase is pure Markdown (skills), Bash (scripts), and Python (test tooling). There is no build step; plugins are loaded directly by Claude Code.
 
 ## Architecture
 
@@ -12,13 +12,14 @@ Claude Code plugin repository with six plugins — **commit** (Conventional Comm
 
 Each plugin lives under `plugins/{name}/` with its own `.claude-plugin/plugin.json` manifest. The top-level `.claude-plugin/marketplace.json` is the registry index.
 
-Six plugins:
+Seven plugins:
 - **`commit`** (`plugins/commit/`) — Conventional Commits skill; analyzes diffs, groups changes into logical units, creates one commit per unit
 - **`skill-creator`** (`plugins/skill-creator/`) — interactive 6-phase workflow for building new Claude skills
 - **`godot-dev`** (`plugins/godot-dev/`) — Godot 4.x development guidance with architecture patterns, conventions, and MCP workflow; extensive reference docs
 - **`code-quality`** (`plugins/code-quality/`) — two skills: **code-quality** for comprehensive codebase audits (clean code, DRY, security, performance, best practices; context-first analysis with non-breaking recommendations) and **code-sniffer** for detecting code smells and AI-generated slop (cargo-culted patterns, ceremonial error handling, vibe-coded signals, ceremony-to-substance ratio)
 - **`reconcile-memory`** (`plugins/reconcile-memory/`) — audit and reconcile auto-memory files: deduplication, contradiction detection, staleness assessment, context hygiene
-- **`develop`** (`plugins/develop/`) — end-to-end development workflow with adaptive phases for features, bug fixes, refactors, and substantial code changes; TDD-driven with user gates between every phase
+- **`develop`** (`plugins/develop/`) — orchestrator-driven development workflow; main chat handles discovery, research, strategy, and planning, then dispatches implementation agents (parallel when independent, sequential when dependent) and a final review agent for validation
+- **`autopilot`** (`plugins/autopilot/`) — autonomous development mode; Claude continuously analyzes the codebase, decides what to work on, and implements improvements in a loop
 
 ### Skills
 
