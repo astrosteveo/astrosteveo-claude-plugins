@@ -23,17 +23,16 @@ except ImportError:
 
 
 def parse_frontmatter(text):
-    """Parse simple YAML frontmatter without external dependencies.
+    """Parse YAML frontmatter using a lenient line-based parser.
 
-    Handles: key: value, key: >\\n  multiline, booleans, nested objects,
-    and simple lists. Falls back to PyYAML if available.
+    Claude Code uses a lenient frontmatter parser that does not require
+    quoting for values containing colons, double quotes, or brackets.
+    Standard YAML parsers (PyYAML) are too strict for this format, so
+    we always use the line-based parser to match Claude Code's behavior.
+
+    Handles: key: value (rest of line is the value), key: >\\n  multiline,
+    booleans, nested objects, and simple lists.
     """
-    if HAS_YAML:
-        result = yaml.safe_load(text)
-        if not isinstance(result, dict):
-            raise ValueError("Frontmatter is not a YAML mapping")
-        return result
-
     result = {}
     current_key = None
     current_value_lines = []
@@ -193,7 +192,7 @@ def validate_skill(skill_dir):
         "line_count", "structure",
         line_count <= 500,
         f"SKILL.md is {line_count} lines ({'within' if line_count <= 500 else 'exceeds'} 500 line limit)",
-        severity="error" if line_count > 500 else "error"
+        severity="error" if line_count > 500 else "warning"
     ))
 
     # Check no XML angle brackets (outside of code blocks and frontmatter)
@@ -257,43 +256,50 @@ def validate_skill(skill_dir):
         return checks
 
     # Name field checks
+    # name is optional — defaults to directory name. Validate the effective name
+    # (from frontmatter if present, otherwise the folder name).
 
     name = fm.get("name")
-
-    checks.append(Check(
-        "name_present", "frontmatter",
-        name is not None,
-        "name field is present" if name else "name field is missing (required)"
-    ))
+    effective_name = str(name) if name is not None else folder_name
 
     if name is not None:
-        name_str = str(name)
-
         checks.append(Check(
-            "name_kebab_case", "frontmatter",
-            bool(kebab_re.match(name_str)),
-            f"name '{name_str}' {'is' if kebab_re.match(name_str) else 'is not'} kebab-case"
+            "name_present", "frontmatter", True,
+            f"name field is set (optional — folder name '{folder_name}' would also work)",
+            severity="warning"
         ))
 
         checks.append(Check(
             "name_matches_folder", "frontmatter",
-            name_str == folder_name,
-            f"name '{name_str}' {'matches' if name_str == folder_name else 'does not match'} folder name '{folder_name}'"
+            effective_name == folder_name,
+            f"name '{effective_name}' {'matches' if effective_name == folder_name else 'does not match'} folder name '{folder_name}'"
+        ))
+    else:
+        checks.append(Check(
+            "name_present", "frontmatter", True,
+            f"name field omitted — defaults to folder name '{folder_name}'",
+            severity="warning"
         ))
 
-        checks.append(Check(
-            "name_max_length", "frontmatter",
-            len(name_str) <= 64,
-            f"name is {len(name_str)} chars ({'within' if len(name_str) <= 64 else 'exceeds'} 64 char limit)"
-        ))
+    checks.append(Check(
+        "name_kebab_case", "frontmatter",
+        bool(kebab_re.match(effective_name)),
+        f"effective name '{effective_name}' {'is' if kebab_re.match(effective_name) else 'is not'} kebab-case"
+    ))
 
-        has_reserved = "claude" in name_str.lower() or "anthropic" in name_str.lower()
-        checks.append(Check(
-            "name_no_reserved", "frontmatter",
-            not has_reserved,
-            f"name contains reserved word" if has_reserved
-            else "name does not contain reserved words (claude/anthropic)"
-        ))
+    checks.append(Check(
+        "name_max_length", "frontmatter",
+        len(effective_name) <= 64,
+        f"effective name is {len(effective_name)} chars ({'within' if len(effective_name) <= 64 else 'exceeds'} 64 char limit)"
+    ))
+
+    has_reserved = "claude" in effective_name.lower() or "anthropic" in effective_name.lower()
+    checks.append(Check(
+        "name_no_reserved", "frontmatter",
+        not has_reserved,
+        f"effective name contains reserved word" if has_reserved
+        else "effective name does not contain reserved words (claude/anthropic)"
+    ))
 
     # Description field checks
 
@@ -302,7 +308,8 @@ def validate_skill(skill_dir):
     checks.append(Check(
         "description_present", "frontmatter",
         desc is not None,
-        "description field is present" if desc else "description field is missing (required)"
+        "description field is present" if desc else "description field is missing (recommended)",
+        severity="warning" if desc is None else "error"
     ))
 
     if desc is not None:

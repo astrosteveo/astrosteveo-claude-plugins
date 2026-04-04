@@ -130,14 +130,13 @@ Skills support variable substitution for dynamic content:
 | `$N` | Shorthand for `$ARGUMENTS[N]` (e.g., `$0`, `$1`) |
 | `${CLAUDE_SESSION_ID}` | Current session ID (useful for logging) |
 | `${CLAUDE_SKILL_DIR}` | Directory containing the skill's SKILL.md |
-| `${CLAUDE_PLUGIN_ROOT}` | Root directory of the plugin (for portability in plugin contexts) |
 
 Example:
 
 ```markdown
 ---
 name: review-issue
-argument-hint: "[issue-number]"
+argument-hint: [issue-number]
 description: Reviews a GitHub issue. Use when user says "review issue".
 ---
 
@@ -169,6 +168,8 @@ Apply these rules when reviewing or writing code.
 
 Use `` !`command` `` syntax to run shell commands before skill content is sent to Claude. The command output replaces the placeholder — Claude only sees the final rendered result.
 
+**Inline form** — single commands:
+
 ```markdown
 ---
 name: pr-summary
@@ -183,6 +184,23 @@ description: Summarize changes in a pull request.
 ## Your task
 Summarize this pull request...
 ```
+
+**Block form** — multi-line commands using fenced code blocks:
+
+````markdown
+## Environment
+```!
+node --version
+npm --version
+git status --short
+```
+````
+
+Each line in the block runs as a separate command. All output replaces the block.
+
+The shell used is controlled by the `shell` frontmatter field (`bash` by default, or `powershell`).
+
+**Security note:** Admins can disable shell execution for user/project/plugin skills by setting `"disableSkillShellExecution": true` in settings.json. Commands are replaced with a disabled message when this policy is active.
 
 Use cases: fetching live API data, reading current file contents, getting Git history, querying databases, checking system status.
 

@@ -1,8 +1,6 @@
 ---
-name: skill-creator
-description: Interactive toolkit for creating, editing, reviewing, and testing Claude skills. Use when the user says "create a skill", "build a skill", "new skill", "edit a skill", "review this skill", "fix this skill", "test a skill", "run skill tests", "validate a skill", "skill creator", "help me write a skill", or "generate a SKILL.md". Also use when the user runs /skill-creator. Supports three modes: create (guided multi-phase workflow), edit (review and fix an existing skill), and test (run the eval framework against a skill). Do NOT use for general coding tasks unrelated to Claude skill authoring.
-compatibility: Requires Claude Code with file system access for creating skill directories and files.
-argument-hint: "[create | edit path/to/skill | test path/to/skill]"
+description: Interactive toolkit for creating, editing, and testing Claude skills. Use when the user says "create a skill", "new skill", "edit a skill", "test a skill", or "generate a SKILL.md". Three modes - create, edit, and test.
+argument-hint: [create | edit path/to/skill | test path/to/skill]
 ---
 
 # Skill Creator
@@ -79,28 +77,28 @@ Goal: Produce valid YAML frontmatter for SKILL.md.
 
 Read `references/02-frontmatter.md` for field specs, constraints, and security rules.
 
-1. **name** — Derive from the skill's purpose. Rules:
+1. **Folder name** — The folder name IS the skill name. No `name` field needed in frontmatter — it defaults to the directory name. Rules:
    - kebab-case only (lowercase, hyphens)
-   - Must match the folder name
    - Cannot contain "claude" or "anthropic"
 
 2. **description** — Draft using this formula:
    ```
    [What it does] + [When to use it / trigger phrases] + [Key capabilities]
    ```
-   Read `references/03-descriptions-and-triggers.md` for good/bad examples and trigger-phrase guidance. The description MUST include both what the skill does AND when to use it. Keep under 1024 characters. No XML angle brackets.
+   Read `references/03-descriptions-and-triggers.md` for good/bad examples and trigger-phrase guidance. The description MUST include both what the skill does AND when to use it. Keep under 1024 characters. Front-load the most important info within the first ~250 characters (descriptions are truncated in skill listings). No XML angle brackets.
 
 3. **Optional fields** — Ask if any apply (see `references/02-frontmatter.md` for full details):
-   - `version` (semantic version, e.g. `1.0.0`)
-   - `license` (MIT, Apache-2.0, etc.)
-   - `compatibility` (environment requirements)
-   - `metadata` (author, mcp-server, category, tags)
-   - `allowed-tools` (restrict tool access when skill is active)
+   - `name` (override the directory name — rarely needed)
    - `argument-hint` (autocomplete hint, e.g. `[issue-number]`)
-   - `model` (specify Claude model)
+   - `allowed-tools` (tools auto-approved when skill is active)
    - `disable-model-invocation` (manual-only via `/skill-name`)
    - `user-invocable` (set `false` to hide from `/` menu)
+   - `model` (override Claude model)
+   - `effort` (reasoning effort: low, medium, high, max)
+   - `paths` (glob patterns to limit auto-activation, e.g. `**/*.ts`)
    - `context: fork` + `agent:` (run in isolated subagent)
+   - `hooks` (lifecycle hooks scoped to this skill)
+   - `shell` (shell for inline commands: bash or powershell)
 
 4. Present the complete frontmatter block to the user for review. Iterate until approved.
 
@@ -165,21 +163,16 @@ Goal: Create the skill's directory and all files.
    ```
    {skill-name}/
    ├── SKILL.md              # Always created
-   ├── TESTS.yaml            # Test specification (from use cases in Phase 1)
    ├── scripts/              # If the skill uses executable code
    ├── references/           # If detailed docs are needed
    └── assets/               # If templates/fonts/icons are needed
    ```
 
+   **Do NOT put TESTS.yaml in the skill folder.** Test specs are dev-time eval artifacts — they do not ship with the skill. They are generated in Phase 5 in a temp directory.
+
 3. Write SKILL.md with the approved frontmatter and instructions.
 
 4. Create any supporting files (scripts, references, assets) identified during Phase 3.
-
-6. **Generate TESTS.yaml** from the use cases defined in Phase 1:
-   - Default to exactly 3 eval scenarios: 1 `should_trigger`, 1 `should_not_trigger`, 1 `edge_case`
-   - Pick the most representative query for each — one clear positive, one clear negative, one ambiguous
-   - Only add more scenarios if the user explicitly asks for broader coverage
-   - See `references/08-testing-framework.md` for the full TESTS.yaml format
 
 5. **Critical rules** — verify before writing:
    - File is named exactly `SKILL.md` (case-sensitive)
@@ -201,7 +194,7 @@ Run through each check yourself by reading the files and verifying:
 - [ ] Folder named in kebab-case
 - [ ] `SKILL.md` exists with exact casing
 - [ ] YAML frontmatter has `---` delimiters
-- [ ] `name` field is kebab-case, matches folder name
+- [ ] Folder name is kebab-case (this is the skill name — no `name` field needed)
 - [ ] `description` includes WHAT and WHEN
 - [ ] No XML angle brackets in any file
 - [ ] No `README.md` in skill folder
@@ -221,11 +214,22 @@ Run through each check yourself by reading the files and verifying:
 
 Fix any failures before proceeding.
 
-#### Step 2: Run the automated test suite
+#### Step 2: Generate TESTS.yaml in a temp directory
+
+**Test specs do not ship with the skill.** Generate a TESTS.yaml in a temp directory from the use cases defined in Phase 1:
+
+1. Create a temp directory (e.g., `/tmp/skill-eval-{skill-name}/`)
+2. Write TESTS.yaml there with:
+   - Default to exactly 3 eval scenarios: 1 `should_trigger`, 1 `should_not_trigger`, 1 `edge_case`
+   - Pick the most representative query for each — one clear positive, one clear negative, one ambiguous
+   - Only add more scenarios if the user explicitly asks for broader coverage
+   - See `references/08-testing-framework.md` for the full TESTS.yaml format
+
+#### Step 3: Run the automated test suite
 
 **You MUST run these tests yourself.** Do not suggest the user run them. Do not print commands for them to copy. Execute them directly using the Bash tool.
 
-The test scripts live in `${CLAUDE_SKILL_DIR}/scripts/`. Run them against the newly created skill:
+The test scripts live in `${CLAUDE_SKILL_DIR}/scripts/`. Run them against the newly created skill, passing the temp TESTS.yaml via `--tests`:
 
 1. **Layer 1 — Structural validation** (free, instant):
    ```
@@ -234,22 +238,22 @@ The test scripts live in `${CLAUDE_SKILL_DIR}/scripts/`. Run them against the ne
 
 2. **Layer 2 — Trigger tests** (requires `claude` CLI):
    ```
-   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill --layer 2
+   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill --tests /tmp/skill-eval-{name}/TESTS.yaml --layer 2
    ```
 
 3. **Layer 3 — Behavioral tests** (if TESTS.yaml has behavioral entries):
    ```
-   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill --layer 3
+   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill --tests /tmp/skill-eval-{name}/TESTS.yaml --layer 3
    ```
 
 4. **Full suite** (all layers):
    ```
-   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill
+   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill --tests /tmp/skill-eval-{name}/TESTS.yaml
    ```
 
 Run at minimum Layer 1. Ask the user if they want to run Layer 2 and 3 as well (these spawn headless `claude -p` processes and consume tokens — Layer 2 is lightweight, Layer 3 can use more tokens depending on `max_turns`). If they say yes, run them. If they say run everything, run the full suite.
 
-#### Step 3: Handle failures
+#### Step 4: Handle failures
 
 If any tests fail:
 1. Read the failure output carefully
@@ -279,7 +283,7 @@ After the skill is created, validated, and tests pass:
 User says: "Help me create a skill for code reviews"
 
 1. **Discovery:** Classify as Category 2 (Workflow Automation). Define use cases: "review this PR", "check code quality".
-2. **Frontmatter:** `name: code-review`, description with trigger phrases, `allowed-tools: Read, Grep, Glob`.
+2. **Frontmatter:** description with trigger phrases, `allowed-tools: Read Grep Glob`. Folder name `code-review/` becomes the skill name.
 3. **Instructions:** Step-by-step workflow — fetch diff, analyze patterns, check for issues, present findings.
 4. **File Structure:** `code-review/SKILL.md` + `references/review-checklist.md`.
 5. **Validation:** Run checklist, verify triggers, test with sample PRs.
@@ -289,7 +293,7 @@ User says: "Help me create a skill for code reviews"
 User says: "I have Linear MCP connected, make a skill for sprint planning"
 
 1. **Discovery:** Classify as Category 3 (MCP Enhancement). Use cases: "plan this sprint", "create tickets from backlog".
-2. **Frontmatter:** `name: sprint-planner`, `compatibility: Requires Linear MCP server`, `metadata: { mcp-server: linear }`.
+2. **Frontmatter:** `compatibility: Requires Linear MCP server`, `metadata: { mcp-server: linear }`. Folder name `sprint-planner/` becomes the skill name.
 3. **Instructions:** Use fully qualified tool names (`Linear:create_issue`), phase-based workflow, error handling for MCP connection failures.
 4. **File Structure:** `sprint-planner/SKILL.md` + `references/linear-api-patterns.md`.
 5. **Validation:** Test triggers, verify MCP calls work, check for over-triggering on general project queries.
@@ -297,8 +301,8 @@ User says: "I have Linear MCP connected, make a skill for sprint planning"
 ### Troubleshooting
 
 **Frontmatter parse errors**
-Cause: Missing `---` delimiters, unclosed quotes, or tabs instead of spaces.
-Solution: Verify YAML syntax — use spaces for indentation, close all quotes, ensure both `---` delimiters are present.
+Cause: Missing `---` delimiters or tabs instead of spaces.
+Solution: Verify YAML syntax — use spaces for indentation, ensure both `---` delimiters are present. Values do not need quoting.
 
 **Skill doesn't trigger after creation**
 Cause: Description too vague, missing trigger phrases, or skill context budget exceeded.
@@ -320,7 +324,7 @@ Review and improve an existing skill. The user provides a path to a skill folder
 
 ### Step 1: Read and Assess
 
-1. Read the skill's `SKILL.md`, all `references/` files, `TESTS.yaml`, and any `scripts/`.
+1. Read the skill's `SKILL.md`, all `references/` files, and any `scripts/`.
 2. Read `references/01-fundamentals.md` to internalize the constraints.
 3. Run the structural validator to get an immediate health check:
    ```
@@ -356,11 +360,12 @@ Ask the user if they want to run the eval framework against the edited skill. If
 
 Run the eval framework against an existing skill. The user provides a path to a skill folder.
 
-### Step 1: Confirm the Skill
+### Step 1: Confirm the Skill and Test Spec
 
-1. Verify the path exists and contains a `SKILL.md` and `TESTS.yaml`
-2. Read `TESTS.yaml` to understand what will be tested
-3. Show the user a summary:
+1. Verify the skill path exists and contains a `SKILL.md`
+2. Ask the user for the path to their TESTS.yaml (test specs live outside the skill folder)
+   - If they don't have one, offer to generate one in a temp directory
+3. Read the TESTS.yaml and show the user a summary:
    - Number of `should_trigger` entries
    - Number of `should_not_trigger` entries
    - Number of edge cases
@@ -383,7 +388,7 @@ The test scripts live in `${CLAUDE_SKILL_DIR}/scripts/`.
    - Layer 3 (behavioral tests) uses more tokens — multiple turns per test, varies by `max_turns`
    - If the user says "run everything" or "full suite", run all layers:
    ```
-   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/skill
+   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/skill --tests /path/to/TESTS.yaml
    ```
 
 ### Step 3: Report Results

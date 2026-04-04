@@ -13,9 +13,8 @@ Use this checklist to validate a skill before and after upload.
 - [ ] Folder named in kebab-case
 - [ ] SKILL.md file exists (exact spelling, case-sensitive)
 - [ ] YAML frontmatter has `---` delimiters (top and bottom)
-- [ ] `name` field: kebab-case, no spaces, no capitals
-- [ ] `name` matches the folder name
-- [ ] `name` does not contain "claude" or "anthropic"
+- [ ] Folder name is kebab-case (this IS the skill name — `name` field is optional)
+- [ ] Folder name does not contain "claude" or "anthropic"
 - [ ] `description` includes WHAT it does and WHEN to use it
 - [ ] `description` is under 1024 characters
 - [ ] No XML angle brackets (< >) anywhere in SKILL.md

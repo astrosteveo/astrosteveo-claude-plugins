@@ -12,7 +12,9 @@ A three-layer testing system for validating Claude skills. Tests run against rea
 
 ## Quick Start
 
-### 1. Create TESTS.yaml in your skill folder
+### 1. Create TESTS.yaml (outside the skill folder)
+
+Test specs are dev-time eval artifacts — they do not ship with the skill. Keep them in a separate location (e.g., an `evals/` directory at the plugin or project level).
 
 ```yaml
 version: 1
@@ -31,40 +33,40 @@ triggers:
 behavioral: []
 ```
 
-See `templates/TESTS.yaml` for a complete template with all options.
-
 ### 2. Run tests
+
+Pass the skill path and test spec as separate arguments:
 
 ```bash
 # Full suite (all layers)
-python scripts/run-tests.py /path/to/skill
+python scripts/run-tests.py /path/to/skill --tests /path/to/TESTS.yaml
 
-# Structural only (free, instant)
+# Structural only (free, instant — no TESTS.yaml needed)
 python scripts/run-tests.py /path/to/skill --layer 1
 
 # Trigger tests only
-python scripts/run-tests.py /path/to/skill --layer 2
+python scripts/run-tests.py /path/to/skill --tests /path/to/TESTS.yaml --layer 2
 
 # Dry run (show plan without executing)
-python scripts/run-tests.py /path/to/skill --dry-run
+python scripts/run-tests.py /path/to/skill --tests /path/to/TESTS.yaml --dry-run
 
 # JSON output for CI/automation
-python scripts/run-tests.py /path/to/skill --json
+python scripts/run-tests.py /path/to/skill --tests /path/to/TESTS.yaml --json
 
 # Override model
-python scripts/run-tests.py /path/to/skill --model haiku
+python scripts/run-tests.py /path/to/skill --tests /path/to/TESTS.yaml --model haiku
 
 # Run tests in parallel (4 workers)
-python scripts/run-tests.py /path/to/skill --parallel 4
+python scripts/run-tests.py /path/to/skill --tests /path/to/TESTS.yaml --parallel 4
 
 # Flakiness detection (run 3 times)
-python scripts/run-tests.py /path/to/skill --runs 3
+python scripts/run-tests.py /path/to/skill --tests /path/to/TESTS.yaml --runs 3
 
-# Save results for regression tracking
-python scripts/run-tests.py /path/to/skill --save-results
+# Save results for regression tracking (saved next to TESTS.yaml)
+python scripts/run-tests.py /path/to/skill --tests /path/to/TESTS.yaml --save-results
 
 # Compare against previous run
-python scripts/run-tests.py /path/to/skill --compare latest
+python scripts/run-tests.py /path/to/skill --tests /path/to/TESTS.yaml --compare latest
 ```
 
 ### 3. Run structural validator standalone
@@ -80,7 +82,7 @@ python scripts/validate-structure.py /path/to/skill --json
 
 ```yaml
 version: 1                    # Schema version (required, must be 1)
-skill: your-skill-name        # Must match the skill's name field (required)
+skill: your-skill-name        # Must match the skill name (folder name or name field)
 ```
 
 ### Config section
@@ -296,17 +298,17 @@ This is useful for identifying non-deterministic trigger or soft assertion failu
 Save test results to track changes over time:
 
 ```bash
-# Save results after a run
-python scripts/run-tests.py /path/to/skill --save-results
+# Save results after a run (saved next to TESTS.yaml, not in the skill folder)
+python scripts/run-tests.py /path/to/skill --tests /path/to/TESTS.yaml --save-results
 
 # Compare against the most recent saved run
-python scripts/run-tests.py /path/to/skill --compare latest
+python scripts/run-tests.py /path/to/skill --tests /path/to/TESTS.yaml --compare latest
 
 # Compare against a specific file
-python scripts/run-tests.py /path/to/skill --compare /path/to/baseline.json
+python scripts/run-tests.py /path/to/skill --tests /path/to/TESTS.yaml --compare /path/to/baseline.json
 ```
 
-Results are saved to `skill-folder/test-results/` as timestamped JSON files. The comparison report shows regressions, improvements, new tests, and removed tests.
+Results are saved to `test-results/` next to the TESTS.yaml file as timestamped JSON files. The comparison report shows regressions, improvements, new tests, and removed tests.
 
 ## JSON Report Structure
 
@@ -338,6 +340,7 @@ When using `--runs N`, the report includes a `flakiness` key with per-test stabi
 
 | Flag | Description |
 |---|---|
+| `--tests PATH` | Path to TESTS.yaml (test specs live outside the skill folder) |
 | `--json` | Output JSON only |
 | `--layer N` | Run only layer 1, 2, or 3 |
 | `--model MODEL` | Override model for test runs |
@@ -345,7 +348,7 @@ When using `--runs N`, the report includes a `flakiness` key with per-test stabi
 | `--plugin-dir DIR` | Plugin directory (auto-detected if omitted) |
 | `--parallel N` | Number of parallel test workers (default: 1) |
 | `--runs N` | Run suite N times for flakiness detection (default: 1) |
-| `--save-results` | Save results to test-results/ in the skill folder |
+| `--save-results` | Save results to test-results/ next to the TESTS.yaml file |
 | `--compare BASELINE` | Compare results against a baseline file (path or 'latest') |
 
 ## Integration with Skill-Creator
@@ -353,6 +356,6 @@ When using `--runs N`, the report includes a `flakiness` key with per-test stabi
 The testing framework integrates into the skill-creator workflow:
 
 - **Phase 1 (Discovery):** Use cases feed directly into trigger test cases
-- **Phase 3 (Instructions):** A TESTS.yaml is auto-generated from the use cases
-- **Phase 5 (Validation):** Run `python scripts/run-tests.py` as part of validation
+- **Phase 5 (Validation):** A TESTS.yaml is generated in a temp directory from the use cases, then passed to the test runner via `--tests`
+- **Phase 5 (Validation):** Run `python scripts/run-tests.py /path/to/skill --tests /tmp/.../TESTS.yaml`
 - **Phase 6 (Next Steps):** Iterate on test failures to improve the skill

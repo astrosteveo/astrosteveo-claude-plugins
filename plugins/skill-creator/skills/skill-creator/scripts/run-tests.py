@@ -2,20 +2,19 @@
 """
 Skill Test Runner — Layers 1, 2, and 3.
 
-Reads TESTS.yaml from a skill directory and runs:
-  Layer 1: Structural validation (in-process, no Claude needed)
-  Layer 2: Trigger tests (spawns claude -p, observes skill invocation)
-  Layer 3: Behavioral tests (spawns claude -p, evaluates output)
+Runs eval tests against a skill. Test specs (TESTS.yaml) are separate
+from the skill itself — they are dev-time artifacts, not shipped with
+the skill.
 
 Usage:
-    python run-tests.py /path/to/skill-folder
-    python run-tests.py /path/to/skill-folder --json
-    python run-tests.py /path/to/skill-folder --layer 2
-    python run-tests.py /path/to/skill-folder --model haiku --dry-run
-    python run-tests.py /path/to/skill-folder --parallel 4
-    python run-tests.py /path/to/skill-folder --runs 3
-    python run-tests.py /path/to/skill-folder --save-results
-    python run-tests.py /path/to/skill-folder --compare latest
+    python run-tests.py /path/to/skill --tests /path/to/TESTS.yaml
+    python run-tests.py /path/to/skill --tests tests.yaml --json
+    python run-tests.py /path/to/skill --tests tests.yaml --layer 2
+    python run-tests.py /path/to/skill --tests tests.yaml --model haiku --dry-run
+    python run-tests.py /path/to/skill --tests tests.yaml --parallel 4
+    python run-tests.py /path/to/skill --tests tests.yaml --runs 3
+    python run-tests.py /path/to/skill --tests tests.yaml --save-results
+    python run-tests.py /path/to/skill --tests tests.yaml --compare latest
 """
 
 import argparse
@@ -1056,9 +1055,9 @@ def print_flakiness_report(flakiness):
 
 # Regression Tracking
 
-def save_results(report, skill_dir):
-    """Save test results to skill_dir/test-results/."""
-    results_dir = os.path.join(skill_dir, "test-results")
+def save_results(report, output_dir):
+    """Save test results to output_dir/test-results/."""
+    results_dir = os.path.join(output_dir, "test-results")
     os.makedirs(results_dir, exist_ok=True)
 
     timestamp = time.strftime("%Y-%m-%d_%H%M%S")
@@ -1177,8 +1176,10 @@ def execute_suite(skill_dir, config, layer=None, extra_flags=None,
 # Main
 
 def main():
-    parser = argparse.ArgumentParser(description="Run skill tests from TESTS.yaml")
+    parser = argparse.ArgumentParser(description="Run skill eval tests")
     parser.add_argument("skill_dir", help="Path to the skill folder")
+    parser.add_argument("--tests", metavar="PATH",
+                        help="Path to TESTS.yaml (test specs live outside the skill folder)")
     parser.add_argument("--json", action="store_true", help="Output JSON only")
     parser.add_argument("--layer", type=int, choices=[1, 2, 3],
                         help="Run only a specific layer (1=structural, 2=trigger, 3=behavioral)")
@@ -1192,22 +1193,32 @@ def main():
     parser.add_argument("--runs", type=int, default=1, metavar="N",
                         help="Run suite N times and report per-test stability")
     parser.add_argument("--save-results", action="store_true",
-                        help="Save results to test-results/ in the skill folder")
+                        help="Save results to test-results/ next to the TESTS.yaml file")
     parser.add_argument("--compare", metavar="BASELINE",
                         help="Compare results against a baseline file (path or 'latest')")
     args = parser.parse_args()
 
     skill_dir = os.path.abspath(args.skill_dir)
 
-    # Load TESTS.yaml
-    tests_path = os.path.join(skill_dir, "TESTS.yaml")
+    # Load TESTS.yaml — prefer --tests flag, fall back to skill dir (with warning)
+    if args.tests:
+        tests_path = os.path.abspath(args.tests)
+    else:
+        tests_path = os.path.join(skill_dir, "TESTS.yaml")
+
     if not os.path.exists(tests_path):
-        # Fall back to running structural only
         if not args.json:
-            print(f"No TESTS.yaml found in {skill_dir}. Running structural checks only.\n")
+            if args.tests:
+                print(f"TESTS.yaml not found at {tests_path}.\n")
+            else:
+                print(f"No TESTS.yaml provided. Running structural checks only.\n"
+                      f"  Hint: use --tests /path/to/TESTS.yaml\n")
         config = {"skill": os.path.basename(skill_dir)}
         tests_path = None
     else:
+        if not args.tests and not args.json:
+            print(f"  Note: Loading TESTS.yaml from skill folder. Consider moving it\n"
+                  f"  outside the skill dir and using --tests instead.\n")
         config = parse_yaml_file(tests_path) or {"skill": os.path.basename(skill_dir)}
 
     # Apply CLI overrides
@@ -1267,9 +1278,10 @@ def main():
         )
         report = generate_report(results, config, skill_dir)
 
-    # Save results
+    # Save results next to the TESTS.yaml (or skill dir if no --tests)
+    results_base_dir = os.path.dirname(tests_path) if tests_path else skill_dir
     if args.save_results:
-        path = save_results(report, skill_dir)
+        path = save_results(report, results_base_dir)
         if not args.json:
             print(f"  Results saved to {path}\n")
 
@@ -1277,7 +1289,7 @@ def main():
     if args.compare:
         baseline_path = args.compare
         if baseline_path == "latest":
-            baseline_path = os.path.join(skill_dir, "test-results", "latest.json")
+            baseline_path = os.path.join(results_base_dir, "test-results", "latest.json")
         diff = compare_results(report, baseline_path)
         report["comparison"] = diff
 

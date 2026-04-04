@@ -8,6 +8,8 @@ The `description` field is the most impactful part of your skill. It's the first
 [What it does] + [When to use it / trigger phrases] + [Key capabilities]
 ```
 
+**Important:** Descriptions are truncated at ~250 characters in skill listings. Front-load the most critical information — what the skill does and key trigger phrases — within the first 250 characters. The full description (up to 1024 characters) is still used for matching, but the visible listing is shorter.
+
 ## Point of View
 
 Write descriptions in **third person**. The description is injected into Claude's system prompt — first or second person creates confusion about who is speaking.

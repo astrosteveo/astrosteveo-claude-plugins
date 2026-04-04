@@ -1,6 +1,7 @@
 # Skill Test Specification
-# Place this file in your skill's root directory alongside SKILL.md.
-# Run with: python scripts/run-tests.py /path/to/skill-folder
+# Keep this file OUTSIDE the skill folder (e.g., in an evals/ directory).
+# Test specs are dev-time artifacts — they do not ship with the skill.
+# Run with: python scripts/run-tests.py /path/to/skill --tests /path/to/this-file.yaml
 
 version: 1
 skill: your-skill-name
@@ -154,5 +155,6 @@ behavioral:
 # --plugin-dir DIR    Plugin directory (auto-detected if omitted)
 # --parallel N        Run N tests concurrently (default: 1)
 # --runs N            Run suite N times for flakiness detection (default: 1)
-# --save-results      Save results to test-results/ in the skill folder
+# --tests PATH        Path to TESTS.yaml (test specs live outside the skill folder)
+# --save-results      Save results to test-results/ next to the TESTS.yaml file
 # --compare BASELINE  Compare against baseline file (path or 'latest')

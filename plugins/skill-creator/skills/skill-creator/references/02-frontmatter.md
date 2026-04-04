@@ -2,14 +2,17 @@
 
 The YAML frontmatter is how Claude decides whether to load your skill. It appears in Claude's system prompt at all times (Level 1 of progressive disclosure). Getting this right is the single most important part of skill creation.
 
-## Required Format
+## Standard Format
 
 ```yaml
 ---
-name: your-skill-name
-description: What it does and when to use it. Include trigger phrases.
+description: What it does and when to use it. Include trigger phrases like "do something" or "run the thing".
 ---
 ```
+
+The skill name comes from the folder name — no `name` field needed. Only add `name` if you need to override the directory name (rare).
+
+Values are unquoted. Do not wrap descriptions or other values in single or double quotes — Claude Code's frontmatter parser handles special characters (colons, double quotes, brackets) without quoting.
 
 Write descriptions as a single-line string. Do NOT use YAML block scalars (`>` or `|`) — they break the description across multiple lines in the file, making it harder to read and edit. Keep the entire description on one line after `description: `.
 
@@ -17,35 +20,39 @@ The `---` delimiters are mandatory. Missing them is a common upload error.
 
 ## Field Specifications
 
-### name (required)
+### name (optional)
+
+Usually omitted — defaults to the directory name, just like slash commands. Only set this if you need to override the folder name.
 
 - kebab-case only (lowercase letters, hyphens)
 - No spaces, capitals, or underscores
-- Must match the folder name
 - Cannot contain "claude" or "anthropic" (reserved)
 - Maximum 64 characters
 
 ```yaml
-# Correct
-name: sprint-planner
+# Best — omit name, let folder name be the skill name
+# folder: sprint-planner/
+---
+description: Manages Linear project workflows...
+---
 
-# Wrong
-name: Sprint Planner      # spaces and capitals
-name: sprint_planner      # underscores
-name: claude-helper        # reserved prefix
+# Override — only if the folder name differs (rare)
+name: sprint-planner
 ```
 
-### description (required)
+### description (recommended)
 
 Must include BOTH:
 - **What** the skill does
 - **When** to use it (trigger conditions / phrases)
 
 Constraints:
-- Under 1024 characters
+- Under 1024 characters total
+- Truncated at ~250 characters in skill listings — front-load the most important info
 - No XML angle brackets in the description text content
 - Include specific tasks users might say
 - Mention file types if relevant
+- If omitted, defaults to the first paragraph of the SKILL.md body
 
 See `03-descriptions-and-triggers.md` for detailed guidance and examples.
 
@@ -93,11 +100,11 @@ metadata:
 Restricts which tools Claude can use without permission prompts when the skill is active.
 
 ```yaml
-# Comma-separated string:
-allowed-tools: Read, Write, Edit
+# Space-separated string:
+allowed-tools: Read Write Edit
 
 # Bash with command filters:
-allowed-tools: "Read, Bash(git:*), Bash(npm:*)"
+allowed-tools: Read Bash(git:*) Bash(npm:*)
 
 # Array format:
 allowed-tools:
@@ -108,7 +115,7 @@ allowed-tools:
   - Bash(docker:*)
 ```
 
-**Bash patterns:** `Bash(command:*)` restricts Bash to commands starting with that prefix. Use this for fine-grained control over shell access.
+**Bash patterns:** `Bash(prefix:*)` restricts Bash to commands starting with that prefix. Use this for fine-grained control over shell access.
 
 ### disable-model-invocation (optional)
 
@@ -136,18 +143,55 @@ user-invocable: false
 Shows a hint during autocomplete when the user types `/skill-name`.
 
 ```yaml
-argument-hint: "[issue-number]"
+argument-hint: [issue-number]
 # or
-argument-hint: "[filename] [format]"
+argument-hint: [filename] [format]
 ```
 
 ### model (optional)
 
-Specifies which Claude model to use when the skill is active.
+Specifies which Claude model to use when the skill is active. Accepts model aliases or full model IDs.
 
 ```yaml
-model: claude-sonnet-4-5-20250514
+model: sonnet
 ```
+
+### effort (optional)
+
+Sets the reasoning effort level when the skill is active. Overrides the session effort level.
+
+```yaml
+effort: high
+```
+
+Valid values: `low`, `medium`, `high`, `max`
+
+### paths (optional)
+
+Glob patterns that limit when Claude auto-activates the skill. When set, the skill only loads automatically when working with files matching the patterns.
+
+```yaml
+# Comma-separated string
+paths: **/*.ts, **/*.tsx
+
+# Array format
+paths:
+  - **/*.ts
+  - **/*.tsx
+  - **/*.js
+```
+
+### shell (optional)
+
+Shell used for inline commands (`` !`command` `` and ` ```! ` blocks) within the skill content. Default is `bash`.
+
+```yaml
+shell: bash
+# or
+shell: powershell
+```
+
+Note: `powershell` requires `CLAUDE_CODE_USE_POWERSHELL_TOOL=1` environment variable.
 
 ### context and agent (optional)
 
@@ -167,23 +211,35 @@ Use when:
 
 ### hooks (optional)
 
-Scoped hooks for skill lifecycle events.
+Scoped hooks for skill lifecycle events. Uses the same structure as settings.json hooks but in YAML. Hooks only run while the skill is active.
+
+Event names use PascalCase (e.g., `PreToolUse`, `PostToolUse`, `SessionStart`). Each event takes a list of matcher groups, each containing a `matcher` regex and a `hooks` array of handler objects.
 
 ```yaml
 hooks:
-  pre-tool-use:
-    - command: echo "Tool being used"
-  post-tool-use:
-    - command: echo "Tool completed"
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "./scripts/validate.sh"
+          timeout: 30
+          statusMessage: "Validating command..."
+  PostToolUse:
+    - matcher: "Edit|Write"
+      hooks:
+        - type: command
+          command: "./scripts/lint-check.sh"
 ```
+
+Handler types: `command`, `http`, `prompt`, `agent`. Common optional fields: `timeout`, `statusMessage`, `once` (run once per session then remove), `if` (permission rule filter for tool events), `async` (command only).
 
 ## Complete Example
 
+Assuming the skill lives in a folder named `sprint-planner/`:
+
 ```yaml
 ---
-name: sprint-planner
 description: Manages Linear project workflows including sprint planning, task creation, and status tracking. Use when user mentions "sprint", "Linear tasks", "project planning", or asks to "create tickets".
-version: 1.0.0
 license: MIT
 compatibility: Requires Linear MCP server connection.
 metadata:
@@ -212,17 +268,19 @@ metadata:
 name: my-skill
 description: Does things
 
-# Wrong — unclosed quotes
-name: my-skill
-description: "Does things
-
 # Wrong — tabs instead of spaces for indentation
 name: my-skill
 description:	Does things
 
+# Wrong — using block scalars
+name: my-skill
+description: >
+  Does things across
+  multiple lines
+
 # Correct
 ---
 name: my-skill
-description: Does things
+description: Does things. Use when user says "do the thing" or asks for help.
 ---
 ```
