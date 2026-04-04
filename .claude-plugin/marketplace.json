@@ -15,7 +15,7 @@
             },
             "source": "./plugins/commit"
         },
-{
+        {
             "name": "godot-dev",
             "description": "Godot 4.x development skill with engine conventions, architecture patterns, and Recipe-Generator pattern",
             "author": {
@@ -61,13 +61,13 @@
             "source": "./plugins/autopilot"
         },
         {
-            "name": "local-memory",
-            "description": "Configure auto-memory to live inside the project for version control",
+            "name": "frontend-design",
+            "description": "Create distinctive, production-grade frontend interfaces with high design quality — strict no-cards policy",
             "author": {
                 "name": "AstroSteveo",
                 "email": "astrosteveo@noreply.users.github.com"
             },
-            "source": "./plugins/local-memory"
+            "source": "./plugins/frontend-design"
         }
     ]
 }

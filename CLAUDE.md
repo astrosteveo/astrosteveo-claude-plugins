@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Claude Code plugin repository with seven plugins — **commit** (Conventional Commits), **godot-dev** (Godot 4.x guidance), **code-quality** (codebase quality review), **reconcile-memory** (memory audit and cleanup), **develop** (orchestrator-driven development workflow), **autopilot** (autonomous development mode), and **local-memory** (project-local auto-memory). The codebase is pure Markdown (skills), Bash (scripts), and Python (test tooling). There is no build step; plugins are loaded directly by Claude Code.
+Claude Code plugin repository with seven plugins — **commit** (Conventional Commits), **godot-dev** (Godot 4.x guidance), **code-quality** (codebase quality review), **reconcile-memory** (memory audit and cleanup), **develop** (orchestrator-driven development workflow), **autopilot** (autonomous development mode), and **frontend-design** (distinctive frontend interfaces with strict no-cards policy). The codebase is pure Markdown (skills), Bash (scripts), and Python (test tooling). There is no build step; plugins are loaded directly by Claude Code.
 
 ## Architecture
 
@@ -19,7 +19,7 @@ Seven plugins:
 - **`reconcile-memory`** (`plugins/reconcile-memory/`) — audit and reconcile auto-memory files: deduplication, contradiction detection, staleness assessment, context hygiene
 - **`develop`** (`plugins/develop/`) — orchestrator-driven development workflow; main chat handles discovery, research, strategy, and planning, then dispatches implementation agents (parallel when independent, sequential when dependent) and a final review agent for validation
 - **`autopilot`** (`plugins/autopilot/`) — autonomous development mode; Claude continuously analyzes the codebase, decides what to work on, and implements improvements in a loop
-- **`local-memory`** (`plugins/local-memory/`) — configure auto-memory to live inside the project directory for version control; creates `.claude/settings.local.json` with `autoMemoryDirectory` pointing to `.claude/memory/`
+- **`frontend-design`** (`plugins/frontend-design/`) — create distinctive, production-grade frontend interfaces; strict no-cards policy, accessibility-first, typography-driven layouts
 
 ### Skills
 
