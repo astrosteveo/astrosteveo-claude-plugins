@@ -43,24 +43,6 @@
             "source": "./plugins/reconcile-memory"
         },
         {
-            "name": "develop",
-            "description": "End-to-end development workflow — adaptive phases for features, bug fixes, refactors, and any substantial code change",
-            "author": {
-                "name": "AstroSteveo",
-                "email": "astrosteveo@noreply.users.github.com"
-            },
-            "source": "./plugins/develop"
-        },
-        {
-            "name": "autopilot",
-            "description": "Autonomous development mode — Claude continuously analyzes the codebase and implements improvements in a loop",
-            "author": {
-                "name": "AstroSteveo",
-                "email": "astrosteveo@noreply.users.github.com"
-            },
-            "source": "./plugins/autopilot"
-        },
-        {
             "name": "skill-creator",
             "description": "Interactive guide for creating new Claude Code skills",
             "author": {
@@ -68,15 +50,6 @@
                 "email": "astrosteveo@noreply.users.github.com"
             },
             "source": "./plugins/skill-creator"
-        },
-        {
-            "name": "frontend-design",
-            "description": "Create distinctive, production-grade frontend interfaces with high design quality — strict no-cards policy",
-            "author": {
-                "name": "AstroSteveo",
-                "email": "astrosteveo@noreply.users.github.com"
-            },
-            "source": "./plugins/frontend-design"
         }
     ]
 }
