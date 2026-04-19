@@ -47,14 +47,27 @@ Must include BOTH:
 - **When** to use it (trigger conditions / phrases)
 
 Constraints:
-- Under 1024 characters total
-- Truncated at ~250 characters in skill listings — front-load the most important info
 - No XML angle brackets in the description text content
 - Include specific tasks users might say
 - Mention file types if relevant
 - If omitted, defaults to the first paragraph of the SKILL.md body
 
+**Character budget:** The combined `description` + `when_to_use` is truncated at **1,536 characters** in the skill listing (the listing is what Claude reads to decide when to load the skill). Front-load the most important info — what the skill does and key trigger phrases — so it survives truncation.
+
 See `03-descriptions-and-triggers.md` for detailed guidance and examples.
+
+### when_to_use (optional)
+
+Additional context for when Claude should invoke the skill — extra trigger phrases, example user requests, or edge-case clarifications. This field is appended to `description` in the skill listing and counts toward the combined 1,536-character cap.
+
+Use when the `description` is already rich on "what" but you want to add more "when" guidance without cluttering the primary description.
+
+```yaml
+---
+description: Analyzes Figma design files and generates developer handoff documentation.
+when_to_use: Trigger when the user uploads .fig files, asks for "design specs", mentions "component documentation", or requests a "design-to-code handoff".
+---
+```
 
 ### version (optional)
 
@@ -164,7 +177,7 @@ Sets the reasoning effort level when the skill is active. Overrides the session 
 effort: high
 ```
 
-Valid values: `low`, `medium`, `high`, `max`
+Valid values: `low`, `medium`, `high`, `xhigh`, `max`. Available levels depend on the model.
 
 ### paths (optional)
 

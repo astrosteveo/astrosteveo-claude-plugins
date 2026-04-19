@@ -109,7 +109,7 @@ This prevents over-engineering your skill with instructions that don't improve o
 Skill descriptions are loaded into Claude's context at startup. With many skills, descriptions may exceed the character budget.
 
 - Budget scales dynamically at **1% of context window** (fallback: 8,000 characters)
-- Individual descriptions are truncated at ~250 characters in skill listings
+- Combined `description` + `when_to_use` is truncated at **1,536 characters** per skill in the listing
 - Run `/context` to check for warnings about excluded skills
 - Override with: `export SLASH_COMMAND_TOOL_CHAR_BUDGET=32000`
 - If budget exceeded: shorten descriptions, reduce enabled skills, or use skill "packs" for related capabilities

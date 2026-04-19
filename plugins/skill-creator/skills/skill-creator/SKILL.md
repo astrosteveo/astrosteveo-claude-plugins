@@ -85,22 +85,25 @@ Read `references/02-frontmatter.md` for field specs, constraints, and security r
    ```
    [What it does] + [When to use it / trigger phrases] + [Key capabilities]
    ```
-   Read `references/03-descriptions-and-triggers.md` for good/bad examples and trigger-phrase guidance. The description MUST include both what the skill does AND when to use it. Keep under 1024 characters. Front-load the most important info within the first ~250 characters (descriptions are truncated in skill listings). No XML angle brackets.
+   Read `references/03-descriptions-and-triggers.md` for good/bad examples and trigger-phrase guidance. The description MUST include both what the skill does AND when to use it. Combined `description` + `when_to_use` is truncated at 1,536 characters in the skill listing — front-load the most important info. No XML angle brackets.
 
 3. **Optional fields** — Ask if any apply (see `references/02-frontmatter.md` for full details):
    - `name` (override the directory name — rarely needed)
+   - `when_to_use` (extra trigger phrases / example requests; appended to `description` in the listing)
    - `argument-hint` (autocomplete hint, e.g. `[issue-number]`)
    - `allowed-tools` (tools auto-approved when skill is active)
    - `disable-model-invocation` (manual-only via `/skill-name`)
    - `user-invocable` (set `false` to hide from `/` menu)
    - `model` (override Claude model)
-   - `effort` (reasoning effort: low, medium, high, max)
+   - `effort` (reasoning effort: low, medium, high, xhigh, max — available levels depend on the model)
    - `paths` (glob patterns to limit auto-activation, e.g. `**/*.ts`)
-   - `context: fork` + `agent:` (run in isolated subagent)
+   - `context: fork` + `agent:` (run in isolated subagent — Explore, Plan, or general-purpose)
    - `hooks` (lifecycle hooks scoped to this skill)
-   - `shell` (shell for inline commands: bash or powershell)
+   - `shell` (shell for inline `` !`command` `` blocks: bash or powershell)
 
-4. Present the complete frontmatter block to the user for review. Iterate until approved.
+4. **`$ARGUMENTS` placeholder** — If the skill accepts user input via `/skill-name [args]`, use `$ARGUMENTS` in the SKILL.md body where the input should be substituted. See `references/04-writing-instructions.md` for `$0`/`$1` positional variants.
+
+5. Present the complete frontmatter block to the user for review. Iterate until approved.
 
 ### Phase 3: Instructions
 
@@ -168,7 +171,7 @@ Goal: Create the skill's directory and all files.
    └── assets/               # If templates/fonts/icons are needed
    ```
 
-   **Do NOT put TESTS.yaml in the skill folder.** Test specs are dev-time eval artifacts — they do not ship with the skill. They are generated in Phase 5 in a temp directory.
+   **Do NOT put TESTS.yaml, test results, or eval scratch files in the skill folder.** These are dev-time artifacts that must not ship with the skill. They belong in the ephemeral eval workspace (Phase 5), which is gitignored and outside the skill directory.
 
 3. Write SKILL.md with the approved frontmatter and instructions.
 
@@ -214,12 +217,17 @@ Run through each check yourself by reading the files and verifying:
 
 Fix any failures before proceeding.
 
-#### Step 2: Generate TESTS.yaml in a temp directory
+#### Step 2: Generate TESTS.yaml in an ephemeral eval workspace
 
-**Test specs do not ship with the skill.** Generate a TESTS.yaml in a temp directory from the use cases defined in Phase 1:
+**Test specs do not ship with the skill.** The eval workspace is ephemeral, gitignored, and lives outside the skill folder. Never put TESTS.yaml, results, or scratch files inside the skill directory — they must not be committed or distributed with the skill.
 
-1. Create a temp directory (e.g., `/tmp/skill-eval-{skill-name}/`)
-2. Write TESTS.yaml there with:
+1. Resolve the ephemeral workspace path using the Python cross-platform helper (works on Windows, macOS, Linux):
+   ```
+   python -c "import tempfile, os; p = os.path.join(tempfile.gettempdir(), 'skill-evals', '{skill-name}'); os.makedirs(p, exist_ok=True); print(p)"
+   ```
+   Use the printed path as `EVAL_DIR` for subsequent commands. Alternatively, if the user wants a project-local workspace (e.g., for debugging), use `{project-root}/.skill-evals/{skill-name}/` — this pattern is already covered by `.gitignore`.
+
+2. Write TESTS.yaml to `EVAL_DIR/TESTS.yaml` with:
    - Default to exactly 3 eval scenarios: 1 `should_trigger`, 1 `should_not_trigger`, 1 `edge_case`
    - Pick the most representative query for each — one clear positive, one clear negative, one ambiguous
    - Only add more scenarios if the user explicitly asks for broader coverage
@@ -229,7 +237,7 @@ Fix any failures before proceeding.
 
 **You MUST run these tests yourself.** Do not suggest the user run them. Do not print commands for them to copy. Execute them directly using the Bash tool.
 
-The test scripts live in `${CLAUDE_SKILL_DIR}/scripts/`. Run them against the newly created skill, passing the temp TESTS.yaml via `--tests`:
+The test scripts live in `${CLAUDE_SKILL_DIR}/scripts/`. Run them against the newly created skill, passing the ephemeral TESTS.yaml via `--tests`:
 
 1. **Layer 1 — Structural validation** (free, instant):
    ```
@@ -238,17 +246,17 @@ The test scripts live in `${CLAUDE_SKILL_DIR}/scripts/`. Run them against the ne
 
 2. **Layer 2 — Trigger tests** (requires `claude` CLI):
    ```
-   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill --tests /tmp/skill-eval-{name}/TESTS.yaml --layer 2
+   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill --tests $EVAL_DIR/TESTS.yaml --layer 2
    ```
 
 3. **Layer 3 — Behavioral tests** (if TESTS.yaml has behavioral entries):
    ```
-   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill --tests /tmp/skill-eval-{name}/TESTS.yaml --layer 3
+   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill --tests $EVAL_DIR/TESTS.yaml --layer 3
    ```
 
 4. **Full suite** (all layers):
    ```
-   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill --tests /tmp/skill-eval-{name}/TESTS.yaml
+   python ${CLAUDE_SKILL_DIR}/scripts/run-tests.py /path/to/created/skill --tests $EVAL_DIR/TESTS.yaml
    ```
 
 Run at minimum Layer 1. Ask the user if they want to run Layer 2 and 3 as well (these spawn headless `claude -p` processes and consume tokens — Layer 2 is lightweight, Layer 3 can use more tokens depending on `max_turns`). If they say yes, run them. If they say run everything, run the full suite.
@@ -363,8 +371,12 @@ Run the eval framework against an existing skill. The user provides a path to a 
 ### Step 1: Confirm the Skill and Test Spec
 
 1. Verify the skill path exists and contains a `SKILL.md`
-2. Ask the user for the path to their TESTS.yaml (test specs live outside the skill folder)
-   - If they don't have one, offer to generate one in a temp directory
+2. Ask the user for the path to their TESTS.yaml (test specs live outside the skill folder, in an ephemeral eval workspace)
+   - If they don't have one, offer to generate one in the ephemeral workspace:
+     ```
+     python -c "import tempfile, os; p = os.path.join(tempfile.gettempdir(), 'skill-evals', '{skill-name}'); os.makedirs(p, exist_ok=True); print(p)"
+     ```
+   - Or use `{project-root}/.skill-evals/{skill-name}/` for a gitignored project-local workspace
 3. Read the TESTS.yaml and show the user a summary:
    - Number of `should_trigger` entries
    - Number of `should_not_trigger` entries

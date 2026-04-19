@@ -12,9 +12,18 @@ A three-layer testing system for validating Claude skills. Tests run against rea
 
 ## Quick Start
 
-### 1. Create TESTS.yaml (outside the skill folder)
+### 1. Create TESTS.yaml in an ephemeral eval workspace
 
-Test specs are dev-time eval artifacts — they do not ship with the skill. Keep them in a separate location (e.g., an `evals/` directory at the plugin or project level).
+Test specs are dev-time eval artifacts — they must never ship with the skill and never get committed. Generate them in a gitignored ephemeral workspace, not inside the skill folder.
+
+**Cross-platform temp dir (default):**
+```bash
+python -c "import tempfile, os; p = os.path.join(tempfile.gettempdir(), 'skill-evals', 'your-skill-name'); os.makedirs(p, exist_ok=True); print(p)"
+```
+
+**Project-local (for debugging):** `{project-root}/.skill-evals/{skill-name}/` — this path is gitignored at the repo root so scratch files cannot be committed by accident.
+
+Both locations, plus `test-results/` directories created by `--save-results`, are covered by `.gitignore`.
 
 ```yaml
 version: 1
@@ -356,6 +365,8 @@ When using `--runs N`, the report includes a `flakiness` key with per-test stabi
 The testing framework integrates into the skill-creator workflow:
 
 - **Phase 1 (Discovery):** Use cases feed directly into trigger test cases
-- **Phase 5 (Validation):** A TESTS.yaml is generated in a temp directory from the use cases, then passed to the test runner via `--tests`
-- **Phase 5 (Validation):** Run `python scripts/run-tests.py /path/to/skill --tests /tmp/.../TESTS.yaml`
+- **Phase 5 (Validation):** A TESTS.yaml is generated in an ephemeral gitignored workspace from the use cases, then passed to the test runner via `--tests`
+- **Phase 5 (Validation):** Run `python scripts/run-tests.py /path/to/skill --tests $EVAL_DIR/TESTS.yaml`
 - **Phase 6 (Next Steps):** Iterate on test failures to improve the skill
+
+The eval workspace is never inside the skill folder and never committed — it is ephemeral and gitignored.

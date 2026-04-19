@@ -1,6 +1,14 @@
 # Skill Test Specification
-# Keep this file OUTSIDE the skill folder (e.g., in an evals/ directory).
-# Test specs are dev-time artifacts — they do not ship with the skill.
+# Keep this file OUTSIDE the skill folder, in an EPHEMERAL gitignored workspace.
+# Test specs are dev-time artifacts — they must never ship with the skill
+# and must never be committed.
+#
+# Recommended locations:
+#   - OS temp dir (default): {tempfile.gettempdir()}/skill-evals/{skill-name}/TESTS.yaml
+#   - Project-local (debug):  {project-root}/.skill-evals/{skill-name}/TESTS.yaml
+#
+# The patterns .skill-evals/, plugins/*/evals/, and test-results/ are gitignored.
+#
 # Run with: python scripts/run-tests.py /path/to/skill --tests /path/to/this-file.yaml
 
 version: 1

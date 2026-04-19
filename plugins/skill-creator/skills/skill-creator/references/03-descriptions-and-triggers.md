@@ -8,7 +8,7 @@ The `description` field is the most impactful part of your skill. It's the first
 [What it does] + [When to use it / trigger phrases] + [Key capabilities]
 ```
 
-**Important:** Descriptions are truncated at ~250 characters in skill listings. Front-load the most critical information — what the skill does and key trigger phrases — within the first 250 characters. The full description (up to 1024 characters) is still used for matching, but the visible listing is shorter.
+**Important:** The combined `description` + `when_to_use` is truncated at **1,536 characters** in the skill listing (the listing is what Claude reads at Level 1 progressive disclosure). Front-load the most critical information — what the skill does and key trigger phrases — so it survives truncation if you have many skills loaded and the character budget is tight. If you need more trigger detail than fits cleanly in `description`, move it into `when_to_use` (see `02-frontmatter.md`).
 
 ## Point of View
 

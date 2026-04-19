@@ -318,7 +318,18 @@ def validate_skill(skill_dir):
         checks.append(Check(
             "description_max_length", "frontmatter",
             len(desc_str) <= 1024,
-            f"description is {len(desc_str)} chars ({'within' if len(desc_str) <= 1024 else 'exceeds'} 1024 char limit)"
+            f"description is {len(desc_str)} chars ({'within' if len(desc_str) <= 1024 else 'exceeds'} 1024 char soft limit)",
+            severity="warning" if len(desc_str) > 1024 else "error"
+        ))
+
+        when_to_use = fm.get("when_to_use")
+        combined_len = len(desc_str) + (len(str(when_to_use)) if when_to_use else 0)
+        checks.append(Check(
+            "description_listing_budget", "frontmatter",
+            combined_len <= 1536,
+            f"combined description + when_to_use is {combined_len} chars "
+            f"({'within' if combined_len <= 1536 else 'exceeds'} 1,536-char listing budget — excess is truncated)",
+            severity="warning"
         ))
 
         has_xml = bool(re.search(r"[<>]", desc_str))

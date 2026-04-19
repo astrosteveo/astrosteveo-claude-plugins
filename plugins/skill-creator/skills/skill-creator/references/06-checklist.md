@@ -16,7 +16,7 @@ Use this checklist to validate a skill before and after upload.
 - [ ] Folder name is kebab-case (this IS the skill name — `name` field is optional)
 - [ ] Folder name does not contain "claude" or "anthropic"
 - [ ] `description` includes WHAT it does and WHEN to use it
-- [ ] `description` is under 1024 characters
+- [ ] Combined `description` + `when_to_use` stays within the 1,536-char listing budget (front-load key info)
 - [ ] No XML angle brackets (< >) anywhere in SKILL.md
 - [ ] No `README.md` inside the skill folder
 - [ ] Instructions are clear and actionable
