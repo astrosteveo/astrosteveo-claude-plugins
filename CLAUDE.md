@@ -26,7 +26,11 @@ Each skill is a kebab-case folder under `plugins/{plugin}/skills/{skill-name}/` 
 - `references/` — progressive-disclosure docs loaded on demand (e.g., `01-fundamentals.md`)
 - `scripts/` — automation scripts
 
-Test specs (`TESTS.yaml`) live in `plugins/{plugin}/evals/`, not inside the skill folder.
+Test specs (`TESTS.yaml`) are ephemeral dev-time artifacts — they never live inside the skill folder and they never get committed. Generate them in an ephemeral eval workspace:
+- OS temp dir (default): `{tempfile.gettempdir()}/skill-evals/{skill-name}/`
+- Project-local (for debugging): `.skill-evals/{skill-name}/` — gitignored at the repo root
+
+Both locations (`.skill-evals/`, `plugins/*/evals/`, `test-results/`) are gitignored.
 
 ## Conventions
 
