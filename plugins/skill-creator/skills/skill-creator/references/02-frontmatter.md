@@ -196,7 +196,7 @@ paths:
 
 ### shell (optional)
 
-Shell used for inline commands (`` !`command` `` and ` ```! ` blocks) within the skill content. Default is `bash`.
+Shell used for inline command interpolation (bang-prefixed inline commands and bang-tagged fenced blocks) within skill content. Default is `bash`. See `04-writing-instructions.md` for syntax.
 
 ```yaml
 shell: bash

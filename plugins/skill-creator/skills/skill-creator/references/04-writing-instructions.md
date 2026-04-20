@@ -166,7 +166,13 @@ Apply these rules when reviewing or writing code.
 
 ## Dynamic Context Injection
 
-Use `` !`command` `` syntax to run shell commands before skill content is sent to Claude. The command output replaces the placeholder — Claude only sees the final rendered result.
+Use the following syntax to run shell commands before skill content is sent to Claude:
+
+```text
+!`command`
+```
+
+The command output replaces the placeholder — Claude only sees the final rendered result.
 
 **Inline form** — single commands:
 

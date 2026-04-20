@@ -99,7 +99,7 @@ Read `references/02-frontmatter.md` for field specs, constraints, and security r
    - `paths` (glob patterns to limit auto-activation, e.g. `**/*.ts`)
    - `context: fork` + `agent:` (run in isolated subagent — Explore, Plan, or general-purpose)
    - `hooks` (lifecycle hooks scoped to this skill)
-   - `shell` (shell for inline `` !`command` `` blocks: bash or powershell)
+   - `shell` (shell for inline bang-prefixed command blocks: bash or powershell)
 
 4. **`$ARGUMENTS` placeholder** — If the skill accepts user input via `/skill-name [args]`, use `$ARGUMENTS` in the SKILL.md body where the input should be substituted. See `references/04-writing-instructions.md` for `$0`/`$1` positional variants.
 
