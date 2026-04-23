@@ -1,10 +1,3 @@
 __pycache__/
 *.pyc
 .test-workdir/
-
-# Ephemeral skill eval workspaces — generated TESTS.yaml files, test-results/,
-# and scratch artifacts from the skill-creator eval framework. These are
-# dev-time only; they must never ship with a skill or be committed.
-.skill-evals/
-plugins/*/evals/
-test-results/
