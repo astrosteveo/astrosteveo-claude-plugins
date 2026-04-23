@@ -16,15 +16,6 @@
             "source": "./plugins/commit"
         },
         {
-            "name": "godot-dev",
-            "description": "Godot 4.x development skill with engine conventions, architecture patterns, and Recipe-Generator pattern",
-            "author": {
-                "name": "AstroSteveo",
-                "email": "astrosteveo@noreply.users.github.com"
-            },
-            "source": "./plugins/godot-dev"
-        },
-        {
             "name": "code-quality",
             "description": "Codebase quality skills — code-quality for comprehensive audits, code-sniffer for detecting code smells and AI slop",
             "author": {
