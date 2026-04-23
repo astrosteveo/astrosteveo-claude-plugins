@@ -24,7 +24,7 @@ NEVER delete or modify any memory file without presenting the full plan to the u
 
 ## Instructions
 
-This skill operates in three phases: **Analyze**, **Report and Plan**, then **Execute**. Never modify files without explicit user approval.
+This skill operates in three phases: **Analyze**, **Report and Plan**, then **Execute**.
 
 ### Phase 1: Analyze
 
