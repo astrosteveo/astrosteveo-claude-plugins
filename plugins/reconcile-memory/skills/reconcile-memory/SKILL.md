@@ -1,7 +1,6 @@
 ---
 description: Audits and reconciles Claude Code auto-memory files. Finds duplicates, contradictions, stale references, and over-specific entries that degrade session quality through context poisoning.
 disable-model-invocation: true
-allowed-tools: Read Glob Grep Edit Write Bash
 argument-hint: "[--full to include rules and CLAUDE.md]"
 ---
 
