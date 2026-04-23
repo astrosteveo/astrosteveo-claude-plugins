@@ -66,7 +66,7 @@ Present the plan, then create each commit. For each unit:
 3. Verify the commit succeeded
 
 **Rules:**
-- Never use `git add -A`, `git add --all`, or `git add .` — always stage by filename
+- Never use `git add -A`, `git add --all`, or `git add .` — always stage by filename. Bulk adds can sweep in unintended files like secrets (`.env`, credentials), build artifacts, or unrelated work-in-progress.
 - Skip `git add` for groups that are entirely pre-staged
 - For mixed groups (pre-staged + unstaged), only `git add` the unstaged files
 - Do not add Co-Authored-By trailers — Claude Code handles attribution
