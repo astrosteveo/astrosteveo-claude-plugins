@@ -19,7 +19,7 @@ These are the highest-priority issues — contradictions cause non-deterministic
 
 ## Stale references
 
-Consult `references/01-staleness-criteria.md` for detailed assessment guidance including confidence levels and type-based decay rates.
+Consult `references/staleness-criteria.md` for detailed assessment guidance including confidence levels and type-based decay rates.
 
 - Memories that reference files, functions, classes, endpoints, or patterns that no longer exist in the codebase
 - Use `Glob` and `Grep` to verify whether referenced paths and identifiers still exist

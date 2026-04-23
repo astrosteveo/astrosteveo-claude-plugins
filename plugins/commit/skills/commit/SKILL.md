@@ -51,7 +51,7 @@ Group all changes into logical units of work and assign each a Conventional Comm
 
 **Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`
 
-See `references/01-conventional-commits.md` for when to use each type.
+See `references/conventional-commits.md` for when to use each type.
 
 **Scope** is optional — use when the change targets a specific area: `feat(auth):`, `fix(api):`
 
@@ -102,4 +102,4 @@ type[optional scope][optional !]: description
 - **Body** (optional): Blank line after header. Explains *why* the change was made.
 - **Footers** (optional): `Refs: #123`, `Closes #456`, `BREAKING CHANGE: description` (must be uppercase)
 
-Full specification and examples in `references/01-conventional-commits.md`.
+Full specification and examples in `references/conventional-commits.md`.

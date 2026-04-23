@@ -52,7 +52,7 @@ Classify issues into five categories. For each issue found, record the specific 
 - **Over-specific entries** — one-time corrections or incident-specific debugging steps with no reusable value.
 - **Consolidation candidates** — multiple small memories on the same topic that belong together.
 
-Consult `references/02-issue-categories.md` for detection criteria and cross-reference procedures (git log, transcripts, confidence levels) for each category.
+Consult `references/issue-categories.md` for detection criteria and cross-reference procedures (git log, transcripts, confidence levels) for each category.
 
 #### Step 3: Check Extended Context (if --full or user requests)
 
