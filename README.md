@@ -22,6 +22,12 @@ Audit and reconcile Claude Code auto-memory files — deduplication, contradicti
 
 Invoke with `/reconcile-memory:reconcile-memory`.
 
+### scoped-delivery
+
+Structured four-phase delivery workflow (orient, clarify, implement, review) with fresh subagent contexts for the implementation and review phases. The phase separation is load-bearing: each phase produces a named artifact that becomes the input to the next.
+
+Invoke with `/scoped-delivery <task description>`. Explicit invocation only — does not auto-trigger.
+
 ## Installation
 
 Add this repository as a Claude Code plugin source:
