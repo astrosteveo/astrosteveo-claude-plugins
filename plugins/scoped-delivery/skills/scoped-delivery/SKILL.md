@@ -53,10 +53,24 @@ A numbered list is acceptable only when the remaining questions are genuinely in
 
 Calibrate depth to ambiguity:
 
-- **Ambiguous or under-specified input** — this is where most of the work lives. Actively probe. When direction is open, propose two or three concrete approaches with tradeoffs and ask which fits — people react better to options than to a blank page. Push back when an answer doesn't fit the constraints you saw in Orient. If a user answer opens a new question or a new research need, pursue it before moving on.
+- **Ambiguous or under-specified input** — this is where most of the work lives. Actively probe. When direction is open, present two or three concrete approaches with tradeoffs and **mark one as recommended** so the user can skim, accept, or push back with minimum effort. Push back when an answer doesn't fit the constraints you saw in Orient. If a user answer opens a new question or a new research need, pursue it before moving on.
 - **Already-crisp input** — if `$ARGUMENTS` already specifies what to build and how we'll know it's done, and Orient surfaced no real unknowns, don't manufacture questions. Restate the Spec in your own words, confirm acceptance criteria, and ask the user to approve.
 
 In both modes, restate each answer back to the user immediately — restatement catches misunderstandings cheaply, before they're baked into the plan.
+
+**Option format.** When a question has a shortlist of plausible answers, lay them out so the user can reply with a single letter. Keep options short enough to read at a glance and always name a pragmatic recommendation with a one-sentence reason — a default makes the choice feel like "confirm or redirect," not "design from scratch."
+
+```
+**Q:** <the single question>
+
+- **A) <option>** — <one-line tradeoff>
+- **B) <option>** — <one-line tradeoff>
+- **C) <option>** — <one-line tradeoff>
+
+Recommend **A** because <one short reason grounded in Orient findings or stated constraints>. Reply with a letter, or push back.
+```
+
+Only use the format when there really is a choice. For open-ended questions ("what's the deadline?", "who's the primary user?"), ask plainly — fabricating options wastes the user's time.
 
 **Explicit approval gate.** Do not begin Phase 3 until the user writes the literal word **"approved"** (case-insensitive) in response to the assembled Delivery Spec. "Sure, go" / "looks good" / "lgtm" / silence are all insufficient. The hard keyword exists so investigation stays open as long as it needs to — the user is the only one who decides when ambiguity is gone. If new questions surface after you present the Spec, keep clarifying; do not lower the bar to move on.
 
@@ -64,7 +78,7 @@ In both modes, restate each answer back to the user immediately — restatement 
 
 - Orientation Brief (updated with anything Clarify surfaced)
 - Resolved decisions — each open question, the user's answer, any rationale they gave
-- Out-of-scope list — what we explicitly are NOT doing. This is as important as the in-scope list; without it, the implementer invents features that weren't asked for.
+- Out-of-scope list — what we explicitly are NOT doing. This is as important as the in-scope list; without it, the implementer invents features that weren't asked for. Phrase each item as a self-contained one-liner — these seed `BACKLOG.md`'s **Deferred** section at Closeout, and the cleaner they are here, the less reconstruction later.
 - Acceptance criteria — how we will know the task is delivered
 - **Implementation plan** — concrete enough that Phase 3 is mostly mechanical:
   - File-by-file change list (path, what changes, why)
@@ -86,12 +100,13 @@ Guardrails while implementing:
 - Build what the Delivery Spec describes — no more, no less. If you're about to add something that isn't in it, stop and ask.
 - If something in the plan turns out to be wrong or ambiguous, do not paper over it. Return to the user, resolve it, amend the Spec, and re-secure "approved" before continuing. A drifted Spec makes Review unable to judge fidelity.
 - Keep notes on deviations as you go so the Implementation Report is accurate, not reconstructed from memory.
+- Capture TODOs and follow-ups inline the moment you decide to leave them — they seed `BACKLOG.md`'s **Follow-ups** section at Closeout. Record them as one-liners so they can drop straight in.
 
 **Exit artifact — Implementation Report:**
 
 - Files changed (path + what changed + why)
 - Deviations from the Spec, with reasoning and the user's sign-off where it applied
-- TODOs or follow-ups left behind
+- TODOs or follow-ups left behind (one-liners, ready to route to `BACKLOG.md`)
 
 If there are open deviations the user hasn't signed off on, resolve them before Review — findings on a shaky base are noise.
 
@@ -126,6 +141,8 @@ Present the Review Report to the user. They decide what to address — tight-loo
 Only enter Closeout once Review is clean — no outstanding must-fix findings and the verification pass returned empty.
 
 **Update `BACKLOG.md` at the repo root.** This is the one artifact deliberately on disk: it persists across sessions because that's its purpose. If the file doesn't exist, create it from the template in `references/backlog-template.md` — keep the four section headers stable so entries always have an obvious home.
+
+By this point most entries already exist as one-liners — the Delivery Spec's out-of-scope list, the Implementation Report's TODOs, the Review Report's unaddressed should-fix/nit items. Closeout is mostly *reconciling* that tracked list into the right category, not inventing one from memory.
 
 Route anything this delivery surfaced but did not ship into the matching category:
 
