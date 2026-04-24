@@ -1,184 +1,28 @@
-# Smell Catalog
+# AI Slop Catalog
 
-Complete catalog of smell patterns across both detection layers. Each smell has
-detection guidance and examples of what to look for.
+Patterns that indicate code was generated without thought. Each entry includes:
 
-## Layer 1: General Code Smells
+- **Signal:** what the pattern looks like
+- **What makes it slop:** the specific feature that distinguishes thoughtless generation from legitimate code
+- **Devil's Advocate defense:** the most plausible non-slop interpretation, and the conditions under which it holds
+- **When to flag:** the gate the finding must pass
 
-### 1.1 Dead Abstractions
+Signals are organized by reliability. **Strong signals** rarely false-positive. **Conditional signals** require specific gating. **Context-only signals** amplify confidence in another finding but never create one on their own.
 
-An interface, base class, or abstraction layer with only one implementation and no
-clear reason to expect more.
+## Out of scope
 
-**What to look for:**
-- Interface with a single implementing class
-- Abstract base class with one subclass
-- Factory that constructs exactly one type
-- Strategy pattern with one strategy
-- Generic type parameter that's always the same concrete type
+This catalog does not cover security vulnerabilities, performance issues, dead code, or general code-quality concerns. Use the `code-quality` skill for those — it is the codebase-quality reviewer; this skill is the AI-slop detector. If a sniff turns up a real security or quality issue, mention it briefly in the report and recommend running `code-quality`.
 
-**Why it smells:** Abstractions have a cost — they add indirection and cognitive load.
-An abstraction that doesn't abstract over anything is pure overhead. It suggests the
-author was following a "best practice" checklist rather than solving a real problem.
+---
 
-### 1.2 Cargo-Culted Patterns
+## Strong Signals
 
-Design patterns applied without the problem they solve.
+These rarely false-positive. If the pattern matches and Devil's Advocate fails, flag it.
 
-**What to look for:**
-- Repository pattern over a database that only one service talks to
-- Event bus / pub-sub with one publisher and one subscriber
-- Dependency injection where nothing is ever swapped or mocked
-- Observer pattern with one observer
-- Middleware chains with one middleware
-- Command pattern wrapping a single function call
+### Apologetic Comments
 
-**Why it smells:** Patterns exist to solve specific problems. When the problem isn't
-present, the pattern is just ceremony. It suggests the code was written by someone
-(or something) that knows patterns exist but doesn't know when to apply them.
+**Signal:** Comments that acknowledge the code is incomplete or non-production:
 
-### 1.3 Ceremonial Error Handling
-
-Error handling that exists to look like error handling rather than to handle errors.
-
-**What to look for:**
-- catch-log-rethrow: catching an exception only to log it and throw it again
-- Generic catch-all: `catch (Exception e)` with a one-size-fits-all response
-- Swallowed exceptions: empty catch blocks or catch blocks that only log
-- Error messages that don't identify the problem: "An error occurred",
-  "Something went wrong", "Operation failed"
-- Retry logic with no backoff, no max attempts, or that retries non-transient errors
-- Error codes that are never checked by callers
-
-**Why it smells:** Real error handling is specific — it knows what can go wrong and
-responds appropriately. Ceremonial error handling just wraps code in try/catch to
-look robust.
-
-### 1.4 God Files / God Functions
-
-Files or functions that do too much.
-
-**What to look for:**
-- Files over 500 lines with multiple unrelated responsibilities
-- Functions over 100 lines
-- Functions with 6+ parameters
-- Functions with boolean flags that make them do completely different things
-- Classes with 20+ methods spanning unrelated domains
-
-**Why it smells:** Large units of code suggest the author kept adding to the same place
-rather than thinking about structure. In AI-generated code specifically, this happens
-because each prompt adds to the same file.
-
-### 1.5 Copy-Paste Variations
-
-Near-identical code blocks with minor differences.
-
-**What to look for:**
-- 3+ line blocks that appear in multiple places with small changes
-- Functions that differ only in one or two parameters
-- Switch/if-else chains where each branch does nearly the same thing
-- Repeated configuration or setup code
-
-**Why it smells:** It suggests the code was produced by asking for something similar
-multiple times rather than thinking about the shared pattern.
-
-### 1.6 Wrapper Tax
-
-Layers that exist but add nothing.
-
-**What to look for:**
-- Service classes that just call repository methods with the same signatures
-- Utility functions that wrap a single standard library call
-- Configuration classes that just hold values without validation or defaults
-- Controller methods that pass request straight to service and return the result
-- Adapter classes that don't actually adapt anything
-
-**Why it smells:** Every layer should justify its existence by transforming data,
-enforcing rules, or handling errors. Pass-through layers are noise.
-
-### 1.7 Premature Configuration
-
-Code that's configurable when nothing configures it.
-
-**What to look for:**
-- Constants defined in config files but only used in one place with one value
-- Feature flags that are always on or always off
-- Environment variables that are never set (always fall back to default)
-- Plugin systems with no plugins
-- Strategy/provider interfaces with only a hardcoded default
-
-**Why it smells:** It suggests the author was building for hypothetical future
-requirements rather than actual current needs.
-
-## Layer 2: AI Slop Signals
-
-### 2.1 Docstring-on-Everything Syndrome
-
-Every function, method, and class has a docstring — including trivial ones.
-
-**What to look for:**
-- `def get_name(): """Gets the name."""`
-- `def __init__(): """Initialize the class."""`
-- Docstrings that restate the function signature in prose
-- JSDoc/Javadoc on private helper functions that are only called from one place
-- Type annotations AND docstrings that say the same thing about types
-
-**Why it's slop:** Human developers document selectively — they add docstrings where
-the behavior isn't obvious from the name and signature. Blanket documentation is a
-strong signal of AI generation because LLMs default to adding docstrings everywhere.
-
-### 2.2 Defensive Code Against Impossible States
-
-Checks and guards for conditions that can't occur given the type system or control flow.
-
-**What to look for:**
-- Null/nil checks on values that the type system guarantees are non-null
-- Type checks in strongly-typed languages (`if isinstance(x, str)` when x is typed as str)
-- Length checks on collections that are always populated by the preceding code
-- Redundant validation of data that was already validated upstream
-- Guard clauses at the start of private methods called from one place that already validates
-
-**Why it's slop:** AI models are trained on code that handles every edge case. They
-add defensive checks by default even when the context makes them impossible. Human
-developers trust their own code and the type system.
-
-### 2.3 High Ceremony-to-Substance Ratio
-
-A file where the actual logic is a small fraction of the total code.
-
-**How to measure:**
-- Count lines that DO THE THING (core logic, actual computation, real business rules)
-- Count lines that WRAP THE THING (validation, logging, error handling, type
-  declarations, docstrings, blank lines in excess)
-- If wrapper lines exceed substance lines by 3:1 or more, the ratio is suspicious
-- A 200-line file with 30 lines of real logic is a strong smell
-
-**Why it's slop:** AI-generated code tends to be thorough about ceremony because it
-treats every context the same. Human developers calibrate ceremony to the importance
-and complexity of the code.
-
-### 2.4 Tests That Don't Test
-
-Test suites that provide coverage numbers without actually verifying behavior.
-
-**What to look for:**
-- `expect(result).toBeTruthy()` / `assert result` / `assertNotNull(result)`
-- Tests that only check the happy path
-- Tests where the assertion is on the mock, not the system under test
-- Test names like "should work correctly", "test basic functionality"
-- Setup that mocks away the component being tested
-- Tests that verify implementation details (method call order) instead of outcomes
-- One-line test bodies: call function, assert no error thrown
-
-**Why it's slop:** AI generates tests to satisfy the request "write tests for this"
-without understanding what's actually worth testing. The tests look complete but
-catch nothing.
-
-### 2.5 Apologetic Comments
-
-Comments that acknowledge the code isn't production-ready — left in production code.
-
-**What to look for:**
 - `// This is a simplified version...`
 - `// For production, you'd want to...`
 - `// In a real application, this should...`
@@ -186,80 +30,121 @@ Comments that acknowledge the code isn't production-ready — left in production
 - `// Note: this is a basic implementation`
 - `// Placeholder for future enhancement`
 
-**Why it's slop:** These comments are artifacts of AI conversation — the model hedges
-by noting limitations. A human developer either fixes the limitation or files a
-tracked issue. They don't leave apologies in the code.
+**What makes it slop:** Humans don't apologize in committed code. They either fix the limitation or file a tracked issue. These comments are artifacts of an AI conversation where the model hedged and the human committed without removing the hedge.
 
-### 2.6 Born-Complete Files
+**Devil's Advocate defense:** A `TODO(#1234):` with a tracked issue number is legitimate. A draft branch where the apology IS the work item is legitimate. A comment in a tutorial/example file that calls itself a "simplified example" is legitimate.
 
-Files that appear fully-formed in a single commit with no subsequent iteration.
+**When to flag:** Apologetic comment in committed code on a non-draft branch with no issue reference and no "this is intentionally simplified" framing.
 
-**Detection via git:**
-- `git log --follow --oneline -- path/to/file` shows 1-2 commits total
-- First commit introduces a large, complex file (200+ lines)
-- No subsequent refactoring, bug fixes, or iteration
-- Commit message is vague: "add feature", "implement X", "update code"
+### Docstring-on-Everything
 
-**Why it's slop:** Real development is iterative. Code gets written, tested, revised,
-refactored. A complex file that was born perfect and never changed was likely generated
-in one shot and never critically evaluated.
+**Signal:** Every function, method, and class has a docstring, including trivial ones that just restate the signature:
 
-### 2.7 Ceremonial Security
+- `def get_name(): """Gets the name."""`
+- `def __init__(): """Initialize the class."""`
+- JSDoc/Javadoc on private helpers called from one place
+- Type annotations AND docstrings that say the same thing
 
-Security measures that look correct but don't actually protect anything.
+**What makes it slop:** Humans document selectively, where behavior isn't obvious from the name. Blanket documentation is the LLM default — the model adds a docstring to every function regardless of whether one helps.
 
-**What to look for:**
-- Password hashing without salting
-- CSRF tokens generated but never validated on form submission
-- Input sanitization on some endpoints but not others
-- SQL parameterization in some queries but raw string interpolation in others
-- Auth middleware registered but with broad bypass rules
-- CORS configuration that allows everything (`*`)
-- Rate limiting set so high it never triggers
+**Devil's Advocate defense:** Public APIs (libraries, SDKs) where every function is part of the contract require docstrings. Style guides that mandate docstrings on every function exist. Generated code (Protobuf, OpenAPI) has uniform documentation.
 
-**Why it's slop:** AI models know security patterns exist and include them, but don't
-always complete the implementation. The presence of partial security can be worse than
-none — it creates false confidence.
+**When to flag:** Internal/private code where every function — including `__init__`, getters, and one-line helpers — has a docstring that restates the signature, and there is no indication the project requires this style (no docstring linter, no contributor guide).
 
-### 2.8 Inconsistent Style Within a File
+---
 
-Multiple conventions coexisting in the same file.
+## Conditional Signals (require gating)
 
-**What to look for:**
-- camelCase and snake_case in the same file (outside of FFI boundaries)
-- Tabs and spaces mixed
-- Some functions use early returns, others use deep nesting
-- Some error handling uses exceptions, some uses return codes, in the same module
-- Import style varies (named imports vs. namespace imports vs. default imports)
+These match real slop *and* real legitimate patterns. The gate determines which.
 
-**Why it's slop:** When a human writes a file, they use one style throughout — it's
-natural. When code is assembled from multiple AI-generated blocks pasted together, each
-block may use whatever style the model defaulted to in that completion.
+### Defensive Code Against Impossible States
 
-### 2.9 Backwards-Compatibility for New Code
+**Signal:** Checks for conditions that cannot occur given the type system or surrounding control flow:
 
-Compatibility measures in code that has no users yet.
+- Null/nil checks on values typed as non-null
+- Type checks in strongly-typed languages where the type is already known
+- Length checks on collections just populated by the preceding code
+- Redundant validation of data validated upstream
 
-**What to look for:**
-- Deprecated methods alongside their replacements, both introduced in the same commit
-- `// Kept for backwards compatibility` on code with no external consumers
-- Re-exported types or aliases that were never the canonical name
-- Fallback behavior for "old format" data that has never been produced
-- Migration code for schemas that don't exist in production yet
+**What makes it slop:** AI defaults to defending every edge case regardless of context. Humans trust their own code and the type system.
 
-**Why it's slop:** AI models are trained on mature codebases that need backwards
-compatibility. They apply the same patterns to brand-new code that has zero users.
+**Devil's Advocate defense:** In dynamically-typed languages (Python, JS, Ruby) defending against unexpected callers is reasonable. At system boundaries (network requests, user input, deserialization, IPC) defensive checks are correct. In safety-critical code, paranoid checks may be required by policy.
 
-### 2.10 Over-Specified Types and Structures
+**When to flag:** All three must hold:
+1. The state is *impossible per the type system* (TypeScript with strict null checks, Rust, Kotlin, Swift) — not just unlikely.
+2. The code is internal — not at a network/user-input/deserialization boundary.
+3. The check serves no recovery — it just throws or logs and continues.
 
-Type definitions and data structures that are more complex than the data they represent.
+### High Ceremony-to-Substance Ratio
 
-**What to look for:**
-- Generic types with 3+ type parameters for simple data
+**Signal:** A file where wrapper code (validation, logging, error handling, type declarations) dominates the actual logic by 3:1 or more.
+
+**What makes it slop:** AI treats every context the same and applies thorough ceremony to trivial code.
+
+**Devil's Advocate defense:** Public API surfaces, security-sensitive boundaries, well-tested critical paths, and middleware legitimately have high ceremony for good reasons. Configuration objects with validators are not slop. A 200-line file with a 30-line core function but 170 lines of well-justified boundary handling is fine.
+
+**When to flag:** Both must hold:
+1. The substance the ceremony surrounds is *trivial* — a getter, a one-line transformation, a pass-through, a constant lookup.
+2. The ceremony is generic and serves no specific purpose — `try/log/rethrow` patterns, validating already-validated input, logging that no one will read.
+
+### Over-Specified Types and Structures
+
+**Signal:** Type definitions more complex than the data warrants:
+
+- Generic types with 3+ parameters for simple data
 - Nested interfaces 4+ levels deep
 - Enum with 2 values wrapped in a class with methods
-- Config objects with 15+ optional fields, most never set
+- Config objects with 15+ optional fields where most are never set
 - Abstract base types for data that is always concrete
 
-**Why it's slop:** AI models generate comprehensive type hierarchies by default. Human
-developers start simple and add complexity when actual data demands it.
+**What makes it slop:** AI generates comprehensive type hierarchies by default. Humans start simple and add complexity when actual data demands it.
+
+**Devil's Advocate defense:** Library code, framework abstractions, and domain models from regulated/specified domains (finance, healthcare, telecom) often legitimately have rich type hierarchies. Type-driven development is a valid style.
+
+**When to flag:** Application-level code where the type hierarchy serves no observable purpose — no branching on the variants, no consumers of the optional fields, no inheritance actually being used polymorphically.
+
+### Tests That Don't Test
+
+**Signal:** Test suites that provide coverage numbers without verifying behavior:
+
+- `expect(result).toBeTruthy()` / `assert result` / `assertNotNull(result)`
+- Tests where the assertion is on the mock, not the system under test
+- Tests that verify implementation details (call order, internal state) instead of outcomes
+- One-line test bodies: call function, assert no error thrown
+- Setup that mocks away the component under test
+
+**What makes it slop:** AI generates tests to satisfy "write tests for this" without understanding what's worth testing. The tests look complete but catch nothing.
+
+**Devil's Advocate defense:** Smoke tests are intentionally shallow. Boundary tests on third-party integrations may legitimately just verify "doesn't throw." Tests in early-stage prototypes may be deliberately thin.
+
+**When to flag:** Tests labeled as unit or integration tests for the system under test (not smoke/boundary tests), with vacuous assertions or assertions only on mocks. The code is past prototype stage (judged by surrounding maturity).
+
+---
+
+## Context-Only Signals (amplify, don't create findings)
+
+These signals boost confidence in a Strong or Conditional finding in the same file. They never create a finding on their own.
+
+### Born-Complete Files
+
+**Detection:** `git log --follow --oneline -- path/to/file` shows 1-2 commits, first commit introduces 200+ lines of complex code, no subsequent iteration, vague commit message ("add feature", "implement X").
+
+**Why context-only:** Reference docs, configs, specs, protocol implementations, generated code, well-prepared migrations, and short utility files are legitimately born complete. Many files are correct on the first write.
+
+**How to use:** If a file already has a confirmed Strong or Conditional slop finding, born-complete adds confidence — raise stink level by one. Never report born-complete as a finding by itself.
+
+### Inconsistent Style Within a File
+
+**Detection:** Mixed naming conventions, mixed import styles, mixed error-handling patterns within the same file (not across files).
+
+**Why context-only:** Many teams have no enforced house style. Files touched by multiple authors over time develop natural inconsistencies. FFI boundaries (binding to a snake_case API from camelCase code) are legitimate. Style migrations in progress look exactly like AI-pasted-from-different-sessions code.
+
+**How to use:** Boost confidence on findings in single-author, single-session files where the inconsistency is within a single function or contiguous block. Cross-file inconsistency is essentially never slop.
+
+### Backwards-Compat for New Code
+
+**Detection:** `// Kept for backwards compatibility` on code with no external consumers; deprecated methods alongside replacements introduced in the same commit; re-exports of types under non-canonical names.
+
+**Why context-only:** You usually can't verify whether the code has external consumers without project context. The shape might exist for an upcoming consumer you can't see, a known migration path, or an internal API guarantee.
+
+**How to use:** Boost confidence on a related finding only when you can verify (via the project's explicit scope or documentation) that no consumers exist or could exist.

@@ -1,90 +1,84 @@
-# Smell Report Format
+# Slop Report Format
 
-How to structure and present code sniffer findings.
+How to structure code-sniffer findings.
 
 ## Stink Levels
 
-Forget traditional severity ratings. Smelly code gets stink levels:
-
 | Level | Label | Meaning |
 |-------|-------|---------|
-| 1 | Whiff | Faint smell. Might be intentional. Worth noting. |
-| 2 | Stale | Noticeable smell. Probably not intentional. Should be addressed. |
-| 3 | Funky | Clearly smells bad. Multiple smell signals in the same code. |
-| 4 | Rotten | Unmistakably bad. Strong evidence of thoughtless generation. |
-| 5 | Biohazard | Dangerously smelly. Ceremonial security, tests that test nothing, code that actively misleads about what it does. |
+| 1 | Stale | One unambiguous slop signal that survived Devil's Advocate. |
+| 2 | Funky | Multiple converging slop signals in the same code. |
+| 3 | Rotten | Pervasive slop across a file or module. Strong evidence of unreviewed generation. |
+| 4 | Biohazard | Code that creates false confidence — hollow tests that look like coverage, error handling that hides errors. |
+
+There is no Whiff level. **If a finding is "might be intentional," it is not a finding — drop it.**
 
 ### Calibration
 
-- Most findings should be Stale (2) or Funky (3)
-- Biohazard (5) is reserved for code that creates false confidence — security that
-  doesn't secure, tests that don't test, error handling that hides errors
-- A single AI slop signal is a Whiff. Multiple signals in the same file raise the level.
-- Git history confirming born-complete status adds +1 to any finding in that file.
+- A typical sniff on a moderately-sized file should yield 0-2 findings. Five findings on a 200-line file usually means over-triggering, not heavy slop. Re-run Devil's Advocate.
+- Biohazard is rare. Reserve it for code that misleads the reader about what it does — hollow tests labeled as real tests, error handlers that swallow errors silently.
+- A context-only signal (born-complete, style inconsistency, backwards-compat for new code) raises an existing finding's stink level by one. It does not create a finding on its own.
+- Security and quality issues are out of scope. If you spot one in passing, mention it briefly and recommend `code-quality`. Do not list it as a slop finding.
 
 ## Report Structure
 
-### 1. Quick Sniff Summary
+### 1. Verdict Summary
 
-2-3 sentences. How does this code smell overall? Is it clean, musty, or a dumpster fire?
+2-3 sentences. State the verdict directly.
 
-Include:
+Required:
 - Total findings count by stink level
-- Whether AI slop signals were detected (yes/no/maybe)
-- The single worst offender (file or pattern)
+- AI slop verdict: Clean / Some signals / Significant slop / Heavy slop
+- Confidence: Low / Medium / High
+- Single worst offender (file or pattern), or "none" if the codebase is clean
 
 ### 2. Findings
 
-Group by smell pattern, not by file. If the same smell appears in 10 files, report it
-once with all locations.
+Group by slop signal. If the same signal appears in multiple files, report it once with all locations.
 
 Each finding:
 
-**[Stink Level] Smell Pattern Name** — `path/to/file:line`
+**[Stink Level] Signal Name** — `path/to/file:line`
 
-What: 1-2 sentences describing what you see.
+_Evidence:_ the actual code (short snippet, not paraphrase).
 
-Why it stinks: The specific reason this code suggests thoughtlessness. Connect to the
-smell catalog entry.
+_Why it's slop:_ which catalog signal it matches and how the code matches the gate criteria.
 
-Evidence: the code snippet or pattern (keep short — show the pattern, not the whole file).
+_Devil's Advocate considered:_ the strongest defense you constructed, and why it failed (e.g., "could be defending against API misuse, but the function is private, the type system already prevents the state, and there's no recovery — just a throw").
 
-AI slop? Yes/No — if yes, which specific slop signal(s) from the catalog.
+If the same signal shows up across multiple files, list all locations and describe the pattern once.
 
-### 3. AI Slop Assessment
+### 3. Considered and Dropped
 
-A dedicated section answering: does this code show signs of AI generation or vibe coding?
+**Required.** List candidate findings you investigated and dropped after Devil's Advocate. For each:
 
-Structure:
-- **Verdict**: Clean / Some signals / Likely AI-assisted / Probably vibe-coded
-- **Evidence for**: list the specific AI slop signals found, with file references
-- **Evidence against**: list signs of human authorship (iterative git history, targeted
-  documentation, calibrated error handling, etc.)
-- **Confidence**: How confident are you in this assessment? Low/Medium/High
+**[Pattern]** — `file:line`
 
-Be honest about uncertainty. Some human code looks AI-generated. Some AI code is
-well-reviewed and clean. The assessment is probabilistic, not definitive.
+_What I saw:_ the code that triggered the consideration.
+_Why I dropped it:_ the Devil's Advocate defense that held.
 
-### 4. Worst Offenders
+If you have no dropped findings, say so explicitly: "No candidates were dropped — every signal investigated led to a confirmed finding." This outcome is rare and worth noting if it happens.
 
-Top 3-5 files or modules ranked by smell density. For each:
-- File path
-- Stink level (highest finding in that file)
-- Primary smells detected
-- One-sentence summary of the problem
+This section proves the calibration is honest. **A report with findings and no dropped section is not trustworthy.**
+
+### 4. Slop Verdict
+
+A focused assessment.
+
+- **Verdict:** Clean / Some signals / Significant slop / Heavy slop
+- **Evidence for:** specific slop signals found, with file references
+- **Evidence against:** signs of human authorship — iterative git history, calibrated documentation, voice consistency, targeted comments, etc.
+- **Confidence:** Low / Medium / High
+
+Be honest about uncertainty. Some human code looks AI-generated. Some AI code is well-reviewed and clean. The verdict is probabilistic, not definitive.
 
 ### 5. What Smells Clean
 
-Briefly note areas of the codebase that smell good. Calibrates the report and
-prevents it from being purely negative.
+Briefly note areas of the codebase that smell good. This calibrates the report and prevents it from being purely negative. Skipping this section is a sign the report is biased toward findings.
 
 ## Tone
 
-- **Direct and irreverent** — this tool is opinionated by design. "This function has
-  a docstring that restates the function name" not "Consider whether the documentation
-  adds value."
-- **Evidence-based** — every opinion backed by a specific code reference
-- **Fair** — acknowledge when a pattern that looks like slop might be intentional.
-  Always note the alternative interpretation.
-- **Not cruel** — the goal is to help improve code, not to mock whoever wrote it.
-  Describe the code, not the coder.
+- **Direct, irreverent, evidence-based.** "This `def get_name(): \"\"\"Gets the name.\"\"\"` is the LLM-default docstring pattern" — not "Consider whether the documentation adds value."
+- **Conservative.** Trust is earned by being right, not by being thorough.
+- **Fair.** Always note the alternative interpretation you considered. The Devil's Advocate defense — even when it fails — should appear in the finding so the reader can judge the call.
+- **Not cruel.** Describe the code, not the coder. The goal is to help the user trust their codebase, not to mock whoever wrote it.
