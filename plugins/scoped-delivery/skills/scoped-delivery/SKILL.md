@@ -125,14 +125,18 @@ Present the Review Report to the user. They decide what to address — tight-loo
 
 Only enter Closeout once Review is clean — no outstanding must-fix findings and the verification pass returned empty.
 
-**Update `BACKLOG.md` at the repo root** (create it if it doesn't exist). This is the one artifact deliberately on disk: it persists across sessions because that's its purpose. Append anything this delivery surfaced but did not ship:
+**Update `BACKLOG.md` at the repo root.** This is the one artifact deliberately on disk: it persists across sessions because that's its purpose. If the file doesn't exist, create it from the template in `references/backlog-template.md` — keep the four section headers stable so entries always have an obvious home.
 
-- Out-of-scope items from the Delivery Spec
-- Should-fix or nit findings the user chose not to address
-- TODOs and follow-ups from the Implementation Report
-- Features discussed during Clarify but consciously postponed
+Route anything this delivery surfaced but did not ship into the matching category:
 
-Each entry is a short one-liner with enough context to be useful months later without reading this session's transcript. Date the batch so readers can tell how stale items are. Only record items that were *consciously deferred* — not every idea that floated past.
+- **Ready** — scoped enough to start a new `/scoped-delivery` session on
+- **Deferred** — out-of-scope items from the Delivery Spec, and features raised in Clarify but consciously postponed
+- **Follow-ups** — should-fix or nit findings the user chose not to address, and TODOs from the Implementation Report
+- **Blocked** — items waiting on an external signal; name the blocker inline
+
+Each entry is a one-liner prefixed with today's date (`[YYYY-MM-DD]`), tight but sufficient to pick up months later without the session transcript. Only record items that were *consciously deferred* — not every idea that floated past.
+
+**Also: if this delivery fully shipped an item previously on the backlog, delete that bullet.** Don't archive it — the commit history is the audit trail, and the point of the file is to stay minimal.
 
 **Remind the user to commit and reset.** Close the session with two lines:
 
