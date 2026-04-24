@@ -10,7 +10,7 @@ Audit and reconcile auto-memory files for the current project. Identifies duplic
 
 ## Why This Matters
 
-Auto-memory accumulates monotonically with no built-in cleanup. Every memory file is injected into the context window at session start, where it competes for attention with everything else. Stale, contradictory, or duplicate memories don't throw errors -- they silently shift the probability distribution of outputs. This skill gives you a way to periodically defragment your context.
+Auto-memory accumulates monotonically with no built-in cleanup. Every memory file is injected into the context window at session start, where it competes for attention with everything else. Stale, contradictory, or duplicate memories don't throw errors — they silently shift the probability distribution of outputs. This skill gives you a way to periodically defragment your context.
 
 ## Current Project Memory Location
 
@@ -36,7 +36,7 @@ This skill operates in three phases: **Analyze**, **Report and Plan**, then **Ex
 
 1. If multiple directories are listed and the target is ambiguous, ask the user which project to audit
 2. If no directories are found, inform the user that no auto-memory exists for any project and stop
-3. Read `MEMORY.md` in full -- this is the index file
+3. Read `MEMORY.md` in full — this is the index file
 4. Read every file referenced from `MEMORY.md` and every `.md` file in the memory directory (orphaned files count too)
 5. For each memory file, extract frontmatter fields (`name`, `description`, `type`) and body content
 6. Note the total number of files and approximate total size
@@ -48,7 +48,7 @@ Classify issues into five categories. For each issue found, record the specific 
 
 - **Contradictions** — conflicting guidance across memories, or memory vs. observable code. Highest priority; these cause non-deterministic behavior.
 - **Duplicates and near-duplicates** — the same concept expressed across multiple files or in different words.
-- **Stale references** — memories pointing at files, functions, paths, or dependencies that no longer exist.
+- **Stale references** — memories pointing at files, functions, paths, or dependencies that no longer exist. Factor in memory type when judging: `project` decays fastest, `user` slowest (full decay rates in `references/staleness-criteria.md`).
 - **Over-specific entries** — one-time corrections or incident-specific debugging steps with no reusable value.
 - **Consolidation candidates** — multiple small memories on the same topic that belong together.
 
@@ -104,8 +104,8 @@ Present findings in this structure:
 ### Duplicates ([count])
 
 1. **[Topic]**
-   - File A: `memory/foo.md` -- "[summary]"
-   - File B: `memory/bar.md` -- "[summary]"
+   - File A: `memory/foo.md` — "[summary]"
+   - File B: `memory/bar.md` — "[summary]"
    - Recommendation: Merge into `memory/foo.md` as: "[proposed merged content]"
 
 ### Stale References ([count])
@@ -147,9 +147,9 @@ After the report, present a concrete action plan:
 ## Proposed Changes
 
 1. DELETE `memory/bar.md` (duplicate of foo.md)
-2. EDIT `memory/foo.md` -- merge content from bar.md
+2. EDIT `memory/foo.md` — merge content from bar.md
 3. DELETE `memory/stale-reference.md` (references removed files)
-4. EDIT `memory/MEMORY.md` -- remove pointer to deleted files
+4. EDIT `memory/MEMORY.md` — remove pointer to deleted files
 5. ...
 
 Total: [X] deletions, [Y] edits, [Z] merges
@@ -199,7 +199,7 @@ Result: Clean, non-contradictory context across all persistent injection points
 
 ### Example 3: Targeted check
 User says: "my memories are getting bloated, can you clean them up"
-Actions: Focus on volume reduction -- identify merge candidates and over-specific entries
+Actions: Focus on volume reduction — identify merge candidates and over-specific entries
 Result: Reduced file count with no loss of meaningful context
 
 ## Troubleshooting
@@ -208,13 +208,13 @@ Result: Reduced file count with no loss of meaningful context
 The current project may not have auto-memory enabled, or no memories have been written yet. Check `~/.claude/projects/` to see which projects have memory directories. The directory name is derived from the git repository path.
 
 **User disagrees with a recommendation**
-Adjust the plan per the user's feedback. Never argue about whether a memory is stale -- the user has context you may not have.
+Adjust the plan per the user's feedback. Never argue about whether a memory is stale — the user has context you may not have.
 
 **Memory references code that might exist in another branch**
 If a memory references something you cannot find, flag it but note that it may exist in a branch you have not checked. Let the user decide.
 
 **Very large memory directory (20+ files)**
-Start with contradictions and stale references first -- these have the highest impact. Present the report in batches if the full report would be overwhelming.
+Start with contradictions and stale references first — these have the highest impact. If total findings exceed ~50, split the report by category and confirm each batch before moving to the next.
 
 **Chat transcripts are very large**
 `.jsonl` transcript files can be many megabytes for long sessions. Only read the last 200 lines of the 3 most recent transcripts. Use Grep to search for specific topic keywords rather than reading entire files.
