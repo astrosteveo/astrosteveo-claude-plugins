@@ -7,7 +7,7 @@ set -euo pipefail
 memory_dirs=$(find ~/.claude/projects/ -type d -name "memory" 2>/dev/null | head -20) || true
 
 if [ -z "$memory_dirs" ]; then
-    echo "NO_MEMORY_DIRS_FOUND"
+    echo "No Claude Code auto-memory directories found under ~/.claude/projects/."
     exit 0
 fi
 
