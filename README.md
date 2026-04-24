@@ -24,7 +24,7 @@ Invoke with `/reconcile-memory:reconcile-memory`.
 
 ### scoped-delivery
 
-Structured four-phase delivery workflow (orient, clarify, implement, review) with fresh subagent contexts for the implementation and review phases. The phase separation is load-bearing: each phase produces a named artifact that becomes the input to the next.
+Structured four-phase delivery workflow (orient, clarify, implement, review) where a fresh subagent reviews the final diff so the implementer isn't the reviewer. The phase separation is load-bearing: each phase produces a named artifact that becomes the input to the next.
 
 Invoke with `/scoped-delivery <task description>`. Explicit invocation only — does not auto-trigger.
 
