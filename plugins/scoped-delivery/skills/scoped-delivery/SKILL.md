@@ -117,6 +117,30 @@ Also ask for a confidence read: does the change deliver what the Spec scoped, an
 
 Present the Review Report to the user. They decide what to address — tight-loop fixes in the main agent for simple issues, or amend the Spec and loop back to Implement if findings are structural.
 
+**Verify the fixes.** After any must-fix or should-fix changes land, spawn a *second* fresh `general-purpose` Agent and pass it the original Review Report plus the diff of the fixes. Its job is narrow: confirm each prior finding was actually addressed and that the fixes did not introduce new issues. The implementer is a poor judge of their own work during the fix loop too — the skill is still paying for independence here. Loop until the verification pass comes back clean.
+
+## Phase 5 — Closeout
+
+**Goal:** ship clean, capture what was deferred, reset for the next unit of work.
+
+Only enter Closeout once Review is clean — no outstanding must-fix findings and the verification pass returned empty.
+
+**Update `BACKLOG.md` at the repo root** (create it if it doesn't exist). This is the one artifact deliberately on disk: it persists across sessions because that's its purpose. Append anything this delivery surfaced but did not ship:
+
+- Out-of-scope items from the Delivery Spec
+- Should-fix or nit findings the user chose not to address
+- TODOs and follow-ups from the Implementation Report
+- Features discussed during Clarify but consciously postponed
+
+Each entry is a short one-liner with enough context to be useful months later without reading this session's transcript. Date the batch so readers can tell how stale items are. Only record items that were *consciously deferred* — not every idea that floated past.
+
+**Remind the user to commit and reset.** Close the session with two lines:
+
+- Run `/commit:commit` to land this delivery.
+- Start a new session for the next task — one logical unit of work per session is what keeps scoped-delivery honest, because the next task gets its own Orient phase instead of inheriting state from this one.
+
+Do not run the commit yourself and do not offer to chain into the next task. The fresh session is part of the design.
+
 ## Handoff discipline
 
 - Do not start a phase without its input artifact. Missing artifact means the previous phase didn't finish.
@@ -124,6 +148,8 @@ Present the Review Report to the user. They decide what to address — tight-loo
 - Do not enter Phase 3 without the literal "approved" from the user on the Delivery Spec. Re-secure "approved" on any amendment.
 - Amend the Spec before continuing if Implementation uncovers something that invalidates it.
 - Must-fix findings in the Review Report → user chooses: main-agent fix or re-Implement with an amended Spec.
+- After applying Review-Report fixes, run the verification pass in a fresh subagent. Do not declare Review clean on your own judgment.
+- Do not enter Closeout with unresolved must-fix findings or a skipped verification pass.
 
 ## Why this shape
 
@@ -132,6 +158,7 @@ Four phases exist because each solves a distinct failure mode:
 - **Orient** exists because premature implementation is the most common failure — the agent writes working code that solves the wrong problem. Front-loading codebase and library research here (via `Explore` and external docs) is deliberately expensive; tokens spent learning are cheap relative to tokens spent implementing the wrong thing.
 - **Clarify** exists because unknowns the agent doesn't surface become assumptions the user didn't get to veto. One question at a time keeps the investigation tree open — each answer can spawn the next question or a new research need, which a batched list would suppress. The "approved" keyword gate exists because polite hedges ("looks good", "sure") get misread as consent; a literal keyword is harder to fake. The Delivery Spec is a detailed implementation plan, not a bare confirmation, because the heavier the plan, the lighter Phase 3 and the sharper Phase 4.
 - **Implement in the main agent** (not a subagent) still exists because writing code benefits from live adaptation — running tests, noticing a constraint mid-edit, pausing to ask. With a thick plan from Clarify, Implement becomes closer to execution than design, which is the whole point.
-- **Review in a fresh subagent** exists because authors are weak reviewers of their own work. A reader without the author's context sees the code the way the next engineer will. This is the anti-bias mechanism the skill is actually paying for — everything else is setup for this phase.
+- **Review in a fresh subagent** exists because authors are weak reviewers of their own work. A reader without the author's context sees the code the way the next engineer will. This is the anti-bias mechanism the skill is actually paying for — everything else is setup for this phase. The verification pass after fixes exists for the same reason: the implementer's confidence that "that finding is now addressed" is not the same as an independent check that it is.
+- **Closeout** exists because the shape of the workflow only pays off if each delivery ends cleanly: one commit, one session, and a written record of what was deferred. Without `BACKLOG.md`, "out-of-scope" decays into forgotten-about. Without the session-reset reminder, state from this delivery leaks into the next one and the next Orient phase starts half-compromised.
 
-Artifacts stay in conversation context rather than on disk. The cost of disk I/O, stale state, and cleanup is not worth it for a single task. If an artifact grows unwieldy, that is a signal the task is too large for one delivery — not that the artifact format is wrong.
+In-flight artifacts stay in conversation context rather than on disk. The cost of disk I/O, stale state, and cleanup is not worth it for a single task. If an artifact grows unwieldy, that is a signal the task is too large for one delivery — not that the artifact format is wrong. `BACKLOG.md` is the deliberate exception: it is explicitly meant to outlive the session, which is what makes it worth the disk.
