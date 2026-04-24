@@ -1,0 +1,8 @@
+{
+    "name": "scoped-delivery",
+    "description": "Four-phase delivery workflow for one logical story — orient, clarify, implement, review",
+    "author": {
+        "name": "AstroSteveo",
+        "email": "astrosteveo@noreply.users.github.com"
+    }
+}
