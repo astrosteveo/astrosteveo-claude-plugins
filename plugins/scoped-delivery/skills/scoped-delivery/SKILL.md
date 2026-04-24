@@ -1,5 +1,5 @@
 ---
-description: Structured four-phase delivery workflow for one logical story — orient in the codebase, clarify the story's boundaries with the user, delegate implementation to a fresh subagent, then review with another fresh subagent. Invoke only when the user explicitly types /scoped-delivery. Do not auto-trigger on ambiguous or complex tasks; the workflow adds ceremony that is only worth it when the user has consciously opted in. Suitable for tasks larger than a single-file edit that have unknowns worth surfacing before code is written and are still one coherent story rather than several bundled changes.
+description: Structured four-phase delivery workflow (orient, clarify, implement, review) with fresh subagent contexts for the implementation and review phases. Invoke only when the user explicitly types /scoped-delivery — do not auto-trigger; the ceremony is only worth it when the user has consciously opted in.
 argument-hint: "<task description>"
 ---
 
