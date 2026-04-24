@@ -16,7 +16,7 @@ Four plugins:
 - **`commit`** (`plugins/commit/`) — Conventional Commits skill; analyzes diffs, groups changes into logical units, creates one commit per unit
 - **`code-quality`** (`plugins/code-quality/`) — two skills: **code-quality** for comprehensive codebase audits (clean code, DRY, security, performance, best practices; context-first analysis with non-breaking recommendations) and **code-sniffer** for detecting code smells and AI-generated slop (cargo-culted patterns, ceremonial error handling, vibe-coded signals, ceremony-to-substance ratio)
 - **`reconcile-memory`** (`plugins/reconcile-memory/`) — audit and reconcile auto-memory files: deduplication, contradiction detection, staleness assessment, context hygiene
-- **`scoped-delivery`** (`plugins/scoped-delivery/`) — four-phase delivery workflow (orient, clarify, implement, review) with fresh subagent contexts for the implementation and review phases; explicit-invocation only
+- **`scoped-delivery`** (`plugins/scoped-delivery/`) — four-phase delivery workflow (orient, clarify, implement, review) where a fresh subagent reviews the final diff so the implementer isn't the reviewer; explicit-invocation only
 
 For authoring new skills, use Anthropic's official `skill-creator` plugin from the `anthropics/claude-plugins-official` marketplace.
 
