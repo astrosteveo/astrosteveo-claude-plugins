@@ -1,44 +1,36 @@
-# Issue Categories — Detection Criteria
+# Detection Procedures
 
-Detailed detection guidance for each category of memory issue. Consult this while analyzing memory files in Phase 1 Step 2 of the main workflow.
+Concrete checks to run while analyzing memory files in Phase 1 Step 2. The category names and one-line summaries live in SKILL.md; this reference adds the verifiable procedures and pattern-matching cues that don't fit there.
 
-## Duplicates and near-duplicates
+## Verifying stale references
 
-- Multiple memories describing the same concept, preference, or pattern
-- Memories with overlapping scope where one subsumes the other
-- Memories that were created at different times but say the same thing in different words
-- Look for: same topic keywords, similar phrasing, overlapping file/function references
+Cross-reference each memory against the live codebase and recent activity:
 
-## Contradictions
+- Use `Glob` and `Grep` to check whether referenced files, functions, classes, endpoints, or identifiers still exist at the named paths.
+- Run `git log --oneline -50` and `git log --since="30 days ago"` to identify completed work, removed features, or renames that would invalidate a memory.
+- Scan the 3-5 most recent chat transcripts (`.jsonl` files sibling to the `memory/` directory) for explicit supersession, contradiction, or confirmation of continued relevance.
+- Apply the type-based decay rates and confidence-level definitions in `references/staleness-criteria.md`. `project` memories decay fastest; `user` memories slowest.
+- Memories that name specific file paths go stale fastest. Verify these first.
 
-- Two or more memories that give conflicting guidance
-- A memory that contradicts what is observable in the current codebase
-- Memories where one says "do X" and another says "do not X" or "do Y instead"
+## Spotting duplicates and near-duplicates
 
-These are the highest-priority issues — contradictions cause non-deterministic behavior.
+Pattern-match on:
 
-## Stale references
+- Same topic keywords, similar phrasing, or overlapping file/function references across two memories.
+- One memory's scope fully contained inside another's (the larger subsumes the smaller).
+- Two memories created at different times that say the same thing in different words — common when a follow-up conversation re-records a decision the original session already captured.
 
-Consult `references/staleness-criteria.md` for detailed assessment guidance including confidence levels and type-based decay rates.
+## Spotting consolidation candidates
 
-- Memories that reference files, functions, classes, endpoints, or patterns that no longer exist in the codebase
-- Use `Glob` and `Grep` to verify whether referenced paths and identifiers still exist
-- Cross-reference against git history (`git log --oneline -50`, `git log --since="30 days ago"`) to identify completed work and removed features
-- Scan the 3-5 most recent chat transcripts (`.jsonl` files sibling to `memory/`) for contradictions, superseded decisions, or confirmation of continued relevance
-- Memories about dependencies, tools, or configurations that have since changed
-- Pay special attention to memories referencing specific file paths — these go stale fastest
-- Assign confidence levels: High (multiple signals agree), Medium (one strong signal), Low (weak signals only — recommend keeping unless user decides)
+Look for:
 
-## Over-specific entries
+- Multiple short memories on the same topic, scattered across separate files.
+- Topic-related entries that have drifted into separate files over time and would read more clearly merged.
+- Fragmented information where each piece is below the threshold for being useful in isolation.
 
-- Memories that capture a one-time correction rather than a general rule
-- Memories so narrowly scoped that they are unlikely to apply again
-- Memories that encode a debugging step for a specific incident rather than a reusable pattern
+## Index integrity checks
 
-These waste context budget on information with near-zero future value.
+While reading the directory, verify `MEMORY.md` against disk:
 
-## Consolidation candidates
-
-- Multiple small memories on the same topic that could be merged into one coherent entry
-- Fragmented information that would be more useful as a single reference
-- Related memories spread across multiple files that belong together
+- **Orphaned file** — present on disk, not referenced from `MEMORY.md`. Either add an index entry or delete if the content is duplicated elsewhere.
+- **Dangling index entry** — `MEMORY.md` points at a file that does not exist. Remove the line.
