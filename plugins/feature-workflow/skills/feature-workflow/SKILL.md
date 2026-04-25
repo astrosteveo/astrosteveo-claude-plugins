@@ -1,7 +1,8 @@
 ---
 name: feature-workflow
-description: Guides Claude through a clarify → research → plan → implement → review → fix → verify workflow when the user asks to create, implement, design, build, add, or scope a feature — even when the word "feature" is not used. Maintains a live .claude/PROJECT.md (In progress / Planned / Deferred) so project state survives across sessions.
-when_to_use: Use for "where were we" / "what's next" / "what should I work on" resume questions and for brainstorming about future work. Keeps Claude oriented before writing code and keeps ideas captured between sessions.
+description: Guides Claude through a clarify → research → plan → implement → review → fix → verify workflow when the user asks to create, implement, design, build, add, or scope a feature — even when the word "feature" is not used. Maintains a live .claude/PROJECT.md (In progress, Planned, Deferred) so project state survives across sessions.
+when_to_use: Use for "where were we," "what's next," or "what should I work on" resume questions and for brainstorming about future work. Keeps Claude oriented before writing code and keeps ideas captured between sessions.
+argument-hint: "[optional feature description]"
 ---
 
 # Feature workflow
@@ -111,7 +112,7 @@ Confirm the change actually works. Method depends on the change:
 
 - Tests exist → run them
 - UI → exercise it in a browser, check golden path and obvious edges
-- CLI / script → run it on realistic input
+- CLI or script → run it on realistic input
 - Library code without UI → write or run a test that proves it
 
 If verification is not possible (no environment, no fixtures, no way to exercise it), say so explicitly.
