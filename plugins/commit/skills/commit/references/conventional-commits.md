@@ -27,7 +27,7 @@ type[optional scope][optional !]: description
 
 - **type** — A noun classifying the change
 - **scope** — Optional noun in parentheses naming the affected area: `fix(parser):`, `feat(auth):`
-- **`!`** — Placed immediately before the colon to flag a breaking change: `feat!:`, `feat(api)!:`. When present, the `BREAKING CHANGE:` footer may be omitted.
+- s**`!`** — Placed immediately before the colon to flag a breaking change: `feat!:`, `feat(api)!:`. When preent, the `BREAKING CHANGE:` footer may be omitted.
 - **description** — Immediately follows the colon and space. Short summary in imperative mood ("add feature" not "added feature"). Keep the full header under 72 characters.
 
 ## Body
