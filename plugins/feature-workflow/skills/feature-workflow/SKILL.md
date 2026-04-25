@@ -1,7 +1,7 @@
 ---
 name: feature-workflow
-description: Guides Claude through a clarify → research → plan → implement → review → fix → verify workflow when the user asks to create, implement, design, build, add, or scope a feature — even when the word "feature" is not used. Maintains a live .claude/PROJECT.md (In progress, Planned, Deferred) so project state survives across sessions.
-when_to_use: Use for "where were we," "what's next," or "what should I work on" resume questions and for brainstorming about future work. Keeps Claude oriented before writing code and keeps ideas captured between sessions.
+description: Implements new features through a structured workflow.
+when_to_use: Use when the user asks to create, implement, design, build, add, or scope a feature, when resuming work ("where were we," "what's next," "what should I work on"), or when brainstorming about future work.
 argument-hint: "[optional feature description]"
 ---
 
