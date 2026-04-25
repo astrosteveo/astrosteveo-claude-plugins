@@ -1,6 +1,6 @@
 ---
 name: feature-workflow
-description: Implements new features through a structured workflow.
+description: Plans, implements, and tracks new features across sessions.
 when_to_use: Use when the user asks to create, implement, design, build, add, or scope a feature, when resuming work ("where were we," "what's next," "what should I work on"), or when brainstorming about future work.
 argument-hint: "[optional feature description]"
 ---
