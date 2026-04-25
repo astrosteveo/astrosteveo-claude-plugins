@@ -64,7 +64,7 @@ Calibrate depth to ambiguity:
 
 In both modes, restate each answer back to the user immediately — restatement catches misunderstandings cheaply, before they're baked into the plan. Restate research findings the same way — when an Explore result or a doc lookup changes the shape of the plan, say so explicitly ("the API actually returns X, so option B no longer applies") before continuing.
 
-**Option format.** When a question has a shortlist of plausible answers, lay them out so the user can reply with a single letter. Keep options short enough to read at a glance and always name a pragmatic recommendation with a one-sentence reason — a default makes the choice feel like "confirm or redirect," not "design from scratch."
+**Decision prompt format.** When a question has a shortlist of plausible answers, lay them out so the user can reply with a single letter. Keep options short enough to read at a glance and always name a pragmatic recommendation with a one-sentence reason — a default makes the choice feel like "confirm or redirect," not "design from scratch." Options are a soft default, not a forced menu: the user is free to redirect, mix, or push back, and the prompt should not need to spell that out — treat any non-letter reply as a valid answer rather than asking again. This is the shape every multi-option decision in the workflow takes — Clarify uses it for technical choices, Review reuses it for the post-report handoff. Same shape, same expectations, less mental load.
 
 Before drafting options, verify the premise the options sit on. If the options differ along an axis like "what the API returns" or "what the library supports," confirm that axis against docs or a probe first — otherwise you are asking the user to pick between fictions. Options anchored on unverified premises are the workflow's most expensive failure mode.
 
@@ -75,7 +75,7 @@ Before drafting options, verify the premise the options sit on. If the options d
 - **B) <option>** — <one-line tradeoff>
 - **C) <option>** — <one-line tradeoff>
 
-Recommend **A** because <one short reason grounded in Orient findings or stated constraints>. Reply with a letter, or push back.
+Recommend **A** because <one short reason grounded in Orient findings or stated constraints>.
 ```
 
 Only use the format when there really is a choice. For open-ended questions ("what's the deadline?", "who's the primary user?"), ask plainly — fabricating options wastes the user's time.
@@ -134,9 +134,21 @@ Also ask for a confidence read: does the change deliver what the Spec scoped, an
 - Confidence read on completion
 - Suggested next step
 
-**Present in chunks if the report is long.** Walk findings tier by tier — must-fix first (the user actually needs to decide), then should-fix, then nits — pausing for the user's call on each tier. The full Report is the artifact; the presentation is paced.
+**Walk the Report in chunks.** Present findings tier by tier — must-fix first, then should-fix, then nits — so the user can absorb each tier without scrolling past unrelated items. Pause briefly between tiers for clarifying questions; save the directional decision for the end.
 
-Present the Review Report to the user. They decide what to address — tight-loop fixes in the main agent for simple issues, or amend the Spec and loop back to Implement if findings are structural.
+**Then issue one decision prompt using the Decision prompt format from Clarify.** Same shape, same expectations, less mental load. Tailor the options to what the Report actually surfaced — drop any that don't apply, and keep the recommendation grounded in the confidence read.
+
+```
+**Q:** How should we proceed?
+
+- **A) Address all findings, then verify** — fix must-fix and should-fix in the main agent, then run the verification subagent
+- **B) Address must-fix only, defer should-fix to BACKLOG, then verify** — ships sooner; deferred items become Follow-ups in Closeout
+- **C) Loop back to Implement** — findings are structural; this re-enters Clarify, amends the Spec, and resets the `approved` gate before re-implementing
+
+Recommend **<X>** because <one short reason grounded in the Review's confidence read and the findings>.
+```
+
+If the Report came back clean (no must-fix, no should-fix), skip the prompt entirely and tell the user you're proceeding to Closeout — no decision to make is its own answer.
 
 **Verify the fixes.** After any must-fix or should-fix changes land, spawn a *second* fresh `general-purpose` Agent and pass it the original Review Report plus the diff of the fixes. Its job is narrow: confirm each prior finding was actually addressed and that the fixes did not introduce new issues. The implementer is a poor judge of their own work during the fix loop too — the skill is still paying for independence here. Loop until the verification pass comes back clean.
 
