@@ -16,7 +16,7 @@ Two jobs:
 
 Real engineers orient before writing code: read the ask, read the code, plan, then build. AI sessions tend to skip that. Ideas surfaced in conversation ("we should also do X") evaporate at session end without a place to land them. This skill provides the path and the file that keep both behaviors durable.
 
-This skill is a path, not a gate. Code is always available to write; the workflow keeps the steps honest.
+This skill sequences the steps. Code is always available to write.
 
 ## The state file
 
@@ -72,7 +72,7 @@ Produce a real plan, proportional to the ask:
 - Anything tricky and how it will be handled
 - Assumptions being made — so the user can correct them before code is written
 
-Match plan length to the work. The plan is a thinking artifact for the conversation; it does not need to be saved.
+Match plan length to the work. The plan lives in the conversation.
 
 ### 4. Record
 
@@ -102,7 +102,7 @@ Pass the subagent:
 
 For most features: instruct the subagent to run `code-quality` scoped to the changed files. For substantial slices, also run `code-sniffer` — it catches things `code-quality` misses, because they are tuned for different failure modes.
 
-Bring findings back to the user without editorializing. Some findings will be real; some may be false positives or matters of taste. The user weighs which to act on.
+Relay findings to the user verbatim. Some findings will be real; some may be false positives or matters of taste. The user weighs which to act on.
 
 ### 7. Fix
 
@@ -128,7 +128,7 @@ Remove the item from **In progress** in `.claude/PROJECT.md`. If anything new su
 When the user opens with "let's think about X" or "what should we build" rather than "implement X":
 
 - Read `.claude/PROJECT.md` for context on what is already in flight or planned
-- Talk it through. Hold off on writing code until something concrete emerges.
+- Talk it through. Begin writing code once something concrete emerges.
 - When something concrete emerges, add it to **Planned** (or **Deferred** if it is interesting-but-not-now)
 - **Deferred** is a fine resting place for ideas that are not yet ripe. Let them sit there until they sharpen.
 
