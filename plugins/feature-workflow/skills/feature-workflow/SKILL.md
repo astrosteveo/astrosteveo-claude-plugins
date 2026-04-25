@@ -1,8 +1,7 @@
 ---
 name: feature-workflow
-description: Plans, implements, and tracks new features across sessions.
-when_to_use: Use when the user asks to create, implement, design, build, add, or scope a feature, when resuming work ("where were we," "what's next," "what should I work on"), or when brainstorming about future work.
-argument-hint: "[optional feature description]"
+description: Plans, implements, and tracks features across sessions via a persistent .claude/PROJECT.md file. Use when the user asks to create, implement, design, build, add, or scope a feature, when resuming work ("where were we," "what's next," "what should I work on"), or when brainstorming future work ("let's think about X," "what should we build").
+argument-hint: "[description]"
 ---
 
 # Feature workflow
