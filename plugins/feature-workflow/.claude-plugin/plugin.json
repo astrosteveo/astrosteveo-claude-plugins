@@ -1,6 +1,6 @@
 {
     "name": "feature-workflow",
-    "description": "Guided clarify → research → plan → implement → review → fix → verify workflow with a live .claude/PROJECT.md so feature state survives across sessions",
+    "description": "Plans, implements, and tracks features across sessions via a persistent PROJECT.md file",
     "author": {
         "name": "AstroSteveo",
         "email": "34114851+astrosteveo@users.noreply.github.com"
