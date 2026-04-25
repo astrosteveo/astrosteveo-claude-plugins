@@ -3,7 +3,7 @@
     "description": "Curated list of Claude Code plugins for Engineers",
     "owner": {
         "name": "AstroSteveo",
-        "email": "astrosteveo@noreply.users.github.com"
+        "email": "34114851+astrosteveo@users.noreply.github.com"
     },
     "plugins": [
         {
@@ -11,7 +11,7 @@
             "description": "Conventional Commits skill for Claude Code",
             "author": {
                 "name": "AstroSteveo",
-                "email": "astrosteveo@noreply.users.github.com"
+                "email": "34114851+astrosteveo@users.noreply.github.com"
             },
             "source": "./plugins/commit"
         },
@@ -20,7 +20,7 @@
             "description": "Codebase quality skills — code-quality for comprehensive audits, code-sniffer for detecting code smells and AI slop",
             "author": {
                 "name": "AstroSteveo",
-                "email": "astrosteveo@noreply.users.github.com"
+                "email": "34114851+astrosteveo@users.noreply.github.com"
             },
             "source": "./plugins/code-quality"
         },
@@ -29,7 +29,7 @@
             "description": "Audit and reconcile Claude Code auto-memory files — deduplication, contradiction detection, staleness assessment, and context hygiene",
             "author": {
                 "name": "AstroSteveo",
-                "email": "astrosteveo@noreply.users.github.com"
+                "email": "34114851+astrosteveo@users.noreply.github.com"
             },
             "source": "./plugins/reconcile-memory"
         },
@@ -38,7 +38,7 @@
             "description": "Four-phase delivery workflow for one logical story — orient, clarify, implement, review",
             "author": {
                 "name": "AstroSteveo",
-                "email": "astrosteveo@noreply.users.github.com"
+                "email": "34114851+astrosteveo@users.noreply.github.com"
             },
             "source": "./plugins/scoped-delivery"
         }
