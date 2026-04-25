@@ -32,15 +32,6 @@
                 "email": "34114851+astrosteveo@users.noreply.github.com"
             },
             "source": "./plugins/reconcile-memory"
-        },
-        {
-            "name": "scoped-delivery",
-            "description": "Four-phase delivery workflow for one logical story — orient, clarify, implement, review",
-            "author": {
-                "name": "AstroSteveo",
-                "email": "34114851+astrosteveo@users.noreply.github.com"
-            },
-            "source": "./plugins/scoped-delivery"
         }
     ]
 }
