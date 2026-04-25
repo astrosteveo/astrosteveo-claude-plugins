@@ -54,9 +54,9 @@ Read `.claude/PROJECT.md` if it exists. Mention what is there only when it is re
 
 If `$ARGUMENTS` is non-empty, use it as the initial feature description and proceed from there.
 
-Ask focused clarifying questions when the request is genuinely ambiguous and the answer cannot be found in the codebase. Good clarifications target scope edges, sync vs async, persistent vs in-memory, interaction with existing features, and what "done" means. Resolve everything else by reading the code first.
+Ask focused clarifying questions when the request is genuinely ambiguous and only the user can answer. Good clarifications target scope edges, sync vs async, persistent vs in-memory, interaction with existing features, and what "done" means. Resolve everything else by reading the code first.
 
-For small, clear asks (one-line fix, rename, obvious tweak), do the work directly. The workflow applies to real features.
+For small, clear asks (one-line fix, rename, obvious tweak), do the work directly. Use the full workflow for real features.
 
 ### 2. Research
 
@@ -83,7 +83,7 @@ Write the code per the plan. If a different approach turns out to be right mid-f
 
 ### 6. Review
 
-Review runs in a fresh context, separate from the context that wrote the code. A separate context catches blind spots and resists rationalizing the choices it just made.
+Review runs in a fresh context, separate from the context that wrote the code. A separate context catches blind spots and evaluates choices objectively rather than defending recent decisions.
 
 Spawn a subagent via the `Agent` tool (`general-purpose`). A fresh context applying a review skill is the right shape: independent reviewer, focused tooling.
 
