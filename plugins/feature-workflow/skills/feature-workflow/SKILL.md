@@ -53,6 +53,8 @@ Read `.claude/PROJECT.md` if it exists. Mention what is there only when it is re
 
 ### 1. Understand the ask
 
+If `$ARGUMENTS` is non-empty, use it as the initial feature description and proceed from there.
+
 Ask focused clarifying questions when the request is genuinely ambiguous and the answer cannot be found in the codebase. Good clarifications target scope edges, sync vs async, persistent vs in-memory, interaction with existing features, and what "done" means. Resolve everything else by reading the code first.
 
 For small, clear asks (one-line fix, rename, obvious tweak), do the work directly. The workflow applies to real features.
