@@ -7,40 +7,6 @@
     },
     "plugins": [
         {
-            "name": "commit",
-            "description": "Conventional Commits skill for Claude Code",
-            "author": {
-                "name": "AstroSteveo",
-                "email": "34114851+astrosteveo@users.noreply.github.com"
-            },
-            "source": "./plugins/commit"
-        },
-        {
-            "name": "code-quality",
-            "description": "Codebase quality skills — code-quality for comprehensive audits, code-sniffer for detecting code smells and AI slop",
-            "author": {
-                "name": "AstroSteveo",
-                "email": "34114851+astrosteveo@users.noreply.github.com"
-            },
-            "source": "./plugins/code-quality"
-        },
-        {
-            "name": "reconcile-memory",
-            "description": "Audit and reconcile Claude Code auto-memory files — deduplication, contradiction detection, staleness assessment, and context hygiene",
-            "author": {
-                "name": "AstroSteveo",
-                "email": "34114851+astrosteveo@users.noreply.github.com"
-            },
-            "source": "./plugins/reconcile-memory"
-        },
-        {
-            "name": "feature-workflow",
-            "description": "Guided clarify → research → plan → implement → review → fix → verify workflow with a live .claude/PROJECT.md so feature state survives across sessions",
-            "author": {
-                "name": "AstroSteveo",
-                "email": "34114851+astrosteveo@users.noreply.github.com"
-            },
-            "source": "./plugins/feature-workflow"
         }
     ]
 }

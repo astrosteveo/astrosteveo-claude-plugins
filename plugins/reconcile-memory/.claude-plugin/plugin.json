@@ -1,8 +1,0 @@
-{
-    "name": "reconcile-memory",
-    "description": "Audit and reconcile Claude Code auto-memory files — deduplication, contradiction detection, staleness assessment, and context hygiene",
-    "author": {
-        "name": "AstroSteveo",
-        "email": "34114851+astrosteveo@users.noreply.github.com"
-    }
-}

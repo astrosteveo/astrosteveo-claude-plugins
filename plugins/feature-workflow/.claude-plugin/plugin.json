@@ -1,8 +1,0 @@
-{
-    "name": "feature-workflow",
-    "description": "Plans, implements, and tracks features across sessions via a persistent PROJECT.md file",
-    "author": {
-        "name": "AstroSteveo",
-        "email": "34114851+astrosteveo@users.noreply.github.com"
-    }
-}
